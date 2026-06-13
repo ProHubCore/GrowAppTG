@@ -6,11 +6,11 @@ function Plant({ plant, canCollect, onCollect }) {
       disabled={!canCollect}
       aria-label={canCollect ? "Собрать урожай" : plant.name}
       style={{
-  width: `${plant.width}px`,
-  bottom: `${plant.bottom}px`,
-  left: `${plant.left}%`,
-  transform: "translateX(-50%)",
-}}
+        width: `${plant.width}px`,
+        bottom: `${plant.bottom}px`,
+        left: `${plant.left}%`,
+        transform: "translateX(-50%)",
+      }}
     >
       <img className="plant" src={plant.image} alt={plant.name} />
     </button>

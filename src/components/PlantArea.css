@@ -28,20 +28,17 @@
 .plant-button-image {
   position: absolute;
   z-index: 6;
-
-  display: block;
   padding: 0;
   margin: 0;
-
   border: none;
   background: transparent;
+  pointer-events: none;
+  transform-origin: bottom center;
 
   overflow: visible;
   appearance: none;
   -webkit-appearance: none;
-
-  pointer-events: none;
-  transform-origin: bottom center;
+  line-height: 0;
 }
 
 
@@ -56,11 +53,11 @@
 
 .plant {
   width: 100%;
-  height: 100%;
+  height: auto;
   display: block;
-  object-fit: contain;
-  overflow: visible;
+
   pointer-events: none;
+
   transform-origin: bottom center;
   animation: plantIdle 2.8s ease-in-out infinite;
 }
