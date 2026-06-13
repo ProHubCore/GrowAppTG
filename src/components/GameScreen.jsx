@@ -37,6 +37,7 @@ const STORAGE_KEYS = [
   "growapp-seed-inventory",
   "growapp-shop-stock",
   "growapp-coins",
+  "growapp-club-reputation",
 ];
 
 function createPotState(index) {
