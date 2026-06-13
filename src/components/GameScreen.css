@@ -1,0 +1,120 @@
+.game-screen {
+  position: fixed;
+  inset: 0;
+
+  width: 100vw;
+  height: 100dvh;
+
+  overflow: hidden;
+
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+
+  background: #16100c;
+}
+
+.game-stage {
+  position: relative;
+
+  width: 390px;
+  height: 844px;
+
+  overflow: hidden;
+
+  transform-origin: top center;
+
+  background: #16100c;
+}
+
+.background {
+  position: absolute;
+  inset: 0;
+
+  background-image: url("/assets/plantation-bg.png");
+  background-size: 100% 100%;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  z-index: 1;
+}
+
+.game-content {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+
+  pointer-events: none;
+}
+
+.table-scene {
+  position: absolute;
+
+  left: 15px;
+  bottom: 130px;
+
+  width: 360px;
+  height: 360px;
+
+  pointer-events: none;
+}
+
+.top-wallet {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 50;
+
+  padding: 8px 14px;
+
+  border-radius: 999px;
+  border: 2px solid rgba(255, 226, 155, 0.6);
+
+  background: rgba(47, 31, 20, 0.82);
+  color: #fff1cf;
+
+  font-size: 16px;
+  font-weight: 900;
+
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.28);
+}
+
+.flying-loot-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 45;
+
+  pointer-events: none;
+}
+
+.flying-loot-item {
+  position: absolute;
+
+  width: 34px;
+  height: 34px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 28px;
+
+  animation: flyToBackpack 0.95s ease-in forwards;
+}
+
+@keyframes flyToBackpack {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.7);
+  }
+
+  15% {
+    opacity: 1;
+    transform: translate(0, -18px) scale(1.15);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(145px, -265px) scale(0.3);
+  }
+}

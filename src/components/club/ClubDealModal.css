@@ -1,0 +1,191 @@
+.club-deal-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 20px;
+
+  background: rgba(10, 8, 15, 0.72);
+  backdrop-filter: blur(3px);
+}
+
+.club-deal-modal {
+  position: relative;
+
+  width: min(330px, 100%);
+  padding: 22px 18px 18px;
+
+  color: #f5ead7;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(55, 39, 55, 0.98),
+      rgba(28, 22, 34, 0.98)
+    );
+
+  border: 2px solid rgba(224, 189, 122, 0.55);
+  border-radius: 20px;
+
+  box-shadow:
+    0 20px 50px rgba(0, 0, 0, 0.55),
+    inset 0 0 25px rgba(255, 198, 112, 0.04);
+}
+
+.club-deal-modal__close {
+  position: absolute;
+  top: 8px;
+  right: 12px;
+
+  width: 34px;
+  height: 34px;
+
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 27px;
+  line-height: 30px;
+
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+
+.club-deal-modal__name {
+  margin-bottom: 8px;
+
+  color: #e8bd75;
+  font-size: 23px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.club-deal-modal__phrase {
+  min-height: 58px;
+  margin-bottom: 16px;
+  padding: 11px 13px;
+
+  color: #ded3c5;
+  font-size: 15px;
+  line-height: 1.4;
+  text-align: center;
+
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 13px;
+}
+
+.club-deal-modal__order {
+  padding: 14px;
+
+  background: rgba(246, 217, 165, 0.08);
+  border: 1px solid rgba(246, 217, 165, 0.13);
+  border-radius: 15px;
+}
+
+.club-deal-modal__plant {
+  margin-bottom: 12px;
+
+  color: #cde59d;
+  font-size: 19px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.club-deal-modal__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 15px;
+
+  margin-bottom: 7px;
+
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 14px;
+}
+
+.club-deal-modal__row strong {
+  color: #fff3d8;
+}
+
+.club-deal-modal__total {
+  margin-top: 12px;
+  padding-top: 11px;
+
+  color: #f3cd79;
+  font-size: 18px;
+  font-weight: 800;
+  text-align: center;
+
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.club-deal-modal__warning {
+  margin-top: 12px;
+
+  color: #ef9d91;
+  font-size: 14px;
+  text-align: center;
+}
+
+.club-deal-modal__sell,
+.club-deal-modal__leave {
+  width: 100%;
+  min-height: 48px;
+  margin-top: 13px;
+
+  border: 0;
+  border-radius: 14px;
+
+  font-size: 16px;
+  font-weight: 800;
+
+  cursor: pointer;
+}
+
+.club-deal-modal__sell {
+  color: #2a211a;
+
+  background: linear-gradient(
+    180deg,
+    #f2ce82,
+    #c89a4d
+  );
+
+  box-shadow: 0 6px 0 #7c5732;
+}
+
+.club-deal-modal__sell:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 #7c5732;
+}
+
+.club-deal-modal__sell:disabled {
+  color: rgba(255, 255, 255, 0.4);
+
+  background: #5a5157;
+  box-shadow: 0 5px 0 #373136;
+
+  cursor: default;
+}
+
+.club-deal-modal__leave {
+  min-height: 42px;
+  margin-top: 11px;
+
+  color: rgba(255, 255, 255, 0.65);
+
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.club-deal-modal__success {
+  padding: 30px 15px;
+
+  color: #d7e8a8;
+  font-size: 18px;
+  line-height: 1.45;
+  text-align: center;
+
+  background: rgba(117, 150, 75, 0.12);
+  border-radius: 16px;
+}

@@ -1,0 +1,1048 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background: #16100c;
+}
+
+/* Экран */
+.game-screen {
+  position: fixed;
+  inset: 0;
+
+  width: 100vw;
+  height: 100dvh;
+
+  overflow: hidden;
+
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+
+  background: #16100c;
+}
+
+/* Фиксированная игровая сцена 390x844 */
+.game-stage {
+  position: relative;
+
+  width: 390px;
+  height: 844px;
+
+  overflow: hidden;
+
+  transform-origin: top center;
+
+  background: #16100c;
+}
+
+/* Фон плантации */
+.background {
+  position: absolute;
+  inset: 0;
+
+  background-image: url("/assets/backgrounds/main-bg.png");
+  background-size: 100% 100%;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  z-index: 1;
+}
+
+/* Игровой слой */
+.game-content {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+
+  pointer-events: none;
+}
+
+
+/* Игровой слой */
+.game-content {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+
+  pointer-events: none;
+}
+
+/* Общая сцена */
+.table-scene {
+  position: absolute;
+
+  left: 15px;
+  bottom: 130px;
+
+  width: 360px;
+  height: 360px;
+
+  pointer-events: none;
+}
+
+/* Ведро + растение */
+.plant-area {
+  position: absolute;
+
+  left: 50%;
+  bottom: 20px;
+  transform: translateX(-50%);
+
+  width: 260px;
+  height: 350px;
+
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+
+  pointer-events: none;
+}
+
+.pot {
+  position: absolute;
+
+  bottom: -30px;
+  width: 200px;
+
+  z-index: 5;
+  pointer-events: none;
+}
+
+/* Растение */
+.plant-button-image {
+  position: absolute;
+  z-index: 6;
+
+  padding: 0;
+  border: none;
+  background: transparent;
+
+  pointer-events: none;
+  transform-origin: bottom center;
+}
+
+.plant-button-image.collectable {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.plant-button-image.collectable:active {
+  transform: translateX(-50%) scale(0.94) !important;
+}
+
+.plant-button-image.collectable .plant {
+  animation:
+    plantReadyPulse 1.45s ease-in-out infinite,
+    plantGlow 2s ease-in-out infinite;
+}
+
+.plant {
+  width: 100%;
+  height: auto;
+  display: block;
+
+  pointer-events: none;
+  transform-origin: bottom center;
+}
+
+@keyframes plantReadyPulse {
+  0% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.025);
+  }
+
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes plantGlow {
+  0% {
+    filter: drop-shadow(0 0 4px rgba(145, 255, 105, 0.35));
+  }
+
+  50% {
+    filter:
+      drop-shadow(0 0 10px rgba(145, 255, 105, 0.75))
+      drop-shadow(0 0 18px rgba(255, 70, 220, 0.35));
+  }
+
+  100% {
+    filter: drop-shadow(0 0 4px rgba(145, 255, 105, 0.35));
+  }
+}
+
+/* Коробка семян */
+.seed-basket {
+  position: absolute;
+
+  left: -5px;
+  bottom: 5px;
+  z-index: 8;
+
+  width: 130px;
+  height: 140px;
+
+  padding: 0;
+  border: none;
+  background: transparent;
+
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.seed-basket-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+
+  filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.35));
+
+  transition:
+    transform 0.12s ease,
+    filter 0.12s ease;
+}
+
+.seed-basket:active .seed-basket-image {
+  transform: scale(0.94);
+}
+
+.seed-basket.disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.seed-basket.disabled .seed-basket-image {
+  filter: grayscale(0.5) drop-shadow(0 8px 10px rgba(0, 0, 0, 0.25));
+}
+
+.seed-basket.disabled:active .seed-basket-image {
+  transform: none;
+}
+
+/* Уничтожитель растения */
+.shovel-tool {
+  position: absolute;
+
+  left: 270px;
+  top: 570px;
+  z-index: 12;
+
+  width: 82px;
+  height: 130px;
+
+  padding: 0;
+  border: none;
+  background: transparent;
+
+  cursor: pointer;
+}
+
+.shovel-tool-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+
+  filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.35));
+
+  transition:
+    transform 0.12s ease,
+    filter 0.12s ease,
+    opacity 0.12s ease;
+}
+
+.shovel-tool:active .shovel-tool-image {
+  transform: scale(0.94);
+}
+
+.shovel-tool.disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.shovel-tool.disabled .shovel-tool-image {
+  filter: grayscale(0.65) drop-shadow(0 6px 8px rgba(0, 0, 0, 0.25));
+}
+
+.shovel-tool.disabled:active .shovel-tool-image {
+  transform: none;
+}
+
+/* Инвентарь на стене */
+.backpack-tool {
+  position: absolute;
+
+  right: 58px;
+  top: 178px;
+  z-index: 12;
+
+  width: 92px;
+  height: 130px;
+
+  padding: 0;
+  border: none;
+  background: transparent;
+
+  cursor: pointer;
+}
+
+.backpack-tool-image {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+
+  transform-origin: top center;
+
+  filter: drop-shadow(0 8px 10px rgba(0, 0, 0, 0.35));
+
+  animation: backpackHang 3.8s ease-in-out infinite;
+
+  transition:
+    transform 0.12s ease,
+    filter 0.12s ease;
+}
+
+.backpack-tool:active .backpack-tool-image {
+  animation: none;
+  transform: scale(0.94);
+}
+
+@keyframes backpackHang {
+  0% {
+    transform: rotate(0deg);
+  }
+
+  25% {
+    transform: rotate(-1.4deg);
+  }
+
+  50% {
+    transform: rotate(0.7deg);
+  }
+
+  75% {
+    transform: rotate(-0.8deg);
+  }
+
+  100% {
+    transform: rotate(0deg);
+  }
+}
+
+/* Нижнее меню */
+.bottom-menu {
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  bottom: 16px;
+  z-index: 30;
+
+  height: 80px;
+  padding: 10px;
+
+  display: flex;
+  gap: 10px;
+
+  background: rgba(12, 22, 24, 0.82);
+  border: 1px solid rgba(126, 255, 190, 0.22);
+  border-radius: 22px;
+
+  box-shadow:
+    0 12px 26px rgba(0, 0, 0, 0.28),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+
+  backdrop-filter: blur(6px);
+}
+
+.bottom-menu button {
+  flex: 1;
+
+  border: none;
+  border-radius: 16px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(126, 255, 190, 0.92),
+      rgba(56, 184, 134, 0.92)
+    );
+
+  color: #10281d;
+
+  font-size: 15px;
+  font-weight: 900;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 5px 0 rgba(20, 84, 64, 0.9),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.18);
+}
+
+.bottom-menu button:active {
+  transform: translateY(3px);
+  box-shadow:
+    0 2px 0 rgba(20, 84, 64, 0.9),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.18);
+}
+
+.bottom-menu button:disabled {
+  opacity: 0.7;
+}
+
+/* Верхний кошелёк */
+.top-wallet {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 50;
+
+  padding: 8px 14px;
+
+  border-radius: 999px;
+  border: 1px solid rgba(126, 255, 190, 0.36);
+
+  background: rgba(12, 22, 24, 0.78);
+  color: #eaffef;
+
+  font-size: 16px;
+  font-weight: 900;
+
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.28),
+    0 0 14px rgba(126, 255, 190, 0.08);
+
+  backdrop-filter: blur(6px);
+}
+
+/* Таймер роста */
+.grow-hint {
+  position: absolute;
+  left: 50%;
+  top: 82px;
+  transform: translateX(-50%);
+  z-index: 20;
+
+  width: 250px;
+  min-height: 54px;
+  padding: 10px 12px;
+
+  display: flex;
+  align-items: center;
+  gap: 10px;
+
+  border-radius: 18px;
+  border: 1px solid rgba(120, 255, 170, 0.45);
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(18, 34, 31, 0.72),
+      rgba(12, 18, 24, 0.76)
+    );
+
+  color: #dfffe9;
+
+  box-shadow:
+    0 8px 22px rgba(0, 0, 0, 0.28),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 0 18px rgba(88, 255, 170, 0.08);
+
+  backdrop-filter: blur(6px);
+  pointer-events: none;
+}
+
+.grow-hint::after {
+  display: none;
+}
+
+.grow-hint.empty {
+  display: none;
+}
+
+.grow-hint.growing {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.grow-hint.ready {
+  width: 210px;
+  min-height: 48px;
+
+  border-color: rgba(170, 255, 120, 0.65);
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(30, 68, 38, 0.76),
+      rgba(13, 28, 20, 0.78)
+    );
+
+  box-shadow:
+    0 8px 22px rgba(0, 0, 0, 0.3),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 0 22px rgba(145, 255, 105, 0.16);
+}
+
+.hint-top {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.hint-icon {
+  width: 30px;
+  height: 30px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border-radius: 12px;
+
+  background:
+    radial-gradient(circle at 35% 30%, rgba(170, 255, 160, 0.55), transparent 42%),
+    rgba(89, 255, 176, 0.12);
+
+  border: 1px solid rgba(145, 255, 160, 0.26);
+
+  font-size: 17px;
+
+  box-shadow:
+    inset 0 0 10px rgba(103, 255, 174, 0.18),
+    0 0 10px rgba(103, 255, 174, 0.12);
+}
+
+.hint-title {
+  font-size: 13px;
+  font-weight: 900;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+}
+
+.hint-text {
+  margin-top: 2px;
+
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1.15;
+
+  color: rgba(223, 255, 233, 0.68);
+}
+
+.timer-bar {
+  width: 100%;
+  height: 7px;
+
+  overflow: hidden;
+  border-radius: 999px;
+
+  background: rgba(255, 255, 255, 0.12);
+
+  box-shadow:
+    inset 0 0 6px rgba(0, 0, 0, 0.3);
+}
+
+.timer-bar-fill {
+  height: 100%;
+  border-radius: 999px;
+
+  background:
+    linear-gradient(
+      90deg,
+      #64ffc7,
+      #b5ff66,
+      #ffe96b
+    );
+
+  box-shadow:
+    0 0 10px rgba(130, 255, 170, 0.45);
+
+  transition: width 0.25s ease;
+}
+
+/* Модалки */
+.modal-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 80;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 18px;
+
+  background:
+    radial-gradient(circle at 50% 35%, rgba(120, 255, 170, 0.12), transparent 38%),
+    rgba(0, 0, 0, 0.58);
+
+  backdrop-filter: blur(6px);
+}
+
+.seed-modal,
+.remove-plant-modal,
+.inventory-modal {
+  position: relative;
+
+  width: 340px;
+  padding: 18px;
+
+  border-radius: 28px;
+  border: 1px solid rgba(126, 255, 190, 0.42);
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(20, 35, 32, 0.96),
+      rgba(12, 18, 24, 0.97)
+    );
+
+  color: #eaffef;
+
+  box-shadow:
+    0 18px 42px rgba(0, 0, 0, 0.48),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 0 28px rgba(86, 255, 170, 0.12);
+
+  overflow: hidden;
+}
+
+.seed-modal::before,
+.remove-plant-modal::before,
+.inventory-modal::before {
+  content: "";
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  top: 0;
+
+  height: 2px;
+
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(128, 255, 190, 0.8),
+    rgba(255, 105, 230, 0.55),
+    transparent
+  );
+
+  opacity: 0.8;
+}
+
+.modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+
+  width: 34px;
+  height: 34px;
+
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 50%;
+
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(234, 255, 239, 0.9);
+
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1;
+
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.modal-close:active {
+  transform: scale(0.92);
+}
+
+.modal-title {
+  padding-right: 40px;
+
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1.1;
+
+  color: #eaffef;
+
+  text-shadow:
+    0 0 12px rgba(106, 255, 180, 0.18),
+    0 2px 0 rgba(0, 0, 0, 0.35);
+}
+
+.modal-subtitle {
+  margin-top: 6px;
+  margin-bottom: 14px;
+
+  color: rgba(234, 255, 239, 0.62);
+
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+/* Семена в модалке */
+.seed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.seed-card {
+  width: 100%;
+  padding: 11px;
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  border: 1px solid rgba(126, 255, 190, 0.28);
+  border-radius: 20px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(86, 255, 170, 0.1),
+      rgba(255, 255, 255, 0.04)
+    );
+
+  color: #eaffef;
+
+  text-align: left;
+  cursor: pointer;
+
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 8px 18px rgba(0, 0, 0, 0.18);
+
+  transition:
+    transform 0.12s ease,
+    border-color 0.12s ease,
+    background 0.12s ease;
+}
+
+.seed-card:active {
+  transform: scale(0.98);
+}
+
+.seed-card:hover {
+  border-color: rgba(126, 255, 190, 0.55);
+}
+
+.seed-icon {
+  width: 48px;
+  height: 48px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  flex-shrink: 0;
+
+  border-radius: 16px;
+
+  background:
+    radial-gradient(circle at 35% 25%, rgba(180, 255, 135, 0.45), transparent 45%),
+    rgba(126, 255, 190, 0.11);
+
+  border: 1px solid rgba(126, 255, 190, 0.18);
+
+  font-size: 27px;
+
+  box-shadow:
+    inset 0 0 12px rgba(126, 255, 190, 0.12),
+    0 0 12px rgba(126, 255, 190, 0.08);
+}
+
+.seed-icon.big {
+  width: 64px;
+  height: 64px;
+  margin: 0 auto 10px;
+
+  border-radius: 20px;
+
+  font-size: 36px;
+}
+
+.seed-info {
+  min-width: 0;
+}
+
+.seed-name {
+  font-size: 15px;
+  font-weight: 900;
+  color: #f0fff4;
+}
+
+.seed-description {
+  margin-top: 3px;
+
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.25;
+
+  color: rgba(234, 255, 239, 0.58);
+}
+
+.confirm-seed-card {
+  padding: 16px;
+
+  border-radius: 22px;
+  border: 1px solid rgba(126, 255, 190, 0.28);
+
+  background:
+    radial-gradient(circle at 50% 25%, rgba(126, 255, 190, 0.12), transparent 45%),
+    rgba(255, 255, 255, 0.045);
+
+  text-align: center;
+
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+/* Инвентарь */
+.inventory-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+
+  margin-top: 16px;
+}
+
+.inventory-slot {
+  position: relative;
+
+  height: 66px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 18px;
+  border: 1px solid rgba(126, 255, 190, 0.26);
+
+  background:
+    radial-gradient(circle at 50% 35%, rgba(126, 255, 190, 0.12), transparent 48%),
+    rgba(255, 255, 255, 0.045);
+
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 8px 18px rgba(0, 0, 0, 0.16);
+
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.inventory-slot.empty {
+  border-color: rgba(255, 255, 255, 0.09);
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.035),
+      rgba(0, 0, 0, 0.08)
+    );
+
+  cursor: default;
+}
+
+.inventory-slot:not(.empty):active {
+  transform: scale(0.96);
+}
+
+.inventory-slot:disabled {
+  opacity: 1;
+}
+
+.inventory-icon {
+  font-size: 30px;
+
+  filter:
+    drop-shadow(0 0 7px rgba(126, 255, 190, 0.25))
+    drop-shadow(0 4px 6px rgba(0, 0, 0, 0.25));
+}
+
+.inventory-count {
+  position: absolute;
+  right: 6px;
+  bottom: 5px;
+
+  min-width: 22px;
+  padding: 2px 6px;
+
+  border-radius: 999px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(126, 255, 190, 0.92),
+      rgba(56, 184, 134, 0.92)
+    );
+
+  color: #10281d;
+
+  font-size: 12px;
+  font-weight: 900;
+
+  box-shadow:
+    0 3px 0 rgba(20, 84, 64, 0.82),
+    0 0 10px rgba(126, 255, 190, 0.2);
+}
+
+.inventory-hint {
+  margin-top: 14px;
+
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.35;
+
+  color: rgba(234, 255, 239, 0.58);
+}
+
+.slot-action-panel {
+  margin-top: 14px;
+  padding: 12px;
+
+  border-radius: 20px;
+  border: 1px solid rgba(126, 255, 190, 0.25);
+
+  background:
+    radial-gradient(circle at 50% 0%, rgba(126, 255, 190, 0.1), transparent 45%),
+    rgba(255, 255, 255, 0.045);
+
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.slot-action-title {
+  margin-bottom: 10px;
+
+  font-size: 13px;
+  font-weight: 900;
+  color: #eaffef;
+}
+
+.slot-action-buttons {
+  display: flex;
+  gap: 10px;
+}
+
+/* Кнопки модалок */
+.modal-actions {
+  margin-top: 16px;
+
+  display: flex;
+  gap: 10px;
+}
+
+.cancel-button,
+.plant-button,
+.remove-button {
+  flex: 1;
+  height: 46px;
+
+  border: none;
+  border-radius: 16px;
+
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 900;
+
+  cursor: pointer;
+
+  -webkit-tap-highlight-color: transparent;
+}
+
+.cancel-button {
+  background: rgba(255, 255, 255, 0.09);
+  color: rgba(234, 255, 239, 0.86);
+
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 5px 0 rgba(0, 0, 0, 0.22);
+}
+
+.plant-button {
+  background: linear-gradient(180deg, #8dffd0, #38b886);
+  color: #10281d;
+
+  box-shadow:
+    0 5px 0 rgba(20, 84, 64, 0.9),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.22);
+}
+
+.remove-button {
+  background: linear-gradient(180deg, #baff5e, #5bc83d);
+  color: #14240d;
+
+  box-shadow:
+    0 5px 0 rgba(42, 91, 28, 0.92),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.2);
+}
+
+.cancel-button:active,
+.plant-button:active,
+.remove-button:active {
+  transform: translateY(3px);
+  box-shadow:
+    0 2px 0 rgba(0, 0, 0, 0.24),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.12);
+}
+
+/* Лут */
+.flying-loot-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 45;
+
+  pointer-events: none;
+}
+
+.flying-loot-item {
+  position: absolute;
+
+  width: 34px;
+  height: 34px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 28px;
+
+  animation: flyToBackpack 0.95s ease-in forwards;
+}
+
+@keyframes flyToBackpack {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) scale(0.7);
+  }
+
+  15% {
+    opacity: 1;
+    transform: translate(0, -18px) scale(1.15);
+  }
+
+  100% {
+    opacity: 0;
+    transform: translate(145px, -265px) scale(0.3);
+  }
+}

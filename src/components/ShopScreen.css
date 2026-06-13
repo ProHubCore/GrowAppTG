@@ -1,0 +1,138 @@
+.shop-screen {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+
+  background-image: url("/assets/shop-bg.png");
+  background-size: 100% 100%;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/*
+  ВРЕМЕННАЯ кнопка назад.
+  Сейчас она с обводкой, чтобы ты видел куда нажимать.
+  Потом border можно убрать.
+*/
+.shop-back-hitbox {
+  position: absolute;
+
+  left: 20px;
+  bottom: 16px;
+
+  width: 60px;
+  height: 60px;
+
+  border-radius: 50%;
+
+  background: rgba(255, 200, 80, 0);
+  cursor: pointer;
+
+  z-index: 20;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.shop-back-hitbox:active {
+  transform: translateY(3px) scale(0.96);
+}
+
+/*
+  Диалоговое окно.
+  Ставим поверх нижней пустой панели на арте.
+*/
+.shop-dialog {
+  position: absolute;
+
+  left: 32px;
+  right: 32px;
+  bottom: 112px;
+
+  min-height: 210px;
+  padding: 18px 18px 16px;
+
+  border-radius: 24px;
+
+  background: rgba(48, 27, 48, 0.72);
+  border: 2px solid rgba(255, 210, 130, 0.75);
+
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.35),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.06);
+
+  backdrop-filter: blur(4px);
+
+  z-index: 15;
+}
+
+.shop-speaker {
+  display: inline-flex;
+  align-items: center;
+
+  padding: 6px 14px;
+  margin-bottom: 10px;
+
+  border-radius: 999px;
+
+  background: linear-gradient(180deg, #f7c35d, #d98730);
+  color: #2d180c;
+
+  font-size: 15px;
+  font-weight: 900;
+
+  box-shadow: 0 4px 0 rgba(77, 36, 13, 0.65);
+}
+
+.shop-text {
+  color: #fff3d4;
+
+  font-size: 16px;
+  font-weight: 700;
+  line-height: 1.32;
+
+  text-shadow: 0 2px 0 rgba(0, 0, 0, 0.35);
+}
+
+.shop-answers {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+
+  margin-top: 16px;
+}
+
+.shop-answer-button {
+  width: 100%;
+  min-height: 42px;
+
+  border: none;
+  border-radius: 16px;
+
+  background: linear-gradient(180deg, #7cf5c9, #39b891);
+  color: #163025;
+
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 900;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 5px 0 rgba(20, 92, 72, 0.8),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.25);
+}
+
+.shop-answer-button.secondary {
+  background: linear-gradient(180deg, #d7b4ff, #8b5fd1);
+  color: #241238;
+
+  box-shadow:
+    0 5px 0 rgba(63, 38, 105, 0.85),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.22);
+}
+
+.shop-answer-button:active {
+  transform: translateY(3px);
+  box-shadow:
+    0 2px 0 rgba(20, 92, 72, 0.8),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.25);
+}
