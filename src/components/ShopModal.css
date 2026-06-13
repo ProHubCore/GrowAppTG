@@ -1,13 +1,13 @@
 /*
-  ПАЧКА ПСИХОМОРА НА ПОЛКЕ
+  ТОВАР НА ПОЛКЕ
 
-  Двигай весь блок через left и top.
+  Двигай весь товар через left и top.
 */
 .shop-shelf-product {
   position: absolute;
 
-  left: 30px;
-  top: 310px;
+  left: 120px;
+  top: 280px;
 
   z-index: 30;
 
@@ -15,7 +15,7 @@
   flex-direction: column;
   align-items: center;
 
-  width: 145px;
+  width: 150px;
 
   padding: 0;
 
@@ -26,18 +26,27 @@
 
   cursor: pointer;
 
-  -webkit-tap-highlight-color: transparent;
+  -webkit-tap-highlight-color:
+    transparent;
+
+  transition:
+    transform 0.16s ease,
+    opacity 0.16s ease;
 }
 
 .shop-shelf-product:active {
   transform: scale(0.96);
 }
 
+.shop-shelf-product.sold-out {
+  opacity: 0.58;
+}
+
 .shop-shelf-product-image {
   display: block;
 
-  width: 110px;
-  height: 140px;
+  width: 145px;
+  height: 175px;
 
   object-fit: contain;
 
@@ -48,7 +57,6 @@
       0 10px 10px
       rgba(0, 0, 0, 0.35)
     );
-    
 }
 
 .shop-shelf-product-price {
@@ -57,12 +65,10 @@
   justify-content: center;
   gap: 6px;
 
-  min-width: 70px;
+  min-width: 88px;
 
-  margin-top: -45px;
+  margin-top: -8px;
   padding: 7px 13px;
-
-    z-index: 31;
 
   border: 1px solid
     rgba(255, 224, 105, 0.45);
@@ -84,7 +90,25 @@
 
   color: #ffe27d;
 
-  font-size: 10px;
+  font-size: 15px;
+  font-weight: 900;
+
+  pointer-events: none;
+}
+
+.shop-shelf-product-stock {
+  margin-top: 5px;
+  padding: 4px 9px;
+
+  border-radius: 999px;
+
+  background:
+    rgba(15, 13, 22, 0.82);
+
+  color:
+    rgba(255, 255, 255, 0.78);
+
+  font-size: 11px;
   font-weight: 800;
 
   pointer-events: none;
@@ -92,9 +116,6 @@
 
 /*
   ОКНО ПОКУПКИ
-
-  Здесь нет серого оверлея,
-  блюра и затемнения экрана.
 */
 .shop-purchase-window {
   position: absolute;
@@ -104,9 +125,12 @@
 
   z-index: 100;
 
-  width: 300px;
+  width: 310px;
+  max-height: 720px;
 
   padding: 24px 20px 20px;
+
+  overflow-y: auto;
 
   border: 1px solid
     rgba(136, 255, 218, 0.28);
@@ -132,19 +156,49 @@
     translate(-50%, -50%);
 }
 
+.shop-purchase-close {
+  position: absolute;
+
+  top: 10px;
+  right: 12px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 32px;
+  height: 32px;
+
+  padding: 0;
+
+  border: none;
+  border-radius: 50%;
+
+  background:
+    rgba(255, 255, 255, 0.09);
+
+  color:
+    rgba(255, 255, 255, 0.82);
+
+  font-size: 24px;
+  line-height: 1;
+
+  cursor: pointer;
+}
+
 .shop-purchase-label {
   color: #97f7d9;
 
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 900;
 
-  letter-spacing: 0.11em;
+  letter-spacing: 0.12em;
   text-align: center;
   text-transform: uppercase;
 }
 
 .shop-purchase-name {
-  margin-top: 7px;
+  margin-top: 6px;
 
   font-size: 25px;
   font-weight: 900;
@@ -154,10 +208,10 @@
 .shop-purchase-image {
   display: block;
 
-  width: 165px;
-  height: 185px;
+  width: 145px;
+  height: 160px;
 
-  margin: 4px auto 0;
+  margin: 3px auto 0;
 
   object-fit: contain;
 
@@ -169,70 +223,213 @@
 }
 
 .shop-purchase-description {
-  max-width: 245px;
+  max-width: 250px;
 
   margin: 0 auto;
 
   color:
     rgba(255, 255, 255, 0.7);
 
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1.4;
   text-align: center;
 }
 
-.shop-purchase-price {
+.shop-stock-information {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+
+  margin-top: 14px;
+}
+
+.shop-stock-information div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+
+  padding: 9px;
+
+  border: 1px solid
+    rgba(255, 255, 255, 0.08);
+
+  border-radius: 12px;
+
+  background:
+    rgba(255, 255, 255, 0.045);
+
+  color:
+    rgba(255, 255, 255, 0.58);
+
+  font-size: 11px;
+  text-align: center;
+}
+
+.shop-stock-information strong {
+  color: white;
+
+  font-size: 15px;
+}
+
+.shop-amount-title {
+  margin-top: 15px;
+
+  color:
+    rgba(255, 255, 255, 0.72);
+
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+}
+
+.shop-amount-controller {
+  display: grid;
+  grid-template-columns:
+    42px 1fr 42px;
+  gap: 9px;
+
+  align-items: center;
+
+  margin-top: 8px;
+}
+
+.shop-amount-button {
+  width: 42px;
+  height: 38px;
+
+  padding: 0;
+
+  border: 1px solid
+    rgba(155, 247, 222, 0.2);
+
+  border-radius: 12px;
+
+  background:
+    rgba(116, 239, 203, 0.1);
+
+  color: #a4ffe4;
+
+  font-size: 24px;
+  font-weight: 900;
+
+  cursor: pointer;
+}
+
+.shop-amount-button:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.shop-selected-amount {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  height: 38px;
+
+  border: 1px solid
+    rgba(255, 255, 255, 0.1);
+
+  border-radius: 12px;
+
+  background:
+    rgba(8, 12, 20, 0.32);
+
+  color: white;
+
+  font-size: 19px;
+  font-weight: 900;
+}
+
+.shop-amount-slider {
+  width: 100%;
+
+  margin-top: 12px;
+
+  accent-color: #8ef1d4;
+
+  cursor: pointer;
+}
+
+.shop-slider-limits {
+  display: flex;
+  justify-content: space-between;
+
+  margin-top: -2px;
+
+  color:
+    rgba(255, 255, 255, 0.38);
+
+  font-size: 10px;
+}
+
+.shop-purchase-price,
+.shop-purchase-total {
   display: flex;
   align-items: center;
   justify-content: space-between;
 
-  margin-top: 17px;
-  padding: 10px 13px;
+  margin-top: 12px;
+  padding: 9px 12px;
 
   border: 1px solid
-    rgba(255, 224, 111, 0.2);
+    rgba(255, 224, 111, 0.16);
 
-  border-radius: 13px;
+  border-radius: 12px;
 
   background:
-    rgba(255, 219, 92, 0.08);
+    rgba(255, 219, 92, 0.055);
 
   color:
-    rgba(255, 255, 255, 0.8);
+    rgba(255, 255, 255, 0.7);
 
-  font-size: 14px;
+  font-size: 12px;
 }
 
-.shop-purchase-price strong {
+.shop-purchase-total {
+  margin-top: 7px;
+
+  background:
+    rgba(255, 219, 92, 0.11);
+}
+
+.shop-purchase-price strong,
+.shop-purchase-total strong {
   color: #ffe27b;
 
-  font-size: 16px;
+  font-size: 15px;
+}
+
+.shop-purchase-total strong {
+  font-size: 18px;
 }
 
 .shop-purchase-balance {
-  margin-top: 8px;
+  margin-top: 7px;
 
   color:
-    rgba(255, 255, 255, 0.52);
+    rgba(255, 255, 255, 0.48);
 
-  font-size: 12px;
+  font-size: 11px;
   text-align: center;
 }
 
 .shop-purchase-message {
-  margin-top: 12px;
+  margin-top: 11px;
   padding: 8px 10px;
 
   border-radius: 10px;
 
-  background:
-    rgba(126, 255, 216, 0.08);
-
-  color: #9affdf;
-
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 800;
   text-align: center;
+}
+
+.shop-purchase-message.error {
+  background:
+    rgba(255, 104, 104, 0.09);
+
+  color: #ffb1b1;
 }
 
 .shop-purchase-actions {
@@ -240,12 +437,14 @@
   grid-template-columns: 1fr 1fr;
   gap: 9px;
 
-  margin-top: 17px;
+  margin-top: 14px;
 }
 
 .shop-purchase-buy,
 .shop-purchase-back {
-  padding: 12px 10px;
+  min-height: 43px;
+
+  padding: 11px 10px;
 
   border: none;
   border-radius: 13px;
@@ -268,10 +467,122 @@
   color: #111822;
 }
 
+.shop-purchase-buy:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
 .shop-purchase-back {
   background:
     rgba(255, 255, 255, 0.09);
 
   color:
     rgba(255, 255, 255, 0.85);
+}
+
+/*
+  УСПЕШНАЯ ПОКУПКА
+*/
+.shop-purchase-success {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  padding-top: 12px;
+
+  text-align: center;
+}
+
+.shop-success-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 65px;
+  height: 65px;
+
+  border: 1px solid
+    rgba(111, 255, 190, 0.35);
+
+  border-radius: 50%;
+
+  background:
+    rgba(67, 227, 150, 0.12);
+
+  box-shadow:
+    0 0 28px
+      rgba(77, 255, 165, 0.16);
+
+  color: #91ffca;
+
+  font-size: 32px;
+  font-weight: 900;
+}
+
+.shop-success-title {
+  margin-top: 13px;
+
+  color: white;
+
+  font-size: 23px;
+  font-weight: 900;
+}
+
+.shop-success-image {
+  width: 130px;
+  height: 145px;
+
+  margin-top: 3px;
+
+  object-fit: contain;
+
+  filter:
+    drop-shadow(
+      0 10px 12px
+      rgba(0, 0, 0, 0.4)
+    );
+}
+
+.shop-success-message {
+  color: #a7ffe3;
+
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.shop-success-hint {
+  max-width: 235px;
+
+  margin-top: 8px;
+
+  color:
+    rgba(255, 255, 255, 0.6);
+
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.shop-success-button {
+  width: 100%;
+
+  margin-top: 18px;
+  padding: 12px;
+
+  border: none;
+  border-radius: 13px;
+
+  background:
+    linear-gradient(
+      135deg,
+      #79edc9,
+      #78a8ff
+    );
+
+  color: #111822;
+
+  font: inherit;
+  font-size: 14px;
+  font-weight: 900;
+
+  cursor: pointer;
 }
