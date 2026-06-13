@@ -1,9 +1,8 @@
 import { useState } from "react";
-const [currentOrder, setCurrentOrder] = usePersistentState(
-  "growapp-club-order",
-  () => createClubOrder()
-);
+
 import ClubDealModal from "./club/ClubDealModal";
+import usePersistentState from "../hooks/usePersistentState";
+
 import { createClubOrder } from "../utils/createClubOrder";
 
 import "./ClubScreen.css";
@@ -17,12 +16,15 @@ function ClubScreen({
 }) {
   const [isDealOpen, setIsDealOpen] = useState(false);
 
-  const [currentOrder, setCurrentOrder] = useState(() =>
-    createClubOrder()
-  );
+  const [currentOrder, setCurrentOrder] =
+    usePersistentState(
+      "growapp-club-order",
+      () => createClubOrder()
+    );
 
   const handleSell = () => {
-    if (!currentOrder || currentOrder.completed) return;
+    if (!currentOrder) return;
+    if (currentOrder.completed) return;
 
     const playerAmount =
       inventory[currentOrder.plantId] || 0;
@@ -30,14 +32,18 @@ function ClubScreen({
     if (playerAmount < currentOrder.amount) return;
 
     const reward =
-      currentOrder.amount * currentOrder.pricePerItem +
+      currentOrder.amount *
+        currentOrder.pricePerItem +
       currentOrder.bonus;
 
     setInventory((previousInventory) => ({
       ...previousInventory,
-      [currentOrder.plantId]:
-        previousInventory[currentOrder.plantId] -
-        currentOrder.amount,
+
+      [currentOrder.plantId]: Math.max(
+        0,
+        (previousInventory[currentOrder.plantId] || 0) -
+          currentOrder.amount
+      ),
     }));
 
     setCoins((previousCoins) => previousCoins + reward);
@@ -59,7 +65,7 @@ function ClubScreen({
       <img
         className="club-npc club-npc-smoker"
         src="/assets/club-characters/club-alien-smoker-01.png"
-        alt="Клубный продавец"
+        alt="Типусиан"
       />
 
       <button
@@ -79,7 +85,8 @@ function ClubScreen({
         </div>
 
         <div className="club-text">
-          Йо, земной фермер. Народ ждёт свежачок.
+          Йо, земной фермер. Вайб ровный,
+          музыка мягкая, народ ждёт свежачок.
           Принёс что-то интересное?
         </div>
 

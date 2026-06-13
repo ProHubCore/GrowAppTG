@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+
 import PlantArea from "./PlantArea";
 import BottomMenu from "./BottomMenu";
 import GrowTimer from "./GrowTimer";
@@ -12,6 +13,8 @@ import FlyingLoot from "./FlyingLoot";
 import DistrictScreen from "./DistrictScreen";
 import ShopScreen from "./ShopScreen";
 import ClubScreen from "./ClubScreen";
+
+import usePersistentState from "../hooks/usePersistentState";
 
 import { pots } from "../data/pots";
 import { plants } from "../data/plants";
@@ -32,19 +35,19 @@ function GameScreen() {
   const [selectedSeed, setSelectedSeed] = useState(null);
 
   const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
-
   const [isInventoryOpen, setIsInventoryOpen] = useState(false);
+
   const [inventory, setInventory] = usePersistentState(
-  "growapp-inventory",
-  {
-    greenTomato: 0,
-  }
-);
+    "growapp-inventory",
+    {
+      greenTomato: 0,
+    }
+  );
 
   const [coins, setCoins] = usePersistentState(
-  "growapp-coins",
-  0
-);
+    "growapp-coins",
+    0
+  );
 
   const [activeScreen, setActiveScreen] = useState("plantation");
   const [flyingLootItems, setFlyingLootItems] = useState([]);
@@ -68,10 +71,16 @@ function GameScreen() {
 
   useEffect(() => {
     const updateScale = () => {
-      const viewportWidth = window.visualViewport?.width || window.innerWidth;
-      const scale = viewportWidth / STAGE_WIDTH;
+      const viewportWidth =
+        window.visualViewport?.width || window.innerWidth;
 
-      setStageScale(scale);
+      const viewportHeight =
+        window.visualViewport?.height || window.innerHeight;
+
+      const widthScale = viewportWidth / STAGE_WIDTH;
+      const heightScale = viewportHeight / STAGE_HEIGHT;
+
+      setStageScale(Math.min(widthScale, heightScale));
     };
 
     updateScale();
@@ -79,57 +88,55 @@ function GameScreen() {
     window.addEventListener("resize", updateScale);
     window.visualViewport?.addEventListener("resize", updateScale);
 
-    const resetGameProgress = () => {
-  localStorage.removeItem("growapp-inventory");
-  localStorage.removeItem("growapp-coins");
-  localStorage.removeItem("growapp-club-order");
-
-  window.location.reload();
-};
-
     return () => {
       window.removeEventListener("resize", updateScale);
-      window.visualViewport?.removeEventListener("resize", updateScale);
+      window.visualViewport?.removeEventListener(
+        "resize",
+        updateScale
+      );
     };
   }, []);
 
   useEffect(() => {
-    if (growStep !== 1 && growStep !== 2) return;
+    if (growStep !== 1 && growStep !== 2) return undefined;
 
     setTimeLeft(GROW_TIME);
 
-    const countdown = setInterval(() => {
-      setTimeLeft((prev) => {
-        if (prev <= 1) {
+    const countdown = window.setInterval(() => {
+      setTimeLeft((previousTime) => {
+        if (previousTime <= 1) {
           return 0;
         }
 
-        return prev - 1;
+        return previousTime - 1;
       });
     }, 1000);
 
-    const growTimeout = setTimeout(() => {
-      setGrowStep((prevStep) => {
-        if (prevStep === 1) {
+    const growTimeout = window.setTimeout(() => {
+      setGrowStep((previousStep) => {
+        if (previousStep === 1) {
           return 2;
         }
 
-        if (prevStep === 2) {
+        if (previousStep === 2) {
           return 3;
         }
 
-        return prevStep;
+        return previousStep;
       });
     }, GROW_TIME * 1000);
 
     return () => {
-      clearInterval(countdown);
-      clearTimeout(growTimeout);
+      window.clearInterval(countdown);
+      window.clearTimeout(growTimeout);
     };
   }, [growStep]);
 
   const changePot = () => {
-    setCurrentPotIndex((prev) => (prev + 1) % pots.length);
+    setCurrentPotIndex(
+      (previousIndex) =>
+        (previousIndex + 1) % pots.length
+    );
   };
 
   const openSeedModal = () => {
@@ -158,24 +165,28 @@ function GameScreen() {
 
     const reward = Math.floor(Math.random() * 3) + 1;
 
-    const newLootItems = Array.from({ length: reward }, (_, index) => ({
-      id: `${Date.now()}-${index}`,
-      startX: 190 + index * 12,
-      startY: 470 - index * 8,
-      delay: index * 120,
-    }));
+    const newLootItems = Array.from(
+      { length: reward },
+      (_, index) => ({
+        id: `${Date.now()}-${index}`,
+        startX: 190 + index * 12,
+        startY: 470 - index * 8,
+        delay: index * 120,
+      })
+    );
 
     setFlyingLootItems(newLootItems);
 
-    setInventory((prev) => ({
-      ...prev,
-      greenTomato: prev.greenTomato + reward,
+    setInventory((previousInventory) => ({
+      ...previousInventory,
+      greenTomato:
+        (previousInventory.greenTomato || 0) + reward,
     }));
 
     setGrowStep(0);
     setTimeLeft(GROW_TIME);
 
-    setTimeout(() => {
+    window.setTimeout(() => {
       setFlyingLootItems([]);
     }, 1100);
   };
@@ -207,9 +218,12 @@ function GameScreen() {
   const deleteInventoryItem = (itemId, count) => {
     if (itemId !== "greenTomato") return;
 
-    setInventory((prev) => ({
-      ...prev,
-      greenTomato: Math.max(0, prev.greenTomato - count),
+    setInventory((previousInventory) => ({
+      ...previousInventory,
+      greenTomato: Math.max(
+        0,
+        (previousInventory.greenTomato || 0) - count
+      ),
     }));
   };
 
@@ -237,11 +251,19 @@ function GameScreen() {
           <>
             <div className="background" />
 
-            <div className="top-wallet">🪙 {coins}</div>
+            <div className="top-wallet">
+              🪙 {coins}
+            </div>
 
-            <GrowTimer growStep={growStep} timeLeft={timeLeft} />
+            <GrowTimer
+              growStep={growStep}
+              timeLeft={timeLeft}
+            />
 
-            <ShovelTool disabled={growStep === 0} onClick={openRemoveModal} />
+            <ShovelTool
+              disabled={growStep === 0}
+              onClick={openRemoveModal}
+            />
 
             <BackpackTool onClick={openInventory} />
 
@@ -249,7 +271,10 @@ function GameScreen() {
 
             <div className="game-content">
               <div className="table-scene">
-                <SeedBasket onClick={openSeedModal} disabled={growStep !== 0} />
+                <SeedBasket
+                  onClick={openSeedModal}
+                  disabled={growStep !== 0}
+                />
 
                 <PlantArea
                   pot={currentPot}
@@ -285,7 +310,10 @@ function GameScreen() {
         )}
 
         {activeScreen === "district" && (
-          <DistrictScreen onOpenClub={openClub} onOpenShop={openShop} />
+          <DistrictScreen
+            onOpenClub={openClub}
+            onOpenShop={openShop}
+          />
         )}
 
         {activeScreen === "shop" && (
@@ -293,23 +321,28 @@ function GameScreen() {
         )}
 
         {activeScreen === "club" && (
-  <ClubScreen
-    inventory={inventory}
-    setInventory={setInventory}
-    coins={coins}
-    setCoins={setCoins}
-    onGoBack={goBackToDistrict}
-  />
-)}
-
-        {activeScreen !== "shop" && activeScreen !== "club" && (
-          <BottomMenu
-            activeScreen={activeScreen}
-            onGoPlantation={() => setActiveScreen("plantation")}
-            onGoDistrict={() => setActiveScreen("district")}
-            onChangePot={changePot}
+          <ClubScreen
+            inventory={inventory}
+            setInventory={setInventory}
+            coins={coins}
+            setCoins={setCoins}
+            onGoBack={goBackToDistrict}
           />
         )}
+
+        {activeScreen !== "shop" &&
+          activeScreen !== "club" && (
+            <BottomMenu
+              activeScreen={activeScreen}
+              onGoPlantation={() =>
+                setActiveScreen("plantation")
+              }
+              onGoDistrict={() =>
+                setActiveScreen("district")
+              }
+              onChangePot={changePot}
+            />
+          )}
       </div>
     </div>
   );
