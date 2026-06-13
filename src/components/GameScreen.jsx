@@ -1,4 +1,7 @@
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+} from "react";
 
 import PlantArea from "./PlantArea";
 import BottomMenu from "./BottomMenu";
@@ -16,11 +19,11 @@ import ShopModal from "./ShopModal";
 import usePersistentState from "../hooks/usePersistentState";
 
 import { pots } from "../data/pots";
-import { plants } from "../data/plants";
+import { plantsBySeed } from "../data/plants";
 import { seeds } from "../data/seeds";
 import { shopItems } from "../data/shopItems";
 
-const GROW_TIME = 5;
+const DEFAULT_GROW_TIME = 5;
 
 const STAGE_WIDTH = 390;
 const STAGE_HEIGHT = 844;
@@ -28,28 +31,49 @@ const STAGE_HEIGHT = 844;
 function createPotState(index) {
   return {
     unlocked: index === 0,
+
     growStep: 0,
-    timeLeft: GROW_TIME,
+
+    /*
+      Какое растение сейчас посажено.
+    */
     selectedSeedId: null,
+
+    /*
+      Индивидуальное время стадии.
+    */
+    growTime: DEFAULT_GROW_TIME,
+
+    timeLeft: DEFAULT_GROW_TIME,
+
     nextGrowthAt: null,
   };
 }
 
 function GameScreen() {
-  const [currentPotIndex, setCurrentPotIndex] =
-    useState(0);
+  const [
+    currentPotIndex,
+    setCurrentPotIndex,
+  ] = useState(0);
 
-  const [potStates, setPotStates] = useState(() =>
+  const [
+    potStates,
+    setPotStates,
+  ] = useState(() =>
     pots.map((_, index) =>
       createPotState(index)
     )
   );
 
-  const [isSeedModalOpen, setIsSeedModalOpen] =
-    useState(false);
+  const [
+    isSeedModalOpen,
+    setIsSeedModalOpen,
+  ] = useState(false);
 
-  const [selectedSeed, setSelectedSeed] =
-    useState(null);
+  const [
+    selectedSeed,
+    setSelectedSeed,
+  ] = useState(null);
 
   const [
     isRemoveModalOpen,
@@ -61,22 +85,21 @@ function GameScreen() {
     setIsInventoryOpen,
   ] = useState(false);
 
-  /*
-    Показывается ли товар на полке магазина.
-    Это НЕ сохраняется после перезагрузки.
-  */
   const [
     isShopProductVisible,
     setIsShopProductVisible,
   ] = useState(false);
 
-  const [inventory, setInventory] =
-    usePersistentState(
-      "growapp-inventory",
-      {
-        greenTomato: 0,
-      }
-    );
+  const [
+    inventory,
+    setInventory,
+  ] = usePersistentState(
+    "growapp-inventory",
+    {
+      greenTomato: 0,
+      psychomor: 0,
+    }
+  );
 
   const [coins, setCoins] =
     usePersistentState(
@@ -84,18 +107,23 @@ function GameScreen() {
       100
     );
 
-  const [activeScreen, setActiveScreen] =
-    useState("plantation");
+  const [
+    activeScreen,
+    setActiveScreen,
+  ] = useState("plantation");
 
   const [
     flyingLootItems,
     setFlyingLootItems,
   ] = useState([]);
 
-  const [stageScale, setStageScale] =
-    useState(1);
+  const [
+    stageScale,
+    setStageScale,
+  ] = useState(1);
 
-  const currentPot = pots[currentPotIndex];
+  const currentPot =
+    pots[currentPotIndex];
 
   const currentPotState =
     potStates[currentPotIndex] ??
@@ -107,6 +135,9 @@ function GameScreen() {
   const timeLeft =
     currentPotState.timeLeft;
 
+  const selectedSeedId =
+    currentPotState.selectedSeedId;
+
   const isCurrentPotUnlocked =
     currentPotState.unlocked;
 
@@ -117,33 +148,27 @@ function GameScreen() {
     ) ?? null;
 
   /*
-    Психомор постоянно показывается
+    Семена уже находятся в seeds.js,
+    поэтому обе культуры видны
     в корзинке плантации.
-
-    Его покупка пока ничего
-    не разблокирует и не запоминается.
   */
-  const availableSeeds =
-    psychomorItem?.seedData
-      ? [
-          ...seeds,
-          psychomorItem.seedData,
-        ]
-      : seeds;
+  const availableSeeds = seeds;
 
-  let currentPlant = null;
+  /*
+    Выбираем правильный комплект стадий
+    по посаженному семени.
+  */
+  const currentPlantStages =
+    plantsBySeed[selectedSeedId] ??
+    null;
 
-  if (growStep === 1) {
-    currentPlant = plants[0];
-  }
-
-  if (growStep === 2) {
-    currentPlant = plants[1];
-  }
-
-  if (growStep === 3) {
-    currentPlant = plants[2];
-  }
+  const currentPlant =
+    growStep > 0 &&
+    currentPlantStages
+      ? currentPlantStages[
+          growStep - 1
+        ] ?? null
+      : null;
 
   useEffect(() => {
     const updateScale = () => {
@@ -156,10 +181,12 @@ function GameScreen() {
         window.innerHeight;
 
       const widthScale =
-        viewportWidth / STAGE_WIDTH;
+        viewportWidth /
+        STAGE_WIDTH;
 
       const heightScale =
-        viewportHeight / STAGE_HEIGHT;
+        viewportHeight /
+        STAGE_HEIGHT;
 
       setStageScale(
         Math.min(
@@ -194,6 +221,15 @@ function GameScreen() {
     };
   }, []);
 
+  /*
+    Общий таймер для всех ведер.
+
+    Зелёный помидор:
+    5 секунд на стадию.
+
+    Психомор:
+    3 секунды на стадию.
+  */
   useEffect(() => {
     const interval =
       window.setInterval(() => {
@@ -218,6 +254,10 @@ function GameScreen() {
                   return potState;
                 }
 
+                const growTime =
+                  potState.growTime ||
+                  DEFAULT_GROW_TIME;
+
                 if (
                   !potState.nextGrowthAt
                 ) {
@@ -225,12 +265,11 @@ function GameScreen() {
                     ...potState,
 
                     timeLeft:
-                      GROW_TIME,
+                      growTime,
 
                     nextGrowthAt:
                       now +
-                      GROW_TIME *
-                        1000,
+                      growTime * 1000,
                   };
                 }
 
@@ -244,6 +283,7 @@ function GameScreen() {
                   const secondsLeft =
                     Math.max(
                       0,
+
                       Math.ceil(
                         millisecondsLeft /
                           1000
@@ -259,6 +299,7 @@ function GameScreen() {
 
                   return {
                     ...potState,
+
                     timeLeft:
                       secondsLeft,
                   };
@@ -274,12 +315,11 @@ function GameScreen() {
                     growStep: 2,
 
                     timeLeft:
-                      GROW_TIME,
+                      growTime,
 
                     nextGrowthAt:
                       now +
-                      GROW_TIME *
-                        1000,
+                      growTime * 1000,
                   };
                 }
 
@@ -349,10 +389,11 @@ function GameScreen() {
 
     setCurrentPotIndex(
       (previousIndex) =>
-        (previousIndex -
+        (
+          previousIndex -
           1 +
-          pots.length) %
-        pots.length
+          pots.length
+        ) % pots.length
     );
   };
 
@@ -362,9 +403,13 @@ function GameScreen() {
 
       growStep: 0,
 
-      timeLeft: GROW_TIME,
-
       selectedSeedId: null,
+
+      growTime:
+        DEFAULT_GROW_TIME,
+
+      timeLeft:
+        DEFAULT_GROW_TIME,
 
       nextGrowthAt: null,
     });
@@ -405,40 +450,25 @@ function GameScreen() {
       return;
     }
 
-    const selectedSeedId =
-      selectedSeed.id ??
-      selectedSeed.key ??
-      selectedSeed.name ??
-      null;
+    const seedId =
+      selectedSeed.id;
 
-    /*
-      Пока Психомор работает
-      только как тестовая кнопка.
-    */
-    if (
-      selectedSeedId ===
-      "psychomor"
-    ) {
-      window.alert(
-        "Психомор посажен"
-      );
-
-      setSelectedSeed(null);
-      setIsSeedModalOpen(false);
-
-      return;
-    }
+    const growTime =
+      selectedSeed.growTime ||
+      DEFAULT_GROW_TIME;
 
     updateCurrentPotState({
       growStep: 1,
 
-      timeLeft: GROW_TIME,
+      selectedSeedId: seedId,
 
-      selectedSeedId,
+      growTime,
+
+      timeLeft: growTime,
 
       nextGrowthAt:
         Date.now() +
-        GROW_TIME * 1000,
+        growTime * 1000,
     });
 
     setSelectedSeed(null);
@@ -456,14 +486,26 @@ function GameScreen() {
       return;
     }
 
+    if (!selectedSeedId) {
+      return;
+    }
+
     const reward =
       Math.floor(
         Math.random() * 3
       ) + 1;
 
+    const harvestItemId =
+      selectedSeedId ===
+      "psychomor"
+        ? "psychomor"
+        : "greenTomato";
+
     const newLootItems =
       Array.from(
-        { length: reward },
+        {
+          length: reward,
+        },
 
         (_, index) => ({
           id:
@@ -479,6 +521,9 @@ function GameScreen() {
 
           delay:
             index * 120,
+
+          itemId:
+            harvestItemId,
         })
       );
 
@@ -490,10 +535,11 @@ function GameScreen() {
       (previousInventory) => ({
         ...previousInventory,
 
-        greenTomato:
+        [harvestItemId]:
           (
-            previousInventory.greenTomato ||
-            0
+            previousInventory[
+              harvestItemId
+            ] || 0
           ) + reward,
       })
     );
@@ -501,9 +547,13 @@ function GameScreen() {
     updateCurrentPotState({
       growStep: 0,
 
-      timeLeft: GROW_TIME,
-
       selectedSeedId: null,
+
+      growTime:
+        DEFAULT_GROW_TIME,
+
+      timeLeft:
+        DEFAULT_GROW_TIME,
 
       nextGrowthAt: null,
     });
@@ -545,9 +595,13 @@ function GameScreen() {
     updateCurrentPotState({
       growStep: 0,
 
-      timeLeft: GROW_TIME,
-
       selectedSeedId: null,
+
+      growTime:
+        DEFAULT_GROW_TIME,
+
+      timeLeft:
+        DEFAULT_GROW_TIME,
 
       nextGrowthAt: null,
     });
@@ -568,7 +622,10 @@ function GameScreen() {
     count
   ) => {
     if (
-      itemId !== "greenTomato"
+      itemId !==
+        "greenTomato" &&
+      itemId !==
+        "psychomor"
     ) {
       return;
     }
@@ -577,12 +634,13 @@ function GameScreen() {
       (previousInventory) => ({
         ...previousInventory,
 
-        greenTomato: Math.max(
+        [itemId]: Math.max(
           0,
 
           (
-            previousInventory.greenTomato ||
-            0
+            previousInventory[
+              itemId
+            ] || 0
           ) - count
         ),
       })
@@ -604,22 +662,16 @@ function GameScreen() {
     setActiveScreen("district");
   };
 
-  /*
-    Эту функцию должна вызвать
-    твоя существующая кнопка:
-
-    "Давай взглянем, братуха"
-  */
-  const showPsychomorProduct = () => {
-    setIsShopProductVisible(true);
-  };
+  const showPsychomorProduct =
+    () => {
+      setIsShopProductVisible(true);
+    };
 
   /*
-    Покупку можно повторять
+    Пока покупку можно повторять
     сколько угодно раз.
 
-    Ничего не запоминается,
-    только списываются монеты.
+    Она просто списывает 60 монет.
   */
   const buyShopItem = (item) => {
     if (!item) {
@@ -801,13 +853,8 @@ function GameScreen() {
         {activeScreen ===
           "district" && (
           <DistrictScreen
-            onOpenClub={
-              openClub
-            }
-
-            onOpenShop={
-              openShop
-            }
+            onOpenClub={openClub}
+            onOpenShop={openShop}
           />
         )}
 
@@ -819,11 +866,6 @@ function GameScreen() {
                 goBackToDistrict
               }
 
-              /*
-                Эту функцию нужно вызвать
-                существующей кнопкой
-                "Давай взглянем, братуха".
-              */
               onShowPsychomor={
                 showPsychomorProduct
               }
@@ -842,12 +884,6 @@ function GameScreen() {
 
               onBuy={
                 buyShopItem
-              }
-
-              onClose={() =>
-                setIsShopProductVisible(
-                  false
-                )
               }
             />
           </>
