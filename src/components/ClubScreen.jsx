@@ -315,6 +315,12 @@ function ClubScreen({ inventory, setInventory, coins, setCoins, onGoBack }) {
     } catch {
       // В приватном режиме браузер может запретить localStorage.
     }
+
+    window.dispatchEvent(
+      new CustomEvent("growapp-club-reputation-change", {
+        detail: { reputation: safeValue },
+      }),
+    );
   };
 
   const openHarvest = () => {
