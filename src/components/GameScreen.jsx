@@ -34,13 +34,17 @@ function createPotState(index) {
 
     growStep: 0,
 
+    /*
+      Какое растение сейчас посажено.
+    */
     selectedSeedId: null,
 
-    growTime:
-      DEFAULT_GROW_TIME,
+    /*
+      Индивидуальное время стадии.
+    */
+    growTime: DEFAULT_GROW_TIME,
 
-    timeLeft:
-      DEFAULT_GROW_TIME,
+    timeLeft: DEFAULT_GROW_TIME,
 
     nextGrowthAt: null,
   };
@@ -86,9 +90,6 @@ function GameScreen() {
     setIsShopProductVisible,
   ] = useState(false);
 
-  /*
-    Собранные плоды.
-  */
   const [
     inventory,
     setInventory,
@@ -97,32 +98,6 @@ function GameScreen() {
     {
       greenTomato: 0,
       psychomor: 0,
-    }
-  );
-
-  /*
-    Купленные семена игрока.
-  */
-  const [
-    seedInventory,
-    setSeedInventory,
-  ] = usePersistentState(
-    "growapp-seed-inventory",
-    {
-      psychomor: 0,
-    }
-  );
-
-  /*
-    Остаток семян у Зорика.
-  */
-  const [
-    shopStock,
-    setShopStock,
-  ] = usePersistentState(
-    "growapp-shop-stock",
-    {
-      psychomor: 5,
     }
   );
 
@@ -152,9 +127,7 @@ function GameScreen() {
 
   const currentPotState =
     potStates[currentPotIndex] ??
-    createPotState(
-      currentPotIndex
-    );
+    createPotState(currentPotIndex);
 
   const growStep =
     currentPotState.growStep;
@@ -162,7 +135,7 @@ function GameScreen() {
   const timeLeft =
     currentPotState.timeLeft;
 
-  const plantedSeedId =
+  const selectedSeedId =
     currentPotState.selectedSeedId;
 
   const isCurrentPotUnlocked =
@@ -174,10 +147,20 @@ function GameScreen() {
         item.id === "psychomor"
     ) ?? null;
 
+  /*
+    Семена уже находятся в seeds.js,
+    поэтому обе культуры видны
+    в корзинке плантации.
+  */
+  const availableSeeds = seeds;
+
+  /*
+    Выбираем правильный комплект стадий
+    по посаженному семени.
+  */
   const currentPlantStages =
-    plantsBySeed[
-      plantedSeedId
-    ] ?? null;
+    plantsBySeed[selectedSeedId] ??
+    null;
 
   const currentPlant =
     growStep > 0 &&
@@ -190,13 +173,11 @@ function GameScreen() {
   useEffect(() => {
     const updateScale = () => {
       const viewportWidth =
-        window.visualViewport
-          ?.width ||
+        window.visualViewport?.width ||
         window.innerWidth;
 
       const viewportHeight =
-        window.visualViewport
-          ?.height ||
+        window.visualViewport?.height ||
         window.innerHeight;
 
       const widthScale =
@@ -240,6 +221,15 @@ function GameScreen() {
     };
   }, []);
 
+  /*
+    Общий таймер для всех ведер.
+
+    Зелёный помидор:
+    5 секунд на стадию.
+
+    Психомор:
+    3 секунды на стадию.
+  */
   useEffect(() => {
     const interval =
       window.setInterval(() => {
@@ -279,8 +269,7 @@ function GameScreen() {
 
                     nextGrowthAt:
                       now +
-                      growTime *
-                        1000,
+                      growTime * 1000,
                   };
                 }
 
@@ -289,8 +278,7 @@ function GameScreen() {
                   now;
 
                 if (
-                  millisecondsLeft >
-                  0
+                  millisecondsLeft > 0
                 ) {
                   const secondsLeft =
                     Math.max(
@@ -331,8 +319,7 @@ function GameScreen() {
 
                     nextGrowthAt:
                       now +
-                      growTime *
-                        1000,
+                      growTime * 1000,
                   };
                 }
 
@@ -363,10 +350,7 @@ function GameScreen() {
     setPotStates(
       (previousStates) =>
         previousStates.map(
-          (
-            potState,
-            index
-          ) => {
+          (potState, index) => {
             if (
               index !==
               currentPotIndex
@@ -469,41 +453,6 @@ function GameScreen() {
     const seedId =
       selectedSeed.id;
 
-    /*
-      Для небесконечного семени
-      проверяем количество.
-    */
-    if (!selectedSeed.infinite) {
-      const currentAmount =
-        seedInventory[
-          seedId
-        ] || 0;
-
-      if (currentAmount <= 0) {
-        return;
-      }
-
-      /*
-        Списываем одно семя
-        при посадке.
-      */
-      setSeedInventory(
-        (previousInventory) => ({
-          ...previousInventory,
-
-          [seedId]: Math.max(
-            0,
-
-            (
-              previousInventory[
-                seedId
-              ] || 0
-            ) - 1
-          ),
-        })
-      );
-    }
-
     const growTime =
       selectedSeed.growTime ||
       DEFAULT_GROW_TIME;
@@ -537,7 +486,7 @@ function GameScreen() {
       return;
     }
 
-    if (!plantedSeedId) {
+    if (!selectedSeedId) {
       return;
     }
 
@@ -547,7 +496,7 @@ function GameScreen() {
       ) + 1;
 
     const harvestItemId =
-      plantedSeedId ===
+      selectedSeedId ===
       "psychomor"
         ? "psychomor"
         : "greenTomato";
@@ -719,63 +668,23 @@ function GameScreen() {
     };
 
   /*
-    Покупка выбранного количества.
+    Пока покупку можно повторять
+    сколько угодно раз.
+
+    Она просто списывает 60 монет.
   */
-  const buyShopItem = (
-    item,
-    amount
-  ) => {
+  const buyShopItem = (item) => {
     if (!item) {
       return {
         success: false,
-
         message:
           "Товар не найден.",
       };
     }
 
-    const requestedAmount =
-      Math.floor(
-        Number(amount)
-      );
-
-    if (
-      !Number.isFinite(
-        requestedAmount
-      ) ||
-      requestedAmount <= 0
-    ) {
+    if (coins < item.price) {
       return {
         success: false,
-
-        message:
-          "Выбери количество семян.",
-      };
-    }
-
-    const availableStock =
-      shopStock[item.id] || 0;
-
-    if (
-      requestedAmount >
-      availableStock
-    ) {
-      return {
-        success: false,
-
-        message:
-          "У Зорика нет столько семян.",
-      };
-    }
-
-    const totalPrice =
-      requestedAmount *
-      item.pricePerSeed;
-
-    if (coins < totalPrice) {
-      return {
-        success: false,
-
         message:
           "Недостаточно монет.",
       };
@@ -784,45 +693,13 @@ function GameScreen() {
     setCoins(
       (previousCoins) =>
         previousCoins -
-        totalPrice
-    );
-
-    setShopStock(
-      (previousStock) => ({
-        ...previousStock,
-
-        [item.id]: Math.max(
-          0,
-
-          (
-            previousStock[
-              item.id
-            ] || 0
-          ) -
-            requestedAmount
-        ),
-      })
-    );
-
-    setSeedInventory(
-      (previousInventory) => ({
-        ...previousInventory,
-
-        [item.id]:
-          (
-            previousInventory[
-              item.id
-            ] || 0
-          ) +
-          requestedAmount,
-      })
+        item.price
     );
 
     return {
       success: true,
-
       message:
-        `Вы купили семена Психомора: ${requestedAmount} шт.`,
+        "Психомор куплен!",
     };
   };
 
@@ -917,10 +794,8 @@ function GameScreen() {
                 isCurrentPotUnlocked
               }
 
-              seeds={seeds}
-
-              seedInventory={
-                seedInventory
+              seeds={
+                availableSeeds
               }
 
               selectedSeed={
@@ -979,7 +854,6 @@ function GameScreen() {
           "district" && (
           <DistrictScreen
             onOpenClub={openClub}
-
             onOpenShop={openShop}
           />
         )}
@@ -1007,16 +881,6 @@ function GameScreen() {
               }
 
               coins={coins}
-
-              stock={
-                shopStock
-                  .psychomor || 0
-              }
-
-              playerSeedCount={
-                seedInventory
-                  .psychomor || 0
-              }
 
               onBuy={
                 buyShopItem

@@ -1,38 +1,22 @@
 export const seeds = [
   {
     id: "greenTomato",
-
-    name: "Зелёный томат",
-
+    name: "Зелёный помидор",
     description:
-      "Бесплатные базовые семена. Их запас никогда не заканчивается.",
-
+      "Странное растение с зелёными плодами. Созревает быстро.",
     icon: "🌱",
-
-    infinite: true,
-
     growTime: 5,
-
-    harvestItemId:
-      "greenTomato",
+    harvestItemId: "greenTomato",
   },
 
   {
     id: "psychomor",
-
     name: "Психомор",
-
     description:
-      "Редкие семена инопланетного светящегося растения.",
-
+      "Редкое инопланетное растение. Светится, цветёт и даёт необычные грибные плоды.",
     image:
       "/assets/seeds/psychomor-seeds.png",
-
-    infinite: false,
-
     growTime: 3,
-
-    harvestItemId:
-      "psychomor",
+    harvestItemId: "psychomor",
   },
 ];
