@@ -28,22 +28,27 @@
 .plant-button-image {
   position: absolute;
   z-index: 6;
-
   padding: 0;
+  margin: 0;
   border: none;
   background: transparent;
-
   pointer-events: none;
   transform-origin: bottom center;
+
+  overflow: visible;
+  appearance: none;
+  -webkit-appearance: none;
+  line-height: 0;
 }
+
 
 .plant-button-image.collectable {
   pointer-events: auto;
   cursor: pointer;
 }
 
-.plant-button-image.collectable:active .plant {
-  transform: scale(0.96);
+.plant-button-image.collectable:active {
+  transform: translateX(-50%) scale(0.96) !important;
 }
 
 .plant {
@@ -57,10 +62,14 @@
   animation: plantIdle 2.8s ease-in-out infinite;
 }
 
+.plant-button-image.collectable {
+  pointer-events: auto;
+  cursor: pointer;
+  animation: plantReadyPulse 1.45s ease-in-out infinite;
+}
+
 .plant-button-image.collectable .plant {
-  animation:
-    plantReadyPulse 1.45s ease-in-out infinite,
-    plantGlow 2s ease-in-out infinite;
+  animation: plantGlow 2s ease-in-out infinite;
 }
 
 /* обычное дыхание растения, без ходьбы в стороны */
@@ -81,15 +90,15 @@
 /* когда растение готово к сбору */
 @keyframes plantReadyPulse {
   0% {
-    transform: scale(1);
+    transform: translateX(-50%) scale(1);
   }
 
   50% {
-    transform: scale(1.025);
+    transform: translateX(-50%) scale(1.025);
   }
 
   100% {
-    transform: scale(1);
+    transform: translateX(-50%) scale(1);
   }
 }
 
@@ -108,4 +117,8 @@
   100% {
     filter: drop-shadow(0 0 4px rgba(145, 255, 105, 0.35));
   }
+}
+
+.plant-area {
+  overflow: visible;
 }
