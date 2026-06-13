@@ -14,6 +14,8 @@ const SLIDE_IN_TIME = 240;
 function PlantArea({
   pot,
   plant,
+  unlockPrice,
+  isSlotAvailable,
   isUnlocked,
   isEmpty,
   canCollect,
@@ -34,7 +36,9 @@ function PlantArea({
     useState(false);
 
   const changePot = (direction) => {
-    if (isChanging) return;
+    if (isChanging) {
+      return;
+    }
 
     const isNext = direction === "next";
 
@@ -43,7 +47,7 @@ function PlantArea({
     setAnimationClass(
       isNext
         ? "plantation-slide-out-left"
-        : "plantation-slide-out-right"
+        : "plantation-slide-out-right",
     );
 
     window.setTimeout(() => {
@@ -56,7 +60,7 @@ function PlantArea({
       setAnimationClass(
         isNext
           ? "plantation-slide-in-right"
-          : "plantation-slide-in-left"
+          : "plantation-slide-in-left",
       );
 
       window.setTimeout(() => {
@@ -85,12 +89,10 @@ function PlantArea({
     const touch = event.changedTouches[0];
 
     const differenceX =
-      touch.clientX -
-      touchStartX.current;
+      touch.clientX - touchStartX.current;
 
     const differenceY =
-      touch.clientY -
-      touchStartY.current;
+      touch.clientY - touchStartY.current;
 
     touchStartX.current = null;
     touchStartY.current = null;
@@ -109,11 +111,9 @@ function PlantArea({
       return;
     }
 
-    if (differenceX < 0) {
-      changePot("next");
-    } else {
-      changePot("previous");
-    }
+    changePot(
+      differenceX < 0 ? "next" : "previous",
+    );
   };
 
   const handleTouchCancel = () => {
@@ -133,14 +133,11 @@ function PlantArea({
       onTouchCancel={handleTouchCancel}
     >
       <button
-        type="button"
         className="plantation-arrow plantation-arrow-left"
+        type="button"
         aria-label="Предыдущее ведро"
         disabled={isChanging}
-        onTouchStart={stopSwipeStart}
-        onClick={() =>
-          changePot("previous")
-        }
+        onClick={() => changePot("previous")}
       >
         ‹
       </button>
@@ -151,6 +148,8 @@ function PlantArea({
         {isUnlocked ? (
           <>
             <div className="plant-area">
+              <Pot pot={pot} />
+
               {plant && (
                 <Plant
                   plant={plant}
@@ -158,23 +157,23 @@ function PlantArea({
                   onCollect={onCollect}
                 />
               )}
-
-              <Pot pot={pot} />
             </div>
 
             <div
               className="plantation-seed-basket"
               onTouchStart={stopSwipeStart}
+              onTouchEnd={stopSwipeStart}
             >
               <SeedBasket
-                onClick={onSeedClick}
                 disabled={!isEmpty}
+                onClick={onSeedClick}
               />
             </div>
 
             <div
               className="plantation-shovel-tool"
               onTouchStart={stopSwipeStart}
+              onTouchEnd={stopSwipeStart}
             >
               <ShovelTool
                 disabled={isEmpty}
@@ -184,31 +183,51 @@ function PlantArea({
           </>
         ) : (
           <button
+            className={`add-pot-button${
+              isSlotAvailable
+                ? ""
+                : " unavailable"
+            }`}
             type="button"
-            className="add-pot-button"
             onTouchStart={stopSwipeStart}
+            onTouchEnd={stopSwipeStart}
             onClick={onUnlock}
           >
             <span className="add-pot-plus">
               +
             </span>
 
-            <span className="add-pot-label">
-              Добавить ведро
-            </span>
+            {isSlotAvailable ? (
+              <>
+                <span className="add-pot-label">
+                  Добавить ведро
+                </span>
+
+                <span className="add-pot-price">
+                  {unlockPrice} монет
+                </span>
+              </>
+            ) : (
+              <>
+                <span className="add-pot-label">
+                  Новое место
+                </span>
+
+                <span className="add-pot-price">
+                  Пока что недоступно
+                </span>
+              </>
+            )}
           </button>
         )}
       </div>
 
       <button
-        type="button"
         className="plantation-arrow plantation-arrow-right"
+        type="button"
         aria-label="Следующее ведро"
         disabled={isChanging}
-        onTouchStart={stopSwipeStart}
-        onClick={() =>
-          changePot("next")
-        }
+        onClick={() => changePot("next")}
       >
         ›
       </button>

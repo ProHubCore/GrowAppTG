@@ -14,4 +14,9 @@ export const pots = [
     name: "Ведро 3",
     image: "/assets/pots/bucket-1.png",
   },
+  {
+    id: 4,
+    name: "Ведро 4",
+    image: "/assets/pots/bucket-1.png",
+  },
 ];

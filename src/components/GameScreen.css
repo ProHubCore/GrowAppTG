@@ -5,12 +5,11 @@
   width: 100vw;
   height: 100dvh;
 
-  overflow: hidden;
-
   display: flex;
-  justify-content: center;
   align-items: flex-start;
+  justify-content: center;
 
+  overflow: hidden;
   background: #16100c;
 }
 
@@ -21,7 +20,6 @@
   height: 844px;
 
   overflow: hidden;
-
   transform-origin: top center;
 
   background: #16100c;
@@ -30,13 +28,19 @@
 .background {
   position: absolute;
   inset: 0;
+  z-index: 1;
 
-  background-image: url("/assets/plantation-bg.png");
+  width: 100%;
+  height: 100%;
+
+  background-image:
+    url("/assets/backgrounds/main-bg.png");
+
   background-size: 100% 100%;
   background-position: center;
   background-repeat: no-repeat;
 
-  z-index: 1;
+  pointer-events: none;
 }
 
 .game-content {
@@ -56,27 +60,124 @@
   width: 360px;
   height: 360px;
 
+  overflow: visible;
   pointer-events: none;
 }
 
 .top-wallet {
   position: absolute;
+
   top: 18px;
   right: 18px;
   z-index: 50;
 
   padding: 8px 14px;
 
-  border-radius: 999px;
-  border: 2px solid rgba(255, 226, 155, 0.6);
+  border:
+    2px solid
+    rgba(255, 226, 155, 0.6);
 
-  background: rgba(47, 31, 20, 0.82);
+  border-radius: 999px;
+
+  background:
+    rgba(47, 31, 20, 0.82);
+
   color: #fff1cf;
 
   font-size: 16px;
   font-weight: 900;
 
-  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.28);
+  box-shadow:
+    0 8px 18px
+    rgba(0, 0, 0, 0.28);
+
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+/* Точки переключения между ведрами */
+
+.plantation-pagination {
+  position: absolute;
+
+  left: 50%;
+  bottom: 120px;
+  z-index: 48;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+  padding: 7px 11px;
+
+  transform: translateX(-50%);
+
+  border:
+    1px solid
+    rgba(222, 255, 241, 0.14);
+
+  border-radius: 999px;
+
+  background:
+    rgba(28, 24, 20, 0.46);
+
+  box-shadow:
+    0 6px 18px
+    rgba(0, 0, 0, 0.2);
+
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+
+  pointer-events: auto;
+}
+
+.plantation-pagination-dot {
+  width: 7px;
+  height: 7px;
+
+  padding: 0;
+
+  border: none;
+  border-radius: 50%;
+
+  background:
+    rgba(226, 236, 230, 0.28);
+
+  box-shadow: none;
+
+  cursor: pointer;
+
+  appearance: none;
+  -webkit-appearance: none;
+
+  transition:
+    width 180ms ease,
+    background 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.plantation-pagination-dot.unlocked {
+  background:
+    rgba(209, 255, 230, 0.52);
+}
+
+.plantation-pagination-dot.active {
+  width: 22px;
+
+  border-radius: 999px;
+
+  background:
+    rgba(136, 255, 195, 0.94);
+
+  box-shadow:
+    0 0 10px
+    rgba(99, 255, 181, 0.55);
+}
+
+.plantation-pagination-dot:active {
+  transform: scale(0.88);
 }
 
 .flying-loot-layer {
@@ -99,22 +200,33 @@
 
   font-size: 28px;
 
-  animation: flyToBackpack 0.95s ease-in forwards;
+  animation:
+    flyToBackpack
+    0.95s ease-in forwards;
 }
 
 @keyframes flyToBackpack {
   0% {
     opacity: 0;
-    transform: translate(0, 0) scale(0.7);
+
+    transform:
+      translate(0, 0)
+      scale(0.7);
   }
 
   15% {
     opacity: 1;
-    transform: translate(0, -18px) scale(1.15);
+
+    transform:
+      translate(0, -18px)
+      scale(1.15);
   }
 
   100% {
     opacity: 0;
-    transform: translate(145px, -265px) scale(0.3);
+
+    transform:
+      translate(145px, -265px)
+      scale(0.3);
   }
 }
