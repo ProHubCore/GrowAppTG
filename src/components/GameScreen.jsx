@@ -14,8 +14,8 @@ import ClubScreen from "./ClubScreen";
 import ShopModal from "./ShopModal";
 import ActionModal from "./ActionModal";
 import TestResetButton from "./TestResetButton";
-
 import usePersistentState from "../hooks/usePersistentState";
+import usePotGrowth from "../hooks/usePotGrowth";
 
 import { pots } from "../data/pots";
 import { plantationSlots } from "../data/plantationSlots";
@@ -125,6 +125,8 @@ function GameScreen() {
   const [isResetModalOpen, setIsResetModalOpen] =
     useState(false);
 
+  usePotGrowth(setPotStates, DEFAULT_GROW_TIME);
+
   useEffect(() => {
     setPotStates((previousStates) =>
       pots.map((_, index) => {
@@ -179,76 +181,6 @@ function GameScreen() {
     };
   }, []);
 
-  useEffect(() => {
-    const interval = window.setInterval(() => {
-      const now = Date.now();
-
-      setPotStates((previousStates) =>
-        previousStates.map((potState) => {
-          if (!potState.unlocked) {
-            return potState;
-          }
-
-          if (
-            potState.growStep !== 1 &&
-            potState.growStep !== 2
-          ) {
-            return potState;
-          }
-
-          const growTime =
-            potState.growTime || DEFAULT_GROW_TIME;
-
-          if (!potState.nextGrowthAt) {
-            return {
-              ...potState,
-              timeLeft: growTime,
-              nextGrowthAt: now + growTime * 1000,
-            };
-          }
-
-          const millisecondsLeft =
-            potState.nextGrowthAt - now;
-
-          if (millisecondsLeft > 0) {
-            const secondsLeft = Math.max(
-              0,
-              Math.ceil(millisecondsLeft / 1000),
-            );
-
-            if (secondsLeft === potState.timeLeft) {
-              return potState;
-            }
-
-            return {
-              ...potState,
-              timeLeft: secondsLeft,
-            };
-          }
-
-          if (potState.growStep === 1) {
-            return {
-              ...potState,
-              growStep: 2,
-              timeLeft: growTime,
-              nextGrowthAt: now + growTime * 1000,
-            };
-          }
-
-          return {
-            ...potState,
-            growStep: 3,
-            timeLeft: 0,
-            nextGrowthAt: null,
-          };
-        }),
-      );
-    }, 250);
-
-    return () => {
-      window.clearInterval(interval);
-    };
-  }, [setPotStates]);
 
   const currentPot = pots[currentPotIndex];
 
