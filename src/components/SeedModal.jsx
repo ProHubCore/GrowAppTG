@@ -1,63 +1,29 @@
-function SeedIcon({
-  seed,
-  big = false,
-}) {
-  if (seed.image) {
-    return (
-      <div
-        className={
-          big
-            ? "seed-icon big"
-            : "seed-icon"
-        }
-      >
-        <img
-          src={seed.image}
-          alt={seed.name}
-          draggable="false"
-          style={{
-            display: "block",
+import "./SeedModal.css";
 
-            width: big
-              ? "100px"
-              : "58px",
-
-            height: big
-              ? "115px"
-              : "68px",
-
-            objectFit: "contain",
-
-            pointerEvents: "none",
-          }}
-        />
-      </div>
-    );
-  }
-
-  return (
-    <div
-      className={
-        big
-          ? "seed-icon big"
-          : "seed-icon"
-      }
-    >
-      {seed.icon}
-    </div>
-  );
-}
-
-function getSeedAmount(
-  seed,
-  seedInventory
-) {
+function getSeedAmount(seed, seedInventory) {
   if (seed.infinite) {
     return Infinity;
   }
 
+  return seedInventory?.[seed.id] || 0;
+}
+
+function SeedIcon({ seed, big = false }) {
+  if (seed.image) {
+    return (
+      <img
+        className={`seed-image${big ? " big" : ""}`}
+        src={seed.image}
+        alt={seed.name}
+        draggable="false"
+      />
+    );
+  }
+
   return (
-    seedInventory?.[seed.id] || 0
+    <div className={`seed-icon${big ? " big" : ""}`}>
+      {seed.icon}
+    </div>
   );
 }
 
@@ -74,13 +40,17 @@ function SeedModal({
     return null;
   }
 
-  const selectedSeedAmount =
-    selectedSeed
-      ? getSeedAmount(
-          selectedSeed,
-          seedInventory
-        )
-      : 0;
+  const availableSeeds = seeds.filter((seed) => {
+    if (seed.infinite) {
+      return true;
+    }
+
+    return getSeedAmount(seed, seedInventory) > 0;
+  });
+
+  const selectedSeedAmount = selectedSeed
+    ? getSeedAmount(selectedSeed, seedInventory)
+    : 0;
 
   const selectedSeedUnavailable =
     selectedSeed &&
@@ -110,33 +80,20 @@ function SeedModal({
             </div>
 
             <div className="seed-list">
-              {seeds.map((seed) => {
-                const amount =
-                  getSeedAmount(
-                    seed,
-                    seedInventory
-                  );
-
-                const isUnavailable =
-                  !seed.infinite &&
-                  amount <= 0;
+              {availableSeeds.map((seed) => {
+                const amount = getSeedAmount(
+                  seed,
+                  seedInventory
+                );
 
                 return (
                   <button
                     type="button"
                     key={seed.id}
-                    className={
-                      isUnavailable
-                        ? "seed-card disabled"
-                        : "seed-card"
-                    }
-                    onClick={() =>
-                      onSelectSeed(seed)
-                    }
+                    className="seed-card"
+                    onClick={() => onSelectSeed(seed)}
                   >
-                    <SeedIcon
-                      seed={seed}
-                    />
+                    <SeedIcon seed={seed} />
 
                     <div className="seed-info">
                       <div className="seed-name">
@@ -147,23 +104,7 @@ function SeedModal({
                         {seed.description}
                       </div>
 
-                      <div
-                        style={{
-                          marginTop:
-                            "6px",
-
-                          color:
-                            isUnavailable
-                              ? "#ff9e9e"
-                              : "#9fffe0",
-
-                          fontSize:
-                            "12px",
-
-                          fontWeight:
-                            "900",
-                        }}
-                      >
+                      <div className="seed-amount">
                         {seed.infinite
                           ? "Семена: ∞"
                           : `Семена: ${amount}`}
@@ -183,15 +124,11 @@ function SeedModal({
             </div>
 
             <div className="modal-subtitle">
-              Хочешь посадить «
-              {selectedSeed.name}»?
+              Хочешь посадить «{selectedSeed.name}»?
             </div>
 
             <div className="confirm-seed-card">
-              <SeedIcon
-                seed={selectedSeed}
-                big
-              />
+              <SeedIcon seed={selectedSeed} big />
 
               <div className="seed-name">
                 {selectedSeed.name}
@@ -201,41 +138,15 @@ function SeedModal({
                 {selectedSeed.description}
               </div>
 
-              <div
-                style={{
-                  marginTop: "8px",
-
-                  color:
-                    selectedSeedUnavailable
-                      ? "#ff9e9e"
-                      : "#9fffe0",
-
-                  fontSize: "13px",
-
-                  fontWeight: "900",
-                }}
-              >
+              <div className="seed-amount">
                 {selectedSeed.infinite
                   ? "Доступно: ∞"
                   : `Доступно: ${selectedSeedAmount}`}
               </div>
 
               {selectedSeedUnavailable && (
-                <div
-                  style={{
-                    marginTop: "8px",
-
-                    color:
-                      "rgba(255,255,255,0.65)",
-
-                    fontSize: "12px",
-
-                    textAlign:
-                      "center",
-                  }}
-                >
-                  Семена закончились.
-                  Загляни к Зорику.
+                <div className="seed-unavailable-message">
+                  Семена закончились. Загляни к Зорику.
                 </div>
               )}
             </div>
@@ -252,21 +163,8 @@ function SeedModal({
               <button
                 type="button"
                 className="plant-button"
-                onClick={
-                  onPlantSeed
-                }
-                disabled={
-                  selectedSeedUnavailable
-                }
-                style={
-                  selectedSeedUnavailable
-                    ? {
-                        opacity: 0.4,
-                        cursor:
-                          "default",
-                      }
-                    : undefined
-                }
+                onClick={onPlantSeed}
+                disabled={selectedSeedUnavailable}
               >
                 Посадить
               </button>

@@ -67,8 +67,7 @@ const RARE_BUYERS = [
 
 function randomNumber(min, max) {
   return (
-    Math.floor(Math.random() * (max - min + 1)) +
-    min
+    Math.floor(Math.random() * (max - min + 1)) + min
   );
 }
 
@@ -117,11 +116,9 @@ function ProductIcon({ product, large = false }) {
   if (product.image) {
     return (
       <img
-        className={
-          large
-            ? "club-product-image large"
-            : "club-product-image"
-        }
+        className={`club-product-image${
+          large ? " large" : ""
+        }`}
         src={product.image}
         alt={product.name}
         draggable="false"
@@ -130,15 +127,13 @@ function ProductIcon({ product, large = false }) {
   }
 
   return (
-    <span
-      className={
-        large
-          ? "club-product-emoji large"
-          : "club-product-emoji"
-      }
+    <div
+      className={`club-product-icon${
+        large ? " large" : ""
+      }`}
     >
       {product.icon}
-    </span>
+    </div>
   );
 }
 
@@ -149,8 +144,7 @@ function ClubScreen({
   setCoins,
   onGoBack,
 }) {
-  const [screen, setScreen] =
-    useState("dialog");
+  const [screen, setScreen] = useState("dialog");
 
   const [selectedProductId, setSelectedProductId] =
     useState(null);
@@ -161,43 +155,45 @@ function ClubScreen({
   const [resultMessage, setResultMessage] =
     useState("");
 
-  const greenTomatoAmount =
-    inventory?.greenTomato || 0;
+  const availableProducts = Object.values(
+    PRODUCTS
+  ).filter(
+    (product) => (inventory?.[product.id] || 0) > 0
+  );
 
-  const psychomorAmount =
-    inventory?.psychomor || 0;
+  const selectedProduct = selectedProductId
+    ? PRODUCTS[selectedProductId]
+    : null;
 
-  const openHarvest = () => {
+  const resetDeal = () => {
     setSelectedProductId(null);
     setCurrentOffer(null);
     setResultMessage("");
+  };
+
+  const openHarvest = () => {
+    resetDeal();
     setScreen("inventory");
   };
 
   const returnToDialog = () => {
-    setSelectedProductId(null);
-    setCurrentOffer(null);
-    setResultMessage("");
+    resetDeal();
     setScreen("dialog");
   };
 
   const selectProduct = (productId) => {
     const product = PRODUCTS[productId];
+    const availableAmount = inventory?.[productId] || 0;
 
-    if (!product) {
+    if (!product || availableAmount <= 0) {
       return;
     }
 
-    const availableAmount =
-      inventory?.[productId] || 0;
-
     setSelectedProductId(productId);
     setResultMessage("");
-
     setCurrentOffer(
       createOffer(product, availableAmount)
     );
-
     setScreen("offer");
   };
 
@@ -206,14 +202,17 @@ function ClubScreen({
       return;
     }
 
-    const product =
-      PRODUCTS[selectedProductId];
-
+    const product = PRODUCTS[selectedProductId];
     const availableAmount =
       inventory?.[selectedProductId] || 0;
 
-    setResultMessage("");
+    if (!product || availableAmount <= 0) {
+      resetDeal();
+      setScreen("inventory");
+      return;
+    }
 
+    setResultMessage("");
     setCurrentOffer(
       createOffer(product, availableAmount)
     );
@@ -227,11 +226,11 @@ function ClubScreen({
     const availableAmount =
       inventory?.[selectedProductId] || 0;
 
-    if (currentOffer.amount <= 0) {
-      setResultMessage(
-        "У тебя нет этого урожая."
-      );
-
+    if (
+      currentOffer.amount <= 0 ||
+      availableAmount <= 0
+    ) {
+      setResultMessage("У тебя нет этого урожая.");
       return;
     }
 
@@ -239,13 +238,11 @@ function ClubScreen({
       setResultMessage(
         "Урожая уже не хватает для этой сделки."
       );
-
       return;
     }
 
     setInventory((previousInventory) => ({
       ...previousInventory,
-
       [selectedProductId]: Math.max(
         0,
         (previousInventory[selectedProductId] || 0) -
@@ -266,9 +263,10 @@ function ClubScreen({
     setScreen("success");
   };
 
-  const selectedProduct = selectedProductId
-    ? PRODUCTS[selectedProductId]
-    : null;
+  const openInventoryAfterSale = () => {
+    resetDeal();
+    setScreen("inventory");
+  };
 
   return (
     <div className="club-screen">
@@ -323,14 +321,14 @@ function ClubScreen({
       )}
 
       {screen === "inventory" && (
-        <div className="club-market-panel">
-          <div className="club-market-header">
+        <div className="club-panel">
+          <div className="club-panel-header">
             <div>
-              <div className="club-market-kicker">
+              <div className="club-panel-kicker">
                 Клубный сбыт
               </div>
 
-              <div className="club-market-title">
+              <div className="club-panel-title">
                 Что продаём?
               </div>
             </div>
@@ -339,106 +337,75 @@ function ClubScreen({
               type="button"
               className="club-panel-close"
               onClick={returnToDialog}
-              aria-label="Назад"
+              aria-label="Закрыть"
             >
               ×
             </button>
           </div>
 
-          <div className="club-market-subtitle">
+          <div className="club-panel-description">
             Выбери урожай. Типусиан найдёт
             случайного покупателя и предложит цену.
           </div>
 
-          <div className="club-product-list">
-            <button
-              type="button"
-              className={
-                greenTomatoAmount > 0
-                  ? "club-product-card"
-                  : "club-product-card disabled"
-              }
-              onClick={() =>
-                selectProduct("greenTomato")
-              }
-            >
-              <div className="club-product-icon">
-                <ProductIcon
-                  product={PRODUCTS.greenTomato}
-                />
-              </div>
+          <div className="club-products-list">
+            {availableProducts.length > 0 ? (
+              availableProducts.map((product) => {
+                const amount =
+                  inventory?.[product.id] || 0;
 
-              <div className="club-product-content">
-                <div className="club-product-name">
-                  {PRODUCTS.greenTomato.name}
+                return (
+                  <button
+                    type="button"
+                    key={product.id}
+                    className={`club-product-card ${
+                      product.id === "psychomor"
+                        ? "psychomor"
+                        : ""
+                    }`}
+                    onClick={() =>
+                      selectProduct(product.id)
+                    }
+                  >
+                    <ProductIcon product={product} />
+
+                    <div className="club-product-info">
+                      <div className="club-product-name">
+                        {product.name}
+                      </div>
+
+                      <div className="club-product-description">
+                        {product.description}
+                      </div>
+
+                      <div className="club-product-amount">
+                        В наличии: {amount}
+                      </div>
+                    </div>
+
+                    <div className="club-product-arrow">
+                      ›
+                    </div>
+                  </button>
+                );
+              })
+            ) : (
+              <div className="club-empty-state">
+                <div className="club-empty-title">
+                  Продавать пока нечего
                 </div>
 
-                <div className="club-product-description">
-                  {
-                    PRODUCTS.greenTomato
-                      .description
-                  }
-                </div>
-
-                <div className="club-product-stock">
-                  В наличии:{" "}
-                  <strong>
-                    {greenTomatoAmount}
-                  </strong>
+                <div className="club-empty-text">
+                  Вырасти урожай на плантации и
+                  возвращайся к Типусиану.
                 </div>
               </div>
-
-              <div className="club-product-arrow">
-                ›
-              </div>
-            </button>
-
-            <button
-              type="button"
-              className={
-                psychomorAmount > 0
-                  ? "club-product-card psychomor"
-                  : "club-product-card psychomor disabled"
-              }
-              onClick={() =>
-                selectProduct("psychomor")
-              }
-            >
-              <div className="club-product-icon">
-                <ProductIcon
-                  product={PRODUCTS.psychomor}
-                />
-              </div>
-
-              <div className="club-product-content">
-                <div className="club-product-name">
-                  {PRODUCTS.psychomor.name}
-                </div>
-
-                <div className="club-product-description">
-                  {
-                    PRODUCTS.psychomor
-                      .description
-                  }
-                </div>
-
-                <div className="club-product-stock">
-                  В наличии:{" "}
-                  <strong>
-                    {psychomorAmount}
-                  </strong>
-                </div>
-              </div>
-
-              <div className="club-product-arrow">
-                ›
-              </div>
-            </button>
+            )}
           </div>
 
           <button
             type="button"
-            className="club-market-back"
+            className="club-secondary-action"
             onClick={returnToDialog}
           >
             Назад к Типусиану
@@ -449,14 +416,14 @@ function ClubScreen({
       {screen === "offer" &&
         selectedProduct &&
         currentOffer && (
-          <div className="club-market-panel offer">
-            <div className="club-market-header">
+          <div className="club-panel club-offer-panel">
+            <div className="club-panel-header">
               <div>
-                <div className="club-market-kicker">
+                <div className="club-panel-kicker">
                   Новое предложение
                 </div>
 
-                <div className="club-market-title">
+                <div className="club-panel-title">
                   Покупатель найден
                 </div>
               </div>
@@ -464,9 +431,7 @@ function ClubScreen({
               <button
                 type="button"
                 className="club-panel-close"
-                onClick={() =>
-                  setScreen("inventory")
-                }
+                onClick={() => setScreen("inventory")}
                 aria-label="Назад"
               >
                 ×
@@ -480,23 +445,19 @@ function ClubScreen({
             )}
 
             <div className="club-offer-product">
-              <div className="club-offer-icon">
-                <ProductIcon
-                  product={selectedProduct}
-                  large
-                />
-              </div>
+              <ProductIcon
+                product={selectedProduct}
+                large
+              />
 
               <div>
-                <div className="club-offer-product-name">
+                <div className="club-product-name">
                   {selectedProduct.name}
                 </div>
 
-                <div className="club-offer-available">
+                <div className="club-product-amount">
                   В наличии:{" "}
-                  {inventory?.[
-                    selectedProductId
-                  ] || 0}
+                  {inventory?.[selectedProductId] || 0}
                 </div>
               </div>
             </div>
@@ -515,10 +476,9 @@ function ClubScreen({
               </div>
             </div>
 
-            <div className="club-offer-details">
+            <div className="club-offer-stats">
               <div className="club-offer-row">
                 <span>Забирает</span>
-
                 <strong>
                   {currentOffer.amount} шт.
                 </strong>
@@ -526,7 +486,6 @@ function ClubScreen({
 
               <div className="club-offer-row">
                 <span>Цена за штуку</span>
-
                 <strong>
                   🪙 {currentOffer.pricePerItem}
                 </strong>
@@ -534,7 +493,6 @@ function ClubScreen({
 
               <div className="club-offer-row total">
                 <span>Ты получишь</span>
-
                 <strong>
                   🪙 {currentOffer.totalPrice}
                 </strong>
@@ -550,48 +508,43 @@ function ClubScreen({
             <div className="club-offer-actions">
               <button
                 type="button"
-                className="club-sell-button"
+                className="club-primary-action"
                 onClick={sellHarvest}
-                disabled={
-                  currentOffer.amount <= 0
-                }
               >
                 Продать
               </button>
 
               <button
                 type="button"
-                className="club-refresh-button"
+                className="club-secondary-action"
                 onClick={refreshOffer}
               >
                 Другой покупатель
               </button>
-            </div>
 
-            <button
-              type="button"
-              className="club-offer-cancel"
-              onClick={() =>
-                setScreen("inventory")
-              }
-            >
-              Отмена
-            </button>
+              <button
+                type="button"
+                className="club-secondary-action"
+                onClick={() => setScreen("inventory")}
+              >
+                Отмена
+              </button>
+            </div>
           </div>
         )}
 
       {screen === "success" &&
         selectedProduct && (
-          <div className="club-market-panel success">
-            <div className="club-success-glow">
+          <div className="club-panel club-success-panel">
+            <div className="club-success-icon">
               ✓
             </div>
 
-            <div className="club-success-title">
+            <div className="club-panel-title">
               Сделка состоялась
             </div>
 
-            <div className="club-success-text">
+            <div className="club-success-message">
               {resultMessage}
             </div>
 
@@ -601,30 +554,28 @@ function ClubScreen({
                 large
               />
 
-              <span>
+              <div className="club-product-name">
                 {selectedProduct.name}
-              </span>
+              </div>
             </div>
 
-            <button
-              type="button"
-              className="club-sell-button"
-              onClick={() => {
-                setCurrentOffer(null);
-                setResultMessage("");
-                setScreen("inventory");
-              }}
-            >
-              Продать ещё
-            </button>
+            <div className="club-offer-actions">
+              <button
+                type="button"
+                className="club-primary-action"
+                onClick={openInventoryAfterSale}
+              >
+                Продать ещё
+              </button>
 
-            <button
-              type="button"
-              className="club-market-back"
-              onClick={returnToDialog}
-            >
-              Вернуться к Типусиану
-            </button>
+              <button
+                type="button"
+                className="club-secondary-action"
+                onClick={returnToDialog}
+              >
+                Вернуться к Типусиану
+              </button>
+            </div>
           </div>
         )}
     </div>
