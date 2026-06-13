@@ -16,11 +16,11 @@ export const plants = [
     left: 50,
   },
   {
-    id: 3,
-    name: "Растение с плодами",
-    image: "/assets/plants/plant-3.png",
-    width: 200,
-    bottom: 115,
-    left: 49,
-  },
+  id: 3,
+  name: "Растение с плодами",
+  image: "/assets/plants/plant-3.png",
+  width: 200,
+  bottom: 115,
+  left: 49,
+},
 ];
