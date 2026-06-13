@@ -1,7 +1,12 @@
+import "./SeedBasket.css";
+
 function SeedBasket({ onClick, disabled }) {
   return (
     <button
-      className={`seed-basket ${disabled ? "disabled" : ""}`}
+      className={`seed-basket ${
+        disabled ? "disabled" : ""
+      }`}
+      type="button"
       onClick={onClick}
       disabled={disabled}
       aria-label="Открыть семена"

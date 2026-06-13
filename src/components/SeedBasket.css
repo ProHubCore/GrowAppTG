@@ -1,0 +1,73 @@
+.seed-basket {
+  position: absolute;
+
+  /*
+    Корзинка теперь закреплена относительно
+    всего игрового экрана, а не слайдера.
+  */
+  left: 25px;
+  bottom: 145px;
+
+  z-index: 32;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  width: 115px;
+  height: 115px;
+
+  padding: 0;
+
+  background: transparent;
+  border: 0;
+
+  cursor: pointer;
+
+  filter:
+    drop-shadow(0 10px 9px rgba(0, 0, 0, 0.28));
+
+  transition:
+    transform 150ms ease,
+    filter 150ms ease,
+    opacity 150ms ease;
+}
+
+.seed-basket-image {
+  display: block;
+
+  width: 100%;
+  height: 100%;
+
+  object-fit: contain;
+
+  pointer-events: none;
+  user-select: none;
+}
+
+.seed-basket:hover {
+  transform:
+    translateY(-2px)
+    scale(1.03);
+
+  filter:
+    drop-shadow(0 12px 11px rgba(0, 0, 0, 0.32));
+}
+
+.seed-basket:active {
+  transform: scale(0.94);
+}
+
+.seed-basket.disabled {
+  opacity: 0.48;
+  filter:
+    grayscale(0.18)
+    drop-shadow(0 7px 7px rgba(0, 0, 0, 0.2));
+
+  cursor: default;
+}
+
+.seed-basket.disabled:hover,
+.seed-basket.disabled:active {
+  transform: none;
+}
