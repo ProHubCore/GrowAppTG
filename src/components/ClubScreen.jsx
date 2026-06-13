@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import "./ClubScreen.css";
+
+const REPUTATION_STORAGE_KEY = "growapp-club-reputation";
 
 const PRODUCTS = {
   greenTomato: {
@@ -11,14 +13,12 @@ const PRODUCTS = {
     minPrice: 2,
     maxPrice: 5,
   },
-
   psychomor: {
     id: "psychomor",
     name: "Психомор",
     description:
       "Редкий светящийся плод. В клубе за такое готовы платить.",
-    image:
-      "/assets/plants/psychomor/psychomor-stage-3.png",
+    image: "/assets/plants/psychomor/psychomor-stage-3.png",
     minPrice: 7,
     maxPrice: 14,
   },
@@ -27,48 +27,93 @@ const PRODUCTS = {
 const BUYERS = [
   {
     name: "Лунный курьер",
-    phrase:
-      "Заберу быстро. Пока патруль не начал задавать вопросы.",
+    phrase: "Заберу быстро. Пока патруль не начал задавать вопросы.",
   },
   {
     name: "Диджей Квазар",
-    phrase:
-      "Мне нужно что-то необычное для сегодняшней вечеринки.",
+    phrase: "Мне нужно что-то необычное для сегодняшней вечеринки.",
   },
   {
     name: "Бармен Глюк",
-    phrase:
-      "Пойдёт в новый напиток. Состав никому не рассказывай.",
+    phrase: "Пойдёт в новый напиток. Состав никому не рассказывай.",
   },
   {
     name: "Тётушка Мокка",
-    phrase:
-      "Мои постоянники любят свежий товар.",
+    phrase: "Мои постоянники любят свежий товар.",
   },
   {
     name: "Космический турист",
-    phrase:
-      "У себя дома я такого точно не найду.",
+    phrase: "У себя дома я такого точно не найду.",
   },
 ];
 
 const RARE_BUYERS = [
   {
     name: "Коллекционер Нокс",
-    phrase:
-      "Ищу только лучшие экземпляры. За качество доплачу.",
+    phrase: "Ищу только лучшие экземпляры. За качество доплачу.",
   },
   {
     name: "Доктор Мираж",
-    phrase:
-      "Редкий материал. Мне нужен для закрытого исследования.",
+    phrase: "Редкий материал. Мне нужен для закрытого исследования.",
   },
 ];
 
+const CLUB_LEVELS = [
+  {
+    level: 1,
+    title: "Новый знакомый",
+    required: 0,
+    reward: "Доступ к клубному сбыту",
+    description: "Типусиан только присматривается к тебе.",
+    icon: "✦",
+  },
+  {
+    level: 2,
+    title: "Свой человек",
+    required: 50,
+    reward: "Откроется новый сорт",
+    description: "В клубе начинают узнавать твой урожай.",
+    icon: "🌱",
+  },
+  {
+    level: 3,
+    title: "Надёжный поставщик",
+    required: 150,
+    reward: "Больше редких покупателей",
+    description: "Типусиан доверяет тебе сделки посерьёзнее.",
+    icon: "💎",
+  },
+  {
+    level: 4,
+    title: "Звезда клуба",
+    required: 300,
+    reward: "Особый клубный предмет",
+    description: "Твой товар обсуждают даже за закрытыми дверями.",
+    icon: "⚡",
+  },
+  {
+    level: 5,
+    title: "Легенда района",
+    required: 600,
+    reward: "Эксклюзивный сорт",
+    description: "Лучшие покупатели приходят уже специально к тебе.",
+    icon: "👑",
+  },
+];
+
+function readStoredReputation() {
+  try {
+    const savedValue = Number(localStorage.getItem(REPUTATION_STORAGE_KEY));
+    return Number.isFinite(savedValue) && savedValue >= 0
+      ? Math.floor(savedValue)
+      : 0;
+  } catch {
+    return 0;
+  }
+}
+
 function randomNumber(min, max) {
-  return (
-    Math.floor(Math.random() * (max - min + 1)) + min
-  );
+  return Math.floor(Math.random() * (max - min + 1)) + min;
 }
 
 function randomItem(items) {
@@ -77,29 +122,13 @@ function randomItem(items) {
 
 function createOffer(product, availableAmount) {
   const isRareBuyer = Math.random() < 0.2;
-
   const buyer = isRareBuyer
     ? randomItem(RARE_BUYERS)
     : randomItem(BUYERS);
-
-  const basePrice = randomNumber(
-    product.minPrice,
-    product.maxPrice
-  );
-
-  const pricePerItem = isRareBuyer
-    ? Math.ceil(basePrice * 1.5)
-    : basePrice;
-
-  const maximumAmount = Math.min(
-    3,
-    Math.max(0, availableAmount)
-  );
-
-  const amount =
-    maximumAmount > 0
-      ? randomNumber(1, maximumAmount)
-      : 0;
+  const basePrice = randomNumber(product.minPrice, product.maxPrice);
+  const pricePerItem = isRareBuyer ? Math.ceil(basePrice * 1.5) : basePrice;
+  const maximumAmount = Math.min(3, Math.max(0, availableAmount));
+  const amount = maximumAmount > 0 ? randomNumber(1, maximumAmount) : 0;
 
   return {
     productId: product.id,
@@ -112,13 +141,52 @@ function createOffer(product, availableAmount) {
   };
 }
 
+function getLevelInfo(reputation) {
+  let currentLevel = CLUB_LEVELS[0];
+
+  for (const level of CLUB_LEVELS) {
+    if (reputation >= level.required) {
+      currentLevel = level;
+    }
+  }
+
+  const currentIndex = CLUB_LEVELS.findIndex(
+    (level) => level.level === currentLevel.level,
+  );
+  const nextLevel = CLUB_LEVELS[currentIndex + 1] || null;
+
+  if (!nextLevel) {
+    return {
+      currentLevel,
+      nextLevel: null,
+      progressPercent: 100,
+      currentProgress: reputation - currentLevel.required,
+      requiredProgress: 0,
+    };
+  }
+
+  const levelRange = nextLevel.required - currentLevel.required;
+  const currentProgress = reputation - currentLevel.required;
+
+  return {
+    currentLevel,
+    nextLevel,
+    progressPercent: Math.max(
+      0,
+      Math.min(100, (currentProgress / levelRange) * 100),
+    ),
+    currentProgress,
+    requiredProgress: levelRange,
+  };
+}
+
 function ProductIcon({ product, large = false }) {
+  const className = large ? " large" : "";
+
   if (product.image) {
     return (
       <img
-        className={`club-product-image${
-          large ? " large" : ""
-        }`}
+        className={`club-product-image${className}`}
         src={product.image}
         alt={product.name}
         draggable="false"
@@ -127,457 +195,513 @@ function ProductIcon({ product, large = false }) {
   }
 
   return (
-    <div
-      className={`club-product-icon${
-        large ? " large" : ""
-      }`}
-    >
+    <div className={`club-product-icon${className}`} aria-hidden="true">
       {product.icon}
     </div>
   );
 }
 
-function ClubScreen({
-  inventory,
-  setInventory,
-  coins,
-  setCoins,
-  onGoBack,
-}) {
-  const [screen, setScreen] = useState("dialog");
+function ReputationOverlay({ reputation, onClose }) {
+  const levelInfo = getLevelInfo(reputation);
 
-  const [selectedProductId, setSelectedProductId] =
-    useState(null);
+  return (
+    <div className="club-reputation-overlay" role="dialog" aria-modal="true">
+      <button
+        className="club-reputation-backdrop"
+        type="button"
+        onClick={onClose}
+        aria-label="Закрыть"
+      />
 
-  const [currentOffer, setCurrentOffer] =
-    useState(null);
+      <section className="club-reputation-sheet">
+        <div className="club-reputation-glow" />
 
-  const [resultMessage, setResultMessage] =
-    useState("");
+        <header className="club-reputation-header">
+          <div>
+            <div className="club-reputation-kicker">КЛУБНАЯ ДОРОЖКА</div>
+            <h2>Репутация района</h2>
+            <p>
+              Продавай урожай, повышай доверие клуба и открывай новые
+              возможности.
+            </p>
+          </div>
 
-  const availableProducts = Object.values(
-    PRODUCTS
-  ).filter(
-    (product) => (inventory?.[product.id] || 0) > 0
+          <button
+            className="club-reputation-close"
+            type="button"
+            onClick={onClose}
+            aria-label="Закрыть"
+          >
+            ×
+          </button>
+        </header>
+
+        <div className="club-reputation-summary">
+          <div className="club-reputation-emblem">
+            {levelInfo.currentLevel.level}
+          </div>
+          <div className="club-reputation-summary-info">
+            <span>Текущий статус</span>
+            <strong>{levelInfo.currentLevel.title}</strong>
+            <small>{reputation} репутации</small>
+          </div>
+        </div>
+
+        <div className="club-level-road">
+          {CLUB_LEVELS.map((level, index) => {
+            const unlocked = reputation >= level.required;
+            const current = level.level === levelInfo.currentLevel.level;
+
+            return (
+              <article
+                className={`club-level-card${unlocked ? " unlocked" : " locked"}${current ? " current" : ""}`}
+                key={level.level}
+              >
+                {index < CLUB_LEVELS.length - 1 && (
+                  <div
+                    className={`club-level-connector${
+                      reputation >= CLUB_LEVELS[index + 1].required
+                        ? " completed"
+                        : ""
+                    }`}
+                  />
+                )}
+
+                <div className="club-level-orb">
+                  <span>{unlocked ? level.icon : "🔒"}</span>
+                  <b>{level.level}</b>
+                </div>
+
+                <div className="club-level-content">
+                  <div className="club-level-topline">
+                    <span>УРОВЕНЬ {level.level}</span>
+                    <small>{level.required} REP</small>
+                  </div>
+                  <h3>{level.title}</h3>
+                  <p>{level.description}</p>
+                  <div className="club-level-reward">
+                    <span>{unlocked ? "Открыто" : "Награда"}</span>
+                    <strong>{level.reward}</strong>
+                  </div>
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      </section>
+    </div>
   );
+}
 
-  const selectedProduct = selectedProductId
-    ? PRODUCTS[selectedProductId]
-    : null;
+function ClubScreen({ inventory, setInventory, coins, setCoins, onGoBack }) {
+  const [screen, setScreen] = useState("dialog");
+  const [selectedProductId, setSelectedProductId] = useState(null);
+  const [currentOffer, setCurrentOffer] = useState(null);
+  const [resultMessage, setResultMessage] = useState("");
+  const [earnedReputation, setEarnedReputation] = useState(0);
+  const [isReputationOpen, setIsReputationOpen] = useState(false);
+  const [reputation, setReputation] = useState(readStoredReputation);
 
-  const resetDeal = () => {
-    setSelectedProductId(null);
-    setCurrentOffer(null);
-    setResultMessage("");
+  const levelInfo = useMemo(() => getLevelInfo(reputation), [reputation]);
+  const greenTomatoAmount = inventory?.greenTomato || 0;
+  const psychomorAmount = inventory?.psychomor || 0;
+
+  const saveReputation = (nextValue) => {
+    const safeValue = Math.max(0, Math.floor(nextValue));
+    setReputation(safeValue);
+
+    try {
+      localStorage.setItem(REPUTATION_STORAGE_KEY, String(safeValue));
+    } catch {
+      // В приватном режиме браузер может запретить localStorage.
+    }
   };
 
   const openHarvest = () => {
-    resetDeal();
+    setSelectedProductId(null);
+    setCurrentOffer(null);
+    setResultMessage("");
+    setEarnedReputation(0);
     setScreen("inventory");
   };
 
   const returnToDialog = () => {
-    resetDeal();
+    setSelectedProductId(null);
+    setCurrentOffer(null);
+    setResultMessage("");
+    setEarnedReputation(0);
     setScreen("dialog");
   };
 
   const selectProduct = (productId) => {
     const product = PRODUCTS[productId];
-    const availableAmount = inventory?.[productId] || 0;
+    if (!product) return;
 
-    if (!product || availableAmount <= 0) {
-      return;
-    }
+    const availableAmount = inventory?.[productId] || 0;
+    if (availableAmount <= 0) return;
 
     setSelectedProductId(productId);
     setResultMessage("");
-    setCurrentOffer(
-      createOffer(product, availableAmount)
-    );
+    setEarnedReputation(0);
+    setCurrentOffer(createOffer(product, availableAmount));
     setScreen("offer");
   };
 
   const refreshOffer = () => {
-    if (!selectedProductId) {
-      return;
-    }
+    if (!selectedProductId) return;
 
     const product = PRODUCTS[selectedProductId];
-    const availableAmount =
-      inventory?.[selectedProductId] || 0;
-
-    if (!product || availableAmount <= 0) {
-      resetDeal();
-      setScreen("inventory");
-      return;
-    }
-
+    const availableAmount = inventory?.[selectedProductId] || 0;
     setResultMessage("");
-    setCurrentOffer(
-      createOffer(product, availableAmount)
-    );
+    setCurrentOffer(createOffer(product, availableAmount));
   };
 
   const sellHarvest = () => {
-    if (!selectedProductId || !currentOffer) {
-      return;
-    }
+    if (!selectedProductId || !currentOffer) return;
 
-    const availableAmount =
-      inventory?.[selectedProductId] || 0;
+    const availableAmount = inventory?.[selectedProductId] || 0;
 
-    if (
-      currentOffer.amount <= 0 ||
-      availableAmount <= 0
-    ) {
+    if (currentOffer.amount <= 0) {
       setResultMessage("У тебя нет этого урожая.");
       return;
     }
 
     if (availableAmount < currentOffer.amount) {
-      setResultMessage(
-        "Урожая уже не хватает для этой сделки."
-      );
+      setResultMessage("Урожая уже не хватает для этой сделки.");
       return;
     }
+
+    const reputationPerItem = currentOffer.isRareBuyer ? 3 : 2;
+    const reputationReward = currentOffer.amount * reputationPerItem;
 
     setInventory((previousInventory) => ({
       ...previousInventory,
       [selectedProductId]: Math.max(
         0,
-        (previousInventory[selectedProductId] || 0) -
-          currentOffer.amount
+        (previousInventory[selectedProductId] || 0) - currentOffer.amount,
       ),
     }));
 
-    setCoins(
-      (previousCoins) =>
-        previousCoins + currentOffer.totalPrice
-    );
-
+    setCoins((previousCoins) => previousCoins + currentOffer.totalPrice);
+    saveReputation(reputation + reputationReward);
+    setEarnedReputation(reputationReward);
     setResultMessage(
-      `Продано: ${currentOffer.amount} шт. Получено ${currentOffer.totalPrice} монет.`
+      `Продано: ${currentOffer.amount} шт. Получено ${currentOffer.totalPrice} монет.`,
     );
-
     setCurrentOffer(null);
     setScreen("success");
   };
 
-  const openInventoryAfterSale = () => {
-    resetDeal();
-    setScreen("inventory");
+  const addTestReputation = () => {
+    saveReputation(reputation + 25);
   };
+
+  const selectedProduct = selectedProductId
+    ? PRODUCTS[selectedProductId]
+    : null;
 
   return (
     <div className="club-screen">
       <img
         className="club-npc club-npc-smoker"
-        src="/assets/club-characters/club-alien-smoker-01.png"
+        src="/assets/club/club-dealer.png"
         alt="Типусиан"
         draggable="false"
+        onError={(event) => {
+          event.currentTarget.style.display = "none";
+        }}
       />
 
       <button
-        type="button"
         className="club-back-hitbox"
+        type="button"
         onClick={onGoBack}
-        aria-label="Назад в район"
+        aria-label="Назад"
       />
 
-      <div className="club-wallet">
-        🪙 {coins}
-      </div>
+      <div className="club-wallet">🪙 {coins}</div>
+
+      <button
+        className="club-reputation-bar"
+        type="button"
+        onClick={() => setIsReputationOpen(true)}
+      >
+        <div className="club-reputation-level">
+          <span>LVL</span>
+          <strong>{levelInfo.currentLevel.level}</strong>
+        </div>
+
+        <div className="club-reputation-main">
+          <div className="club-reputation-labels">
+            <strong>{levelInfo.currentLevel.title}</strong>
+            <span>
+              {levelInfo.nextLevel
+                ? `${levelInfo.currentProgress}/${levelInfo.requiredProgress}`
+                : "MAX"}
+            </span>
+          </div>
+          <div className="club-reputation-track">
+            <div
+              className="club-reputation-fill"
+              style={{ width: `${levelInfo.progressPercent}%` }}
+            />
+          </div>
+        </div>
+
+        <span className="club-reputation-arrow">›</span>
+      </button>
+
+      <button
+        className="club-test-reputation"
+        type="button"
+        onClick={addTestReputation}
+      >
+        +25 REP
+      </button>
 
       {screen === "dialog" && (
-        <div className="club-dialog">
-          <div className="club-speaker">
-            Типусиан
-          </div>
-
+        <section className="club-dialog">
+          <div className="club-speaker">Типусиан</div>
           <div className="club-text">
-            Йо, земной фермер. Вайб ровный,
-            музыка мягкая, народ ждёт свежачок.
-            Принёс что-то интересное?
+            Йо, земной фермер. Вайб ровный, музыка мягкая, народ ждёт
+            свежачок. Принёс что-то интересное?
           </div>
 
           <div className="club-answers">
             <button
-              type="button"
               className="club-answer-button"
+              type="button"
               onClick={openHarvest}
             >
               Есть свежий урожай
             </button>
-
             <button
-              type="button"
               className="club-answer-button secondary"
-              onClick={onGoBack}
+              type="button"
+              onClick={() => setIsReputationOpen(true)}
             >
-              Я просто осмотреться
+              Посмотреть репутацию
             </button>
           </div>
-        </div>
+        </section>
       )}
 
       {screen === "inventory" && (
-        <div className="club-panel">
-          <div className="club-panel-header">
+        <section className="club-panel">
+          <header className="club-panel-header">
             <div>
-              <div className="club-panel-kicker">
-                Клубный сбыт
-              </div>
-
-              <div className="club-panel-title">
-                Что продаём?
-              </div>
+              <div className="club-panel-kicker">Клубный сбыт</div>
+              <div className="club-panel-title">Что продаём?</div>
             </div>
-
             <button
-              type="button"
               className="club-panel-close"
+              type="button"
               onClick={returnToDialog}
               aria-label="Закрыть"
             >
               ×
             </button>
-          </div>
+          </header>
 
-          <div className="club-panel-description">
-            Выбери урожай. Типусиан найдёт
-            случайного покупателя и предложит цену.
-          </div>
+          <p className="club-panel-description">
+            Выбери урожай. Типусиан найдёт случайного покупателя и предложит
+            цену.
+          </p>
 
           <div className="club-products-list">
-            {availableProducts.length > 0 ? (
-              availableProducts.map((product) => {
-                const amount =
-                  inventory?.[product.id] || 0;
-
-                return (
-                  <button
-                    type="button"
-                    key={product.id}
-                    className={`club-product-card ${
-                      product.id === "psychomor"
-                        ? "psychomor"
-                        : ""
-                    }`}
-                    onClick={() =>
-                      selectProduct(product.id)
-                    }
-                  >
-                    <ProductIcon product={product} />
-
-                    <div className="club-product-info">
-                      <div className="club-product-name">
-                        {product.name}
-                      </div>
-
-                      <div className="club-product-description">
-                        {product.description}
-                      </div>
-
-                      <div className="club-product-amount">
-                        В наличии: {amount}
-                      </div>
-                    </div>
-
-                    <div className="club-product-arrow">
-                      ›
-                    </div>
-                  </button>
-                );
-              })
-            ) : (
-              <div className="club-empty-state">
-                <div className="club-empty-title">
-                  Продавать пока нечего
+            <button
+              className={`club-product-card${
+                greenTomatoAmount > 0 ? "" : " disabled"
+              }`}
+              type="button"
+              disabled={greenTomatoAmount <= 0}
+              onClick={() => selectProduct("greenTomato")}
+            >
+              <ProductIcon product={PRODUCTS.greenTomato} />
+              <div className="club-product-info">
+                <div className="club-product-name">
+                  {PRODUCTS.greenTomato.name}
                 </div>
-
-                <div className="club-empty-text">
-                  Вырасти урожай на плантации и
-                  возвращайся к Типусиану.
+                <div className="club-product-description">
+                  {PRODUCTS.greenTomato.description}
+                </div>
+                <div className="club-product-amount">
+                  В наличии: {greenTomatoAmount}
                 </div>
               </div>
-            )}
+              <div className="club-product-arrow">›</div>
+            </button>
+
+            <button
+              className={`club-product-card psychomor${
+                psychomorAmount > 0 ? "" : " disabled"
+              }`}
+              type="button"
+              disabled={psychomorAmount <= 0}
+              onClick={() => selectProduct("psychomor")}
+            >
+              <ProductIcon product={PRODUCTS.psychomor} />
+              <div className="club-product-info">
+                <div className="club-product-name">
+                  {PRODUCTS.psychomor.name}
+                </div>
+                <div className="club-product-description">
+                  {PRODUCTS.psychomor.description}
+                </div>
+                <div className="club-product-amount">
+                  В наличии: {psychomorAmount}
+                </div>
+              </div>
+              <div className="club-product-arrow">›</div>
+            </button>
           </div>
 
           <button
-            type="button"
             className="club-secondary-action"
+            type="button"
             onClick={returnToDialog}
           >
             Назад к Типусиану
           </button>
-        </div>
+        </section>
       )}
 
-      {screen === "offer" &&
-        selectedProduct &&
-        currentOffer && (
-          <div className="club-panel club-offer-panel">
-            <div className="club-panel-header">
-              <div>
-                <div className="club-panel-kicker">
-                  Новое предложение
-                </div>
-
-                <div className="club-panel-title">
-                  Покупатель найден
-                </div>
-              </div>
-
-              <button
-                type="button"
-                className="club-panel-close"
-                onClick={() => setScreen("inventory")}
-                aria-label="Назад"
-              >
-                ×
-              </button>
+      {screen === "offer" && selectedProduct && currentOffer && (
+        <section className="club-panel club-offer-panel">
+          <header className="club-panel-header">
+            <div>
+              <div className="club-panel-kicker">Новое предложение</div>
+              <div className="club-panel-title">Покупатель найден</div>
             </div>
+            <button
+              className="club-panel-close"
+              type="button"
+              onClick={() => setScreen("inventory")}
+              aria-label="Назад"
+            >
+              ×
+            </button>
+          </header>
 
-            {currentOffer.isRareBuyer && (
-              <div className="club-rare-badge">
-                ✦ Редкий покупатель
+          {currentOffer.isRareBuyer && (
+            <div className="club-rare-badge">✦ Редкий покупатель</div>
+          )}
+
+          <div className="club-offer-product">
+            <ProductIcon product={selectedProduct} large />
+            <div className="club-product-info">
+              <div className="club-product-name">{selectedProduct.name}</div>
+              <div className="club-product-amount">
+                В наличии: {inventory?.[selectedProductId] || 0}
               </div>
-            )}
-
-            <div className="club-offer-product">
-              <ProductIcon
-                product={selectedProduct}
-                large
-              />
-
-              <div>
-                <div className="club-product-name">
-                  {selectedProduct.name}
-                </div>
-
-                <div className="club-product-amount">
-                  В наличии:{" "}
-                  {inventory?.[selectedProductId] || 0}
-                </div>
-              </div>
-            </div>
-
-            <div className="club-buyer-card">
-              <div className="club-buyer-label">
-                Покупатель
-              </div>
-
-              <div className="club-buyer-name">
-                {currentOffer.buyerName}
-              </div>
-
-              <div className="club-buyer-phrase">
-                «{currentOffer.buyerPhrase}»
-              </div>
-            </div>
-
-            <div className="club-offer-stats">
-              <div className="club-offer-row">
-                <span>Забирает</span>
-                <strong>
-                  {currentOffer.amount} шт.
-                </strong>
-              </div>
-
-              <div className="club-offer-row">
-                <span>Цена за штуку</span>
-                <strong>
-                  🪙 {currentOffer.pricePerItem}
-                </strong>
-              </div>
-
-              <div className="club-offer-row total">
-                <span>Ты получишь</span>
-                <strong>
-                  🪙 {currentOffer.totalPrice}
-                </strong>
-              </div>
-            </div>
-
-            {resultMessage && (
-              <div className="club-result-message">
-                {resultMessage}
-              </div>
-            )}
-
-            <div className="club-offer-actions">
-              <button
-                type="button"
-                className="club-primary-action"
-                onClick={sellHarvest}
-              >
-                Продать
-              </button>
-
-              <button
-                type="button"
-                className="club-secondary-action"
-                onClick={refreshOffer}
-              >
-                Другой покупатель
-              </button>
-
-              <button
-                type="button"
-                className="club-secondary-action"
-                onClick={() => setScreen("inventory")}
-              >
-                Отмена
-              </button>
             </div>
           </div>
-        )}
 
-      {screen === "success" &&
-        selectedProduct && (
-          <div className="club-panel club-success-panel">
-            <div className="club-success-icon">
-              ✓
-            </div>
-
-            <div className="club-panel-title">
-              Сделка состоялась
-            </div>
-
-            <div className="club-success-message">
-              {resultMessage}
-            </div>
-
-            <div className="club-success-product">
-              <ProductIcon
-                product={selectedProduct}
-                large
-              />
-
-              <div className="club-product-name">
-                {selectedProduct.name}
-              </div>
-            </div>
-
-            <div className="club-offer-actions">
-              <button
-                type="button"
-                className="club-primary-action"
-                onClick={openInventoryAfterSale}
-              >
-                Продать ещё
-              </button>
-
-              <button
-                type="button"
-                className="club-secondary-action"
-                onClick={returnToDialog}
-              >
-                Вернуться к Типусиану
-              </button>
+          <div className="club-buyer-card">
+            <div className="club-buyer-label">Покупатель</div>
+            <div className="club-buyer-name">{currentOffer.buyerName}</div>
+            <div className="club-buyer-phrase">
+              «{currentOffer.buyerPhrase}»
             </div>
           </div>
-        )}
+
+          <div className="club-offer-stats">
+            <div className="club-offer-row">
+              <span>Забирает</span>
+              <strong>{currentOffer.amount} шт.</strong>
+            </div>
+            <div className="club-offer-row">
+              <span>Цена за штуку</span>
+              <strong>{currentOffer.pricePerItem}</strong>
+            </div>
+            <div className="club-offer-row">
+              <span>Репутация</span>
+              <strong>
+                +{currentOffer.amount * (currentOffer.isRareBuyer ? 3 : 2)}
+              </strong>
+            </div>
+            <div className="club-offer-row total">
+              <span>Ты получишь</span>
+              <strong>🪙 {currentOffer.totalPrice}</strong>
+            </div>
+          </div>
+
+          {resultMessage && (
+            <div className="club-result-message">{resultMessage}</div>
+          )}
+
+          <div className="club-offer-actions">
+            <button
+              className="club-primary-action"
+              type="button"
+              onClick={sellHarvest}
+            >
+              Продать
+            </button>
+            <button
+              className="club-secondary-action"
+              type="button"
+              onClick={refreshOffer}
+            >
+              Другой покупатель
+            </button>
+            <button
+              className="club-secondary-action"
+              type="button"
+              onClick={() => setScreen("inventory")}
+            >
+              Отмена
+            </button>
+          </div>
+        </section>
+      )}
+
+      {screen === "success" && selectedProduct && (
+        <section className="club-panel club-success-panel">
+          <div className="club-success-icon">✓</div>
+          <div className="club-panel-title">Сделка состоялась</div>
+          <div className="club-success-message">{resultMessage}</div>
+
+          <div className="club-reputation-earned">
+            <span>Клубная репутация</span>
+            <strong>+{earnedReputation} REP</strong>
+          </div>
+
+          <div className="club-success-product">
+            <ProductIcon product={selectedProduct} large />
+            <div className="club-product-name">{selectedProduct.name}</div>
+          </div>
+
+          <div className="club-offer-actions">
+            <button
+              className="club-primary-action"
+              type="button"
+              onClick={() => {
+                setCurrentOffer(null);
+                setResultMessage("");
+                setEarnedReputation(0);
+                setScreen("inventory");
+              }}
+            >
+              Продать ещё
+            </button>
+            <button
+              className="club-secondary-action"
+              type="button"
+              onClick={returnToDialog}
+            >
+              Вернуться к Типусиану
+            </button>
+          </div>
+        </section>
+      )}
+
+      {isReputationOpen && (
+        <ReputationOverlay
+          reputation={reputation}
+          onClose={() => setIsReputationOpen(false)}
+        />
+      )}
     </div>
   );
 }
