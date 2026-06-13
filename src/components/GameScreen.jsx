@@ -34,11 +34,17 @@ function GameScreen() {
   const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
 
   const [isInventoryOpen, setIsInventoryOpen] = useState(false);
-  const [inventory, setInventory] = useState({
+  const [inventory, setInventory] = usePersistentState(
+  "growapp-inventory",
+  {
     greenTomato: 0,
-  });
+  }
+);
 
-  const [coins] = useState(0);
+  const [coins, setCoins] = usePersistentState(
+  "growapp-coins",
+  0
+);
 
   const [activeScreen, setActiveScreen] = useState("plantation");
   const [flyingLootItems, setFlyingLootItems] = useState([]);
@@ -72,6 +78,14 @@ function GameScreen() {
 
     window.addEventListener("resize", updateScale);
     window.visualViewport?.addEventListener("resize", updateScale);
+
+    const resetGameProgress = () => {
+  localStorage.removeItem("growapp-inventory");
+  localStorage.removeItem("growapp-coins");
+  localStorage.removeItem("growapp-club-order");
+
+  window.location.reload();
+};
 
     return () => {
       window.removeEventListener("resize", updateScale);
@@ -279,8 +293,14 @@ function GameScreen() {
         )}
 
         {activeScreen === "club" && (
-          <ClubScreen onGoBack={goBackToDistrict} />
-        )}
+  <ClubScreen
+    inventory={inventory}
+    setInventory={setInventory}
+    coins={coins}
+    setCoins={setCoins}
+    onGoBack={goBackToDistrict}
+  />
+)}
 
         {activeScreen !== "shop" && activeScreen !== "club" && (
           <BottomMenu

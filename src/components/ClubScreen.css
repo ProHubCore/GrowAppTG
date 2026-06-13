@@ -187,3 +187,22 @@
 .club-answer-button:active {
   transform: translateY(3px);
 }
+
+.club-wallet {
+  position: absolute;
+  top: 18px;
+  right: 16px;
+  z-index: 30;
+
+  padding: 9px 13px;
+
+  color: #f3d488;
+  font-size: 16px;
+  font-weight: 800;
+
+  background: rgba(18, 13, 25, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+
+  backdrop-filter: blur(4px);
+}
