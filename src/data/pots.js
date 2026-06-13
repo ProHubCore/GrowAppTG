@@ -1,17 +1,17 @@
 export const pots = [
   {
     id: 1,
-    name: "Старое ведро",
+    name: "Ведро 1",
     image: "/assets/pots/bucket-1.png",
   },
   {
     id: 2,
-    name: "Глиняный горшок",
-    image: "/assets/pots/pot-2.png",
+    name: "Ведро 2",
+    image: "/assets/pots/bucket-1.png",
   },
   {
     id: 3,
-    name: "Металлическое ведро",
-    image: "/assets/pots/bucket-3.png",
+    name: "Ведро 3",
+    image: "/assets/pots/bucket-1.png",
   },
 ];

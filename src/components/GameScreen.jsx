@@ -3,9 +3,7 @@ import { useEffect, useState } from "react";
 import PlantArea from "./PlantArea";
 import BottomMenu from "./BottomMenu";
 import GrowTimer from "./GrowTimer";
-import SeedBasket from "./SeedBasket";
 import SeedModal from "./SeedModal";
-import ShovelTool from "./ShovelTool";
 import RemovePlantModal from "./RemovePlantModal";
 import BackpackTool from "./BackpackTool";
 import InventoryModal from "./InventoryModal";
@@ -25,35 +23,62 @@ const GROW_TIME = 5;
 const STAGE_WIDTH = 390;
 const STAGE_HEIGHT = 844;
 
+function createPotState(index) {
+  return {
+    unlocked: index === 0,
+    growStep: 0,
+    timeLeft: GROW_TIME,
+    selectedSeedId: null,
+    nextGrowthAt: null,
+  };
+}
+
 function GameScreen() {
   const [currentPotIndex, setCurrentPotIndex] = useState(0);
 
-  const [growStep, setGrowStep] = useState(0);
-  const [timeLeft, setTimeLeft] = useState(GROW_TIME);
+  const [potStates, setPotStates] = useState(() =>
+    pots.map((_, index) => createPotState(index))
+  );
 
-  const [isSeedModalOpen, setIsSeedModalOpen] = useState(false);
-  const [selectedSeed, setSelectedSeed] = useState(null);
+  const [isSeedModalOpen, setIsSeedModalOpen] =
+    useState(false);
 
-  const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
-  const [isInventoryOpen, setIsInventoryOpen] = useState(false);
+  const [selectedSeed, setSelectedSeed] =
+    useState(null);
 
-  const [inventory, setInventory] = usePersistentState(
-    "growapp-inventory",
-    {
+  const [isRemoveModalOpen, setIsRemoveModalOpen] =
+    useState(false);
+
+  const [isInventoryOpen, setIsInventoryOpen] =
+    useState(false);
+
+  const [inventory, setInventory] =
+    usePersistentState("growapp-inventory", {
       greenTomato: 0,
-    }
-  );
+    });
 
-  const [coins, setCoins] = usePersistentState(
-    "growapp-coins",
-    0
-  );
+  const [coins, setCoins] =
+    usePersistentState("growapp-coins", 0);
 
-  const [activeScreen, setActiveScreen] = useState("plantation");
-  const [flyingLootItems, setFlyingLootItems] = useState([]);
-  const [stageScale, setStageScale] = useState(1);
+  const [activeScreen, setActiveScreen] =
+    useState("plantation");
+
+  const [flyingLootItems, setFlyingLootItems] =
+    useState([]);
+
+  const [stageScale, setStageScale] =
+    useState(1);
 
   const currentPot = pots[currentPotIndex];
+
+  const currentPotState =
+    potStates[currentPotIndex] ||
+    createPotState(currentPotIndex);
+
+  const growStep = currentPotState.growStep;
+  const timeLeft = currentPotState.timeLeft;
+  const isCurrentPotUnlocked =
+    currentPotState.unlocked;
 
   let currentPlant = null;
 
@@ -72,24 +97,42 @@ function GameScreen() {
   useEffect(() => {
     const updateScale = () => {
       const viewportWidth =
-        window.visualViewport?.width || window.innerWidth;
+        window.visualViewport?.width ||
+        window.innerWidth;
 
       const viewportHeight =
-        window.visualViewport?.height || window.innerHeight;
+        window.visualViewport?.height ||
+        window.innerHeight;
 
-      const widthScale = viewportWidth / STAGE_WIDTH;
-      const heightScale = viewportHeight / STAGE_HEIGHT;
+      const widthScale =
+        viewportWidth / STAGE_WIDTH;
 
-      setStageScale(Math.min(widthScale, heightScale));
+      const heightScale =
+        viewportHeight / STAGE_HEIGHT;
+
+      setStageScale(
+        Math.min(widthScale, heightScale)
+      );
     };
 
     updateScale();
 
-    window.addEventListener("resize", updateScale);
-    window.visualViewport?.addEventListener("resize", updateScale);
+    window.addEventListener(
+      "resize",
+      updateScale
+    );
+
+    window.visualViewport?.addEventListener(
+      "resize",
+      updateScale
+    );
 
     return () => {
-      window.removeEventListener("resize", updateScale);
+      window.removeEventListener(
+        "resize",
+        updateScale
+      );
+
       window.visualViewport?.removeEventListener(
         "resize",
         updateScale
@@ -98,48 +141,152 @@ function GameScreen() {
   }, []);
 
   useEffect(() => {
-    if (growStep !== 1 && growStep !== 2) return undefined;
+    const growthInterval =
+      window.setInterval(() => {
+        const now = Date.now();
 
-    setTimeLeft(GROW_TIME);
+        setPotStates((previousPotStates) =>
+          previousPotStates.map((potState) => {
+            if (!potState.unlocked) {
+              return potState;
+            }
 
-    const countdown = window.setInterval(() => {
-      setTimeLeft((previousTime) => {
-        if (previousTime <= 1) {
-          return 0;
-        }
+            if (
+              potState.growStep !== 1 &&
+              potState.growStep !== 2
+            ) {
+              return potState;
+            }
 
-        return previousTime - 1;
-      });
-    }, 1000);
+            if (!potState.nextGrowthAt) {
+              return {
+                ...potState,
+                timeLeft: GROW_TIME,
+                nextGrowthAt:
+                  now + GROW_TIME * 1000,
+              };
+            }
 
-    const growTimeout = window.setTimeout(() => {
-      setGrowStep((previousStep) => {
-        if (previousStep === 1) {
-          return 2;
-        }
+            const millisecondsLeft =
+              potState.nextGrowthAt - now;
 
-        if (previousStep === 2) {
-          return 3;
-        }
+            const secondsLeft = Math.max(
+              0,
+              Math.ceil(
+                millisecondsLeft / 1000
+              )
+            );
 
-        return previousStep;
-      });
-    }, GROW_TIME * 1000);
+            if (millisecondsLeft > 0) {
+              if (
+                secondsLeft ===
+                potState.timeLeft
+              ) {
+                return potState;
+              }
+
+              return {
+                ...potState,
+                timeLeft: secondsLeft,
+              };
+            }
+
+            if (potState.growStep === 1) {
+              return {
+                ...potState,
+                growStep: 2,
+                timeLeft: GROW_TIME,
+                nextGrowthAt:
+                  now + GROW_TIME * 1000,
+              };
+            }
+
+            return {
+              ...potState,
+              growStep: 3,
+              timeLeft: 0,
+              nextGrowthAt: null,
+            };
+          })
+        );
+      }, 250);
 
     return () => {
-      window.clearInterval(countdown);
-      window.clearTimeout(growTimeout);
+      window.clearInterval(growthInterval);
     };
-  }, [growStep]);
+  }, []);
 
-  const changePot = () => {
+  const updatePotState = (
+    potIndex,
+    updates
+  ) => {
+    setPotStates((previousPotStates) =>
+      previousPotStates.map(
+        (potState, index) => {
+          if (index !== potIndex) {
+            return potState;
+          }
+
+          const nextUpdates =
+            typeof updates === "function"
+              ? updates(potState)
+              : updates;
+
+          return {
+            ...potState,
+            ...nextUpdates,
+          };
+        }
+      )
+    );
+  };
+
+  const updateCurrentPotState = (updates) => {
+    updatePotState(
+      currentPotIndex,
+      updates
+    );
+  };
+
+  const closePlantationModals = () => {
+    setIsSeedModalOpen(false);
+    setIsRemoveModalOpen(false);
+    setSelectedSeed(null);
+  };
+
+  const showNextPot = () => {
+    closePlantationModals();
+
     setCurrentPotIndex(
       (previousIndex) =>
         (previousIndex + 1) % pots.length
     );
   };
 
+  const showPreviousPot = () => {
+    closePlantationModals();
+
+    setCurrentPotIndex(
+      (previousIndex) =>
+        (previousIndex -
+          1 +
+          pots.length) %
+        pots.length
+    );
+  };
+
+  const unlockCurrentPot = () => {
+    updateCurrentPotState({
+      unlocked: true,
+      growStep: 0,
+      timeLeft: GROW_TIME,
+      selectedSeedId: null,
+      nextGrowthAt: null,
+    });
+  };
+
   const openSeedModal = () => {
+    if (!isCurrentPotUnlocked) return;
     if (growStep !== 0) return;
 
     setSelectedSeed(null);
@@ -153,17 +300,31 @@ function GameScreen() {
 
   const plantSelectedSeed = () => {
     if (!selectedSeed) return;
+    if (!isCurrentPotUnlocked) return;
+    if (growStep !== 0) return;
 
-    setGrowStep(1);
-    setTimeLeft(GROW_TIME);
+    updateCurrentPotState({
+      growStep: 1,
+      timeLeft: GROW_TIME,
+      selectedSeedId:
+        selectedSeed.id ||
+        selectedSeed.key ||
+        selectedSeed.name ||
+        null,
+      nextGrowthAt:
+        Date.now() + GROW_TIME * 1000,
+    });
+
     setIsSeedModalOpen(false);
     setSelectedSeed(null);
   };
 
   const collectPlant = () => {
+    if (!isCurrentPotUnlocked) return;
     if (growStep !== 3) return;
 
-    const reward = Math.floor(Math.random() * 3) + 1;
+    const reward =
+      Math.floor(Math.random() * 3) + 1;
 
     const newLootItems = Array.from(
       { length: reward },
@@ -180,11 +341,16 @@ function GameScreen() {
     setInventory((previousInventory) => ({
       ...previousInventory,
       greenTomato:
-        (previousInventory.greenTomato || 0) + reward,
+        (previousInventory.greenTomato ||
+          0) + reward,
     }));
 
-    setGrowStep(0);
-    setTimeLeft(GROW_TIME);
+    updateCurrentPotState({
+      growStep: 0,
+      timeLeft: GROW_TIME,
+      selectedSeedId: null,
+      nextGrowthAt: null,
+    });
 
     window.setTimeout(() => {
       setFlyingLootItems([]);
@@ -192,6 +358,7 @@ function GameScreen() {
   };
 
   const openRemoveModal = () => {
+    if (!isCurrentPotUnlocked) return;
     if (growStep === 0) return;
 
     setIsRemoveModalOpen(true);
@@ -202,8 +369,15 @@ function GameScreen() {
   };
 
   const removePlant = () => {
-    setGrowStep(0);
-    setTimeLeft(GROW_TIME);
+    if (!isCurrentPotUnlocked) return;
+
+    updateCurrentPotState({
+      growStep: 0,
+      timeLeft: GROW_TIME,
+      selectedSeedId: null,
+      nextGrowthAt: null,
+    });
+
     setIsRemoveModalOpen(false);
   };
 
@@ -215,14 +389,18 @@ function GameScreen() {
     setIsInventoryOpen(false);
   };
 
-  const deleteInventoryItem = (itemId, count) => {
+  const deleteInventoryItem = (
+    itemId,
+    count
+  ) => {
     if (itemId !== "greenTomato") return;
 
     setInventory((previousInventory) => ({
       ...previousInventory,
       greenTomato: Math.max(
         0,
-        (previousInventory.greenTomato || 0) - count
+        (previousInventory.greenTomato ||
+          0) - count
       ),
     }));
   };
@@ -247,7 +425,8 @@ function GameScreen() {
           transform: `scale(${stageScale})`,
         }}
       >
-        {activeScreen === "plantation" && (
+        {activeScreen ===
+          "plantation" && (
           <>
             <div className="background" />
 
@@ -255,47 +434,74 @@ function GameScreen() {
               🪙 {coins}
             </div>
 
-            <GrowTimer
-              growStep={growStep}
-              timeLeft={timeLeft}
+            {isCurrentPotUnlocked && (
+              <GrowTimer
+                growStep={growStep}
+                timeLeft={timeLeft}
+              />
+            )}
+
+            <BackpackTool
+              onClick={openInventory}
             />
 
-            <ShovelTool
-              disabled={growStep === 0}
-              onClick={openRemoveModal}
+            <FlyingLoot
+              lootItems={flyingLootItems}
             />
-
-            <BackpackTool onClick={openInventory} />
-
-            <FlyingLoot lootItems={flyingLootItems} />
 
             <div className="game-content">
               <div className="table-scene">
-                <SeedBasket
-                  onClick={openSeedModal}
-                  disabled={growStep !== 0}
-                />
-
                 <PlantArea
                   pot={currentPot}
                   plant={currentPlant}
-                  canCollect={growStep === 3}
+                  isUnlocked={
+                    isCurrentPotUnlocked
+                  }
+                  isEmpty={growStep === 0}
+                  canCollect={
+                    growStep === 3
+                  }
                   onCollect={collectPlant}
+                  onSeedClick={
+                    openSeedModal
+                  }
+                  onRemoveClick={
+                    openRemoveModal
+                  }
+                  onUnlock={
+                    unlockCurrentPot
+                  }
+                  onPreviousPot={
+                    showPreviousPot
+                  }
+                  onNextPot={
+                    showNextPot
+                  }
                 />
               </div>
             </div>
 
             <SeedModal
-              isOpen={isSeedModalOpen}
+              isOpen={
+                isSeedModalOpen &&
+                isCurrentPotUnlocked
+              }
               seeds={seeds}
               selectedSeed={selectedSeed}
-              onSelectSeed={setSelectedSeed}
-              onPlantSeed={plantSelectedSeed}
+              onSelectSeed={
+                setSelectedSeed
+              }
+              onPlantSeed={
+                plantSelectedSeed
+              }
               onClose={closeSeedModal}
             />
 
             <RemovePlantModal
-              isOpen={isRemoveModalOpen}
+              isOpen={
+                isRemoveModalOpen &&
+                isCurrentPotUnlocked
+              }
               onConfirm={removePlant}
               onCancel={closeRemoveModal}
             />
@@ -304,7 +510,9 @@ function GameScreen() {
               isOpen={isInventoryOpen}
               inventory={inventory}
               onClose={closeInventory}
-              onDeleteItem={deleteInventoryItem}
+              onDeleteItem={
+                deleteInventoryItem
+              }
             />
           </>
         )}
@@ -317,7 +525,9 @@ function GameScreen() {
         )}
 
         {activeScreen === "shop" && (
-          <ShopScreen onGoBack={goBackToDistrict} />
+          <ShopScreen
+            onGoBack={goBackToDistrict}
+          />
         )}
 
         {activeScreen === "club" && (
@@ -335,12 +545,15 @@ function GameScreen() {
             <BottomMenu
               activeScreen={activeScreen}
               onGoPlantation={() =>
-                setActiveScreen("plantation")
+                setActiveScreen(
+                  "plantation"
+                )
               }
               onGoDistrict={() =>
-                setActiveScreen("district")
+                setActiveScreen(
+                  "district"
+                )
               }
-              onChangePot={changePot}
             />
           )}
       </div>
