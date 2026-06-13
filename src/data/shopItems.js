@@ -4,24 +4,15 @@ export const shopItems = [
     type: "seed",
 
     name: "Психомор",
-    price: 60,
 
     image:
       "/assets/seeds/psychomor-seeds.png",
 
     description:
-      "Редкие инопланетные семена. Никто точно не знает, что из них вырастет.",
+      "Редкие инопланетные семена. Из них вырастает светящийся Психомор.",
 
-    seedData: {
-      id: "psychomor",
+    pricePerSeed: 20,
 
-      name: "Психомор",
-
-      image:
-        "/assets/seeds/psychomor-seeds.png",
-
-      description:
-        "Инопланетное растение с необычными свойствами.",
-    },
+    initialStock: 5,
   },
 ];
