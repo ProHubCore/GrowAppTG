@@ -372,13 +372,6 @@
   }
 }
 
-  50% {
-    opacity: 1;
-    transform:
-      translate(-50%, -50%)
-      scale(1.06);
-  }
-}
 
 
 /*
@@ -678,22 +671,6 @@
   }
 }
 
-  50% {
-    filter:
-      drop-shadow(
-        0 12px 14px rgba(0, 0, 0, 0.72)
-      )
-      drop-shadow(
-        0 0 10px rgba(170, 255, 102, 0.12)
-      )
-      drop-shadow(
-        0 0 20px rgba(74, 220, 151, 0.07)
-      )
-      contrast(1.11)
-      saturate(1.08)
-      brightness(1.035);
-  }
-}
 
 @keyframes tutorialSeedBasketSoftPulse {
   0%,
@@ -724,4 +701,31 @@
         0 0 18px rgba(80, 230, 150, 0.28)
       );
   }
+}
+
+/*
+  Фикс перехода growing -> collect:
+  Дядя Джо и диалог остаются в одной нижней позиции,
+  поэтому при созревании растения ничего не прыгает наверх.
+*/
+.tutorial-step-collect .tutorial-dialog {
+  top: auto !important;
+  bottom: 18px !important;
+  left: 122px;
+  right: 14px;
+}
+
+.tutorial-step-collect .tutorial-character-wrap {
+  top: auto !important;
+  bottom: 18px !important;
+  left: 20px;
+  width: 142px;
+  height: 210px;
+}
+
+.tutorial-step-growing .tutorial-dialog,
+.tutorial-step-growing .tutorial-character-wrap,
+.tutorial-step-collect .tutorial-dialog,
+.tutorial-step-collect .tutorial-character-wrap {
+  transition: none !important;
 }
