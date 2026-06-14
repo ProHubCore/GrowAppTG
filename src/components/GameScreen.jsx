@@ -142,6 +142,29 @@ function GameScreen() {
   const [isResetModalOpen, setIsResetModalOpen] =
     useState(false);
 
+  const isTutorialActive =
+    tutorialStep !== "completed";
+
+  const tutorialAllows = (action) => {
+    if (!isTutorialActive) {
+      return true;
+    }
+
+    const allowedByStep = {
+      intro: ["continue"],
+      "unlock-pot": ["unlock-pot"],
+      "open-seeds": ["open-seeds"],
+      "choose-seed": ["choose-seed"],
+      "plant-seed": ["plant-seed"],
+      growing: [],
+      collect: ["collect"],
+      "go-district": ["go-district"],
+      "district-finish": ["continue"],
+    };
+
+    return (allowedByStep[tutorialStep] || []).includes(action);
+  };
+
   usePotGrowth(setPotStates, DEFAULT_GROW_TIME);
 
   useEffect(() => {
@@ -195,6 +218,54 @@ function GameScreen() {
     };
   }, []);
 
+
+  useEffect(() => {
+    document.body.dataset.tutorialLocked =
+      isTutorialActive ? "true" : "false";
+
+    return () => {
+      delete document.body.dataset.tutorialLocked;
+    };
+  }, [isTutorialActive]);
+
+  useEffect(() => {
+    if (!isTutorialActive) {
+      return;
+    }
+
+    if (tutorialStep === "district-finish") {
+      setActiveScreen("district");
+      setIsSeedModalOpen(false);
+      setSelectedSeed(null);
+      return;
+    }
+
+    setActiveScreen("plantation");
+    setCurrentPotIndex(0);
+    setIsInventoryOpen(false);
+    setIsRemoveModalOpen(false);
+    setIsResetModalOpen(false);
+    setPendingSlotIndex(null);
+    setIsUnavailableModalOpen(false);
+
+    if (tutorialStep === "choose-seed") {
+      setSelectedSeed(null);
+      setIsSeedModalOpen(true);
+      return;
+    }
+
+    if (tutorialStep === "plant-seed") {
+      const tutorialSeed =
+        seeds.find((seed) => seed.id === "greenTomato") || null;
+
+      setSelectedSeed(tutorialSeed);
+      setIsSeedModalOpen(true);
+      return;
+    }
+
+    setIsSeedModalOpen(false);
+    setSelectedSeed(null);
+  }, [isTutorialActive, tutorialStep]);
 
   const currentPot = pots[currentPotIndex];
 
@@ -280,6 +351,10 @@ function GameScreen() {
   };
 
   const changePot = (nextIndex) => {
+    if (isTutorialActive) {
+      return;
+    }
+
     closePlantationModals();
 
     const safeIndex =
@@ -297,6 +372,10 @@ function GameScreen() {
   };
 
   const handleLockedSlotClick = () => {
+    if (!tutorialAllows("unlock-pot")) {
+      return;
+    }
+
     if (isCurrentPotUnlocked) {
       return;
     }
@@ -365,6 +444,10 @@ function GameScreen() {
   };
 
   const openSeedModal = () => {
+    if (!tutorialAllows("open-seeds")) {
+      return;
+    }
+
     if (!isCurrentPotUnlocked) {
       return;
     }
@@ -382,6 +465,14 @@ function GameScreen() {
   };
 
   const selectSeed = (seed) => {
+    if (!tutorialAllows("choose-seed")) {
+      return;
+    }
+
+    if (tutorialStep === "choose-seed" && seed?.id !== "greenTomato") {
+      return;
+    }
+
     setSelectedSeed(seed);
 
     if (
@@ -393,11 +484,19 @@ function GameScreen() {
   };
 
   const closeSeedModal = () => {
+    if (isTutorialActive) {
+      return;
+    }
+
     setSelectedSeed(null);
     setIsSeedModalOpen(false);
   };
 
   const plantSelectedSeed = () => {
+    if (!tutorialAllows("plant-seed")) {
+      return;
+    }
+
     if (!selectedSeed) {
       return;
     }
@@ -445,6 +544,10 @@ function GameScreen() {
   };
 
   const collectPlant = () => {
+    if (!tutorialAllows("collect")) {
+      return;
+    }
+
     if (!isCurrentPotUnlocked) {
       return;
     }
@@ -495,6 +598,10 @@ function GameScreen() {
   };
 
   const openRemoveModal = () => {
+    if (isTutorialActive) {
+      return;
+    }
+
     if (!isCurrentPotUnlocked) {
       return;
     }
@@ -540,16 +647,28 @@ function GameScreen() {
   };
 
   const openClub = () => {
+    if (isTutorialActive) {
+      return;
+    }
+
     setIsShopProductVisible(false);
     setActiveScreen("club");
   };
 
   const openShop = () => {
+    if (isTutorialActive) {
+      return;
+    }
+
     setIsShopProductVisible(false);
     setActiveScreen("shop");
   };
 
   const goBackToDistrict = () => {
+    if (isTutorialActive) {
+      return;
+    }
+
     setIsShopProductVisible(false);
     setActiveScreen("district");
   };
@@ -622,6 +741,10 @@ function GameScreen() {
   };
 
   const openResetModal = () => {
+    if (isTutorialActive) {
+      return;
+    }
+
     closePlantationModals();
     setIsInventoryOpen(false);
     setIsResetModalOpen(true);
@@ -682,10 +805,18 @@ function GameScreen() {
               {coins}
             </div>
 
-            <TestResetButton onClick={openResetModal} />
+            <TestResetButton
+              onClick={openResetModal}
+              disabled={isTutorialActive}
+            />
 
             <BackpackTool
-              onClick={() => setIsInventoryOpen(true)}
+              disabled={isTutorialActive}
+              onClick={() => {
+                if (!isTutorialActive) {
+                  setIsInventoryOpen(true);
+                }
+              }}
             />
 
             <FlyingLoot lootItems={flyingLootItems} />
@@ -720,6 +851,11 @@ function GameScreen() {
                   onUnlock={handleLockedSlotClick}
                   onPreviousPot={showPreviousPot}
                   onNextPot={showNextPot}
+                  navigationDisabled={isTutorialActive}
+                  seedDisabled={!tutorialAllows("open-seeds")}
+                  removeDisabled={isTutorialActive}
+                  collectDisabled={!tutorialAllows("collect")}
+                  unlockDisabled={!tutorialAllows("unlock-pot")}
                 />
               </div>
             </div>
@@ -739,6 +875,7 @@ function GameScreen() {
                   }`}
                   type="button"
                   aria-label={`Перейти к ведру ${index + 1}`}
+                  disabled={isTutorialActive}
                   onClick={() => changePot(index)}
                 />
               ))}
@@ -755,6 +892,7 @@ function GameScreen() {
               onSelectSeed={selectSeed}
               onPlantSeed={plantSelectedSeed}
               onClose={closeSeedModal}
+              tutorialStep={tutorialStep}
             />
 
             <RemovePlantModal
@@ -867,11 +1005,20 @@ function GameScreen() {
           activeScreen !== "club" && (
             <BottomMenu
               activeScreen={activeScreen}
+              tutorialStep={tutorialStep}
               onGoPlantation={() => {
+                if (isTutorialActive) {
+                  return;
+                }
+
                 setIsShopProductVisible(false);
                 setActiveScreen("plantation");
               }}
               onGoDistrict={() => {
+                if (!tutorialAllows("go-district")) {
+                  return;
+                }
+
                 setIsShopProductVisible(false);
                 setActiveScreen("district");
 
@@ -887,6 +1034,10 @@ function GameScreen() {
           stageScale={stageScale}
           activeScreen={activeScreen}
           onContinue={() => {
+            if (!tutorialAllows("continue")) {
+              return;
+            }
+
             if (tutorialStep === "intro") {
               setActiveScreen("plantation");
               setCurrentPotIndex(0);

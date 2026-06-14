@@ -327,6 +327,10 @@ function PlayerProfile() {
     getClubProgress(clubReputation);
 
   const openProfile = () => {
+    if (document.body.dataset.tutorialLocked === "true") {
+      return;
+    }
+
     triggerTelegramHaptic("light");
     setIsOpen(true);
   };
@@ -345,6 +349,7 @@ function PlayerProfile() {
       <button
         type="button"
         className="player-profile-button"
+        disabled={document.body.dataset.tutorialLocked === "true"}
         onClick={openProfile}
         aria-label="Открыть профиль игрока"
       >

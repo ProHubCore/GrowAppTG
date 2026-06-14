@@ -1,4 +1,5 @@
 import GameScreen from "./components/GameScreen";
+import PlayerProfile from "./components/PlayerProfile";
 import GameLoadingScreen from "./components/GameLoadingScreen";
 import useGameAssets from "./hooks/useGameAssets";
 
@@ -20,7 +21,12 @@ function App() {
     );
   }
 
-  return <GameScreen />;
+  return (
+    <>
+      <GameScreen />
+      <PlayerProfile />
+    </>
+  );
 }
 
 export default App;

@@ -30,6 +30,11 @@ function PlantArea({
   onUnlock,
   onPreviousPot,
   onNextPot,
+  navigationDisabled = false,
+  seedDisabled = false,
+  removeDisabled = false,
+  collectDisabled = false,
+  unlockDisabled = false,
 }) {
   const touchStartX = useRef(null);
   const touchStartY = useRef(null);
@@ -41,7 +46,7 @@ function PlantArea({
     useState(false);
 
   const changePot = (direction) => {
-    if (isChanging) {
+    if (navigationDisabled || isChanging) {
       return;
     }
 
@@ -76,6 +81,10 @@ function PlantArea({
   };
 
   const handleTouchStart = (event) => {
+    if (navigationDisabled) {
+      return;
+    }
+
     const touch = event.touches[0];
 
     touchStartX.current = touch.clientX;
@@ -141,7 +150,7 @@ function PlantArea({
         className="plantation-arrow plantation-arrow-left"
         type="button"
         aria-label="Предыдущее ведро"
-        disabled={isChanging}
+        disabled={navigationDisabled || isChanging}
         onClick={() => changePot("previous")}
       >
         ‹
@@ -164,7 +173,7 @@ function PlantArea({
               {plant && (
                 <Plant
                   plant={plant}
-                  canCollect={canCollect}
+                  canCollect={canCollect && !collectDisabled}
                   onCollect={onCollect}
                 />
               )}
@@ -176,7 +185,7 @@ function PlantArea({
               onTouchEnd={stopSwipeStart}
             >
               <SeedBasket
-                disabled={!isEmpty}
+                disabled={!isEmpty || seedDisabled}
                 onClick={onSeedClick}
               />
             </div>
@@ -187,7 +196,7 @@ function PlantArea({
               onTouchEnd={stopSwipeStart}
             >
               <ShovelTool
-                disabled={isEmpty}
+                disabled={isEmpty || removeDisabled}
                 onClick={onRemoveClick}
               />
             </div>
@@ -202,6 +211,7 @@ function PlantArea({
             type="button"
             onTouchStart={stopSwipeStart}
             onTouchEnd={stopSwipeStart}
+            disabled={unlockDisabled}
             onClick={onUnlock}
           >
             <span className="add-pot-plus">
@@ -238,7 +248,7 @@ function PlantArea({
         className="plantation-arrow plantation-arrow-right"
         type="button"
         aria-label="Следующее ведро"
-        disabled={isChanging}
+        disabled={navigationDisabled || isChanging}
         onClick={() => changePot("next")}
       >
         ›

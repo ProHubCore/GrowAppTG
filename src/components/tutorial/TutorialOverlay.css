@@ -729,3 +729,20 @@
 .tutorial-step-collect .tutorial-character-wrap {
   transition: none !important;
 }
+
+/* Финальная спокойная версия: изображение Дяди Джо не меняем и не двигаем. */
+.tutorial-character {
+  filter: none !important;
+  animation: none !important;
+  transform: none !important;
+}
+
+/* Затемняющие панели реально блокируют клики вне подсвеченной цели. */
+.tutorial-dim-full,
+.tutorial-dim-panel {
+  pointer-events: auto;
+}
+
+.tutorial-spotlight {
+  pointer-events: none;
+}

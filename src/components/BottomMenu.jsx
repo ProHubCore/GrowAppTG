@@ -1,12 +1,21 @@
 import "./BottomMenu.css";
 
-function BottomMenu({ activeScreen, onGoPlantation, onGoDistrict }) {
+function BottomMenu({
+  activeScreen,
+  tutorialStep,
+  onGoPlantation,
+  onGoDistrict,
+}) {
+  const tutorialActive = tutorialStep !== "completed";
+  const districtAllowed = tutorialStep === "go-district";
+
   return (
     <div className="bottom-menu">
       <button
         className={`bottom-menu-button ${
           activeScreen === "plantation" ? "active" : ""
         }`}
+        disabled={tutorialActive}
         onClick={onGoPlantation}
       >
         🪴
@@ -17,6 +26,7 @@ function BottomMenu({ activeScreen, onGoPlantation, onGoDistrict }) {
         className={`bottom-menu-button ${
           activeScreen === "district" ? "active" : ""
         }`}
+        disabled={tutorialActive && !districtAllowed}
         onClick={onGoDistrict}
       >
         🌆

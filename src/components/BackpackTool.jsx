@@ -1,7 +1,9 @@
-function BackpackTool({ onClick }) {
+function BackpackTool({ onClick, disabled = false }) {
   return (
     <button
       className="backpack-tool"
+      type="button"
+      disabled={disabled}
       onClick={onClick}
       aria-label="Инвентарь"
     >
