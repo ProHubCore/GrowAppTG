@@ -219,7 +219,7 @@ function ReputationOverlay({ reputation, onClose }) {
         <header className="club-reputation-header">
           <div>
             <div className="club-reputation-kicker">КЛУБНАЯ ДОРОЖКА</div>
-            <h2>Репутация района</h2>
+            <h2>Репутация клуба</h2>
             <p>
               Продавай урожай, повышай доверие клуба и открывай новые
               возможности.

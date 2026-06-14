@@ -14,6 +14,9 @@ import JoeHouseScreen from "./JoeHouseScreen";
 import ShopModal from "./ShopModal";
 import ActionModal from "./ActionModal";
 import TestResetButton from "./TestResetButton";
+import HarvestCareModal from "./HarvestCareModal";
+import HarvestResultModal from "./HarvestResultModal";
+import PlantCatalogModal from "./PlantCatalogModal";
 import TutorialOverlay from "./tutorial/TutorialOverlay";
 import usePersistentState from "../hooks/usePersistentState";
 import usePotGrowth from "../hooks/usePotGrowth";
@@ -28,6 +31,7 @@ import { getClubLevel } from "../game/clubProgression";
 import { plantsBySeed } from "../data/plants";
 import { seeds } from "../data/seeds";
 import { shopItems } from "../data/shopItems";
+import { getHarvestYield, rollHarvestQuality } from "../data/harvestQuality";
 
 import "./GameScreen.css";
 
@@ -46,6 +50,7 @@ const STORAGE_KEYS = [
   "growapp-club-reputation",
   "growapp-tutorial-step",
   "growapp-joe-quests",
+  "growapp-plant-catalog",
 ];
 
 function createPotState(index) {
@@ -56,6 +61,7 @@ function createPotState(index) {
     growTime: DEFAULT_GROW_TIME,
     timeLeft: DEFAULT_GROW_TIME,
     nextGrowthAt: null,
+    careApplied: null,
   };
 }
 
@@ -71,6 +77,7 @@ function createEmptyPotState(unlocked) {
     growTime: DEFAULT_GROW_TIME,
     timeLeft: DEFAULT_GROW_TIME,
     nextGrowthAt: null,
+    careApplied: null,
   };
 }
 
@@ -128,7 +135,17 @@ function GameScreen() {
         greenTomato: 0,
         psychomor: 0,
       },
+      careUses: {
+        water: 0,
+        nutrition: 0,
+        joeMix: 0,
+      },
     },
+  );
+
+  const [plantCatalog, setPlantCatalog] = usePersistentState(
+    "growapp-plant-catalog",
+    {},
   );
 
   const [activeScreen, setActiveScreen] = useState("plantation");
@@ -141,6 +158,9 @@ function GameScreen() {
     useState(false);
 
   const [isInventoryOpen, setIsInventoryOpen] = useState(false);
+  const [isCareModalOpen, setIsCareModalOpen] = useState(false);
+  const [isCatalogOpen, setIsCatalogOpen] = useState(false);
+  const [harvestResult, setHarvestResult] = useState(null);
 
   const [isShopProductVisible, setIsShopProductVisible] =
     useState(false);
@@ -257,6 +277,9 @@ function GameScreen() {
     setActiveScreen("plantation");
     setCurrentPotIndex(0);
     setIsInventoryOpen(false);
+    setIsCareModalOpen(false);
+    setIsCatalogOpen(false);
+    setHarvestResult(null);
     setIsRemoveModalOpen(false);
     setIsResetModalOpen(false);
     setPendingSlotIndex(null);
@@ -548,6 +571,7 @@ function GameScreen() {
       growTime,
       timeLeft: growTime,
       nextGrowthAt: Date.now() + growTime * 1000,
+      careApplied: null,
     });
 
     closeSeedModal();
@@ -555,6 +579,34 @@ function GameScreen() {
     if (tutorialStep === "plant-seed") {
       setTutorialStep("growing");
     }
+  };
+
+  const applyPlantCare = (careType) => {
+    if (growStep !== 2 || currentPotState.careApplied) {
+      return;
+    }
+
+    const updates = { careApplied: careType };
+
+    if (careType === "water" && currentPotState.nextGrowthAt) {
+      const now = Date.now();
+      const remaining = Math.max(0, currentPotState.nextGrowthAt - now);
+      const nextGrowthAt = now + Math.max(1000, Math.round(remaining * 0.8));
+      updates.nextGrowthAt = nextGrowthAt;
+      updates.timeLeft = Math.max(1, Math.ceil((nextGrowthAt - now) / 1000));
+    }
+
+    updateCurrentPotState(updates);
+    setJoeQuestState((previousState) => ({
+      ...previousState,
+      careUses: {
+        water: previousState?.careUses?.water || 0,
+        nutrition: previousState?.careUses?.nutrition || 0,
+        joeMix: previousState?.careUses?.joeMix || 0,
+        [careType]: (previousState?.careUses?.[careType] || 0) + 1,
+      },
+    }));
+    setIsCareModalOpen(false);
   };
 
   const collectPlant = () => {
@@ -570,12 +622,18 @@ function GameScreen() {
       return;
     }
 
-    const reward = Math.floor(Math.random() * 3) + 1;
+    const quality = rollHarvestQuality(currentPotState.careApplied || "none");
+    const reward = getHarvestYield(currentPotState.careApplied || "none", quality.id);
 
     const harvestItemId =
       plantedSeedId === "psychomor"
         ? "psychomor"
         : "greenTomato";
+
+    const itemName = harvestItemId === "psychomor" ? "Психомор" : "Зелёный томат";
+    const itemIcon = harvestItemId === "psychomor" ? "🪻" : "🍅";
+    const previousRecord = plantCatalog[harvestItemId] || {};
+    const firstDiscovery = !(previousRecord.qualities?.[quality.id] > 0);
 
     const newLootItems = Array.from(
       {
@@ -597,6 +655,41 @@ function GameScreen() {
       [harvestItemId]:
         (previousInventory[harvestItemId] || 0) + reward,
     }));
+
+    setPlantCatalog((previousCatalog) => {
+      const record = previousCatalog[harvestItemId] || {
+        totalHarvested: 0,
+        qualities: {},
+        bestQualityRank: -1,
+        bestQualityName: null,
+      };
+
+      return {
+        ...previousCatalog,
+        [harvestItemId]: {
+          ...record,
+          totalHarvested: (record.totalHarvested || 0) + reward,
+          qualities: {
+            ...(record.qualities || {}),
+            [quality.id]: ((record.qualities || {})[quality.id] || 0) + 1,
+          },
+          bestQualityRank: Math.max(record.bestQualityRank ?? -1, quality.rank),
+          bestQualityName:
+            quality.rank >= (record.bestQualityRank ?? -1)
+              ? quality.name
+              : record.bestQualityName,
+        },
+      };
+    });
+
+    setHarvestResult({
+      itemId: harvestItemId,
+      itemName,
+      itemIcon,
+      amount: reward,
+      quality,
+      firstDiscovery,
+    });
 
     updateCurrentPotState(
       createEmptyPotState(true),
@@ -849,8 +942,14 @@ function GameScreen() {
         greenTomato: 0,
         psychomor: 0,
       },
+      careUses: {
+        water: 0,
+        nutrition: 0,
+        joeMix: 0,
+      },
     });
 
+    setPlantCatalog({});
     setPotStates(createInitialPotStates());
     setTutorialStep("intro");
 
@@ -861,6 +960,9 @@ function GameScreen() {
     setIsSeedModalOpen(false);
     setIsRemoveModalOpen(false);
     setIsInventoryOpen(false);
+    setIsCareModalOpen(false);
+    setIsCatalogOpen(false);
+    setHarvestResult(null);
 
     setIsShopProductVisible(false);
     setFlyingLootItems([]);
@@ -900,6 +1002,16 @@ function GameScreen() {
               }}
             />
 
+            <button
+              type="button"
+              className="plant-catalog-tool"
+              onClick={() => setIsCatalogOpen(true)}
+              disabled={isTutorialActive}
+              aria-label="Открыть каталог растений"
+            >
+              📖
+            </button>
+
             <FlyingLoot lootItems={flyingLootItems} />
 
             <div className="game-content">
@@ -930,6 +1042,9 @@ function GameScreen() {
                   onSeedClick={openSeedModal}
                   onRemoveClick={openRemoveModal}
                   onUnlock={handleLockedSlotClick}
+                  onOpenCare={() => setIsCareModalOpen(true)}
+                  careApplied={currentPotState.careApplied}
+                  canCare={!isTutorialActive && (joeQuestState.trust || 0) >= 25 && growStep === 2 && !currentPotState.careApplied}
                   onPreviousPot={showPreviousPot}
                   onNextPot={showNextPot}
                   navigationDisabled={isTutorialActive}
@@ -992,6 +1107,28 @@ function GameScreen() {
               inventory={inventory}
               onClose={() => setIsInventoryOpen(false)}
               onDeleteItem={deleteInventoryItem}
+            />
+
+            <HarvestCareModal
+              isOpen={isCareModalOpen}
+              trust={joeQuestState.trust || 0}
+              onChoose={applyPlantCare}
+              onClose={() => setIsCareModalOpen(false)}
+            />
+
+            <HarvestResultModal
+              result={harvestResult}
+              onClose={() => setHarvestResult(null)}
+              onOpenCatalog={() => {
+                setHarvestResult(null);
+                setIsCatalogOpen(true);
+              }}
+            />
+
+            <PlantCatalogModal
+              isOpen={isCatalogOpen}
+              catalog={plantCatalog}
+              onClose={() => setIsCatalogOpen(false)}
             />
 
             <ActionModal
@@ -1057,6 +1194,7 @@ function GameScreen() {
             seedInventory={seedInventory}
             clubReputation={clubReputation}
             questState={joeQuestState}
+            plantCatalog={plantCatalog}
             onQuestStateChange={setJoeQuestState}
             onDeliverItems={deliverJoeItems}
             onRewardClaimed={claimJoeReward}

@@ -28,6 +28,9 @@ function PlantArea({
   onSeedClick,
   onRemoveClick,
   onUnlock,
+  onOpenCare,
+  careApplied,
+  canCare = false,
   onPreviousPot,
   onNextPot,
   navigationDisabled = false,
@@ -178,6 +181,27 @@ function PlantArea({
                 />
               )}
             </div>
+
+            {canCare && (
+              <button
+                type="button"
+                className="plant-care-button"
+                onTouchStart={stopSwipeStart}
+                onTouchEnd={stopSwipeStart}
+                onClick={onOpenCare}
+              >
+                <span className="plant-care-button__icon">✦</span>
+                <span className="plant-care-button__text">Уход</span>
+              </button>
+            )}
+
+            {careApplied && growStep > 0 && growStep < 3 && (
+              <div className="plant-care-status">
+                {careApplied === "water" && "💧 Ускорено"}
+                {careApplied === "nutrition" && "🌿 Подкормлено"}
+                {careApplied === "joeMix" && "🧪 Смесь Джо"}
+              </div>
+            )}
 
             <div
               className="plantation-seed-basket"
