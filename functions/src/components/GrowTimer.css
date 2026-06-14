@@ -1,0 +1,190 @@
+/*
+  Компактный премиальный таймер над растением.
+  Он находится внутри plantation-slot,
+  поэтому свайпается вместе с растением.
+*/
+
+.plantation-slot .grow-hint {
+  position: absolute;
+  top: 68px;
+  left: 50%;
+  z-index: 22;
+
+  transform: translateX(-50%);
+
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.plantation-slot .grow-hint.growing {
+  width: 134px;
+  padding: 6px 9px 7px;
+
+  border: 0;
+  border-radius: 12px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(15, 24, 23, 0.34),
+      rgba(7, 13, 15, 0.46)
+    );
+
+  box-shadow:
+    0 5px 15px rgba(0, 0, 0, 0.13),
+    inset 0 1px rgba(255, 255, 255, 0.04),
+    0 0 12px rgba(102, 255, 169, 0.025);
+
+  backdrop-filter: blur(9px);
+  -webkit-backdrop-filter: blur(9px);
+}
+
+.plantation-slot .grow-hint-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.plantation-slot .grow-hint-title {
+  color: rgba(247, 255, 249, 0.9);
+  font-size: 10.5px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.02em;
+}
+
+.plantation-slot .grow-hint-time {
+  color: rgba(213, 248, 226, 0.54);
+  font-size: 9.5px;
+  font-weight: 780;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.plantation-slot .grow-timer-track {
+  position: relative;
+
+  width: 100%;
+  height: 2px;
+  margin-top: 6px;
+  overflow: hidden;
+
+  border-radius: 999px;
+
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.plantation-slot .grow-timer-fill {
+  position: relative;
+
+  height: 100%;
+
+  border-radius: inherit;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(73, 224, 167, 0.84),
+      rgba(166, 239, 103, 0.9)
+    );
+
+  box-shadow:
+    0 0 5px rgba(113, 255, 178, 0.22);
+
+  transition: width 250ms ease;
+}
+
+.plantation-slot .grow-timer-fill::after {
+  content: "";
+
+  position: absolute;
+  top: 0;
+  right: 0;
+
+  width: 8px;
+  height: 100%;
+
+  border-radius: inherit;
+
+  background: rgba(255, 255, 255, 0.32);
+
+  filter: blur(2px);
+}
+
+/*
+  Готовый урожай:
+  только маленькая капсула с галочкой и текстом.
+*/
+.plantation-slot .grow-hint.ready {
+  min-width: 108px;
+  padding: 6px 9px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+
+  border-radius: 999px;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(24, 54, 32, 0.36),
+      rgba(8, 22, 15, 0.48)
+    );
+
+  box-shadow:
+    0 5px 14px rgba(0, 0, 0, 0.13),
+    inset 0 1px rgba(255, 255, 255, 0.04),
+    0 0 12px rgba(151, 255, 91, 0.035);
+
+  backdrop-filter: blur(9px);
+  -webkit-backdrop-filter: blur(9px);
+}
+
+.plantation-slot .grow-ready-check {
+  width: 14px;
+  height: 14px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: rgba(166, 255, 101, 0.09);
+
+  color: #dfffac;
+  font-size: 8px;
+  font-weight: 950;
+}
+
+.plantation-slot .grow-ready-text {
+  color: rgba(240, 255, 226, 0.9);
+  font-size: 9.5px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.012em;
+}
+
+/* Мягкая подсветка во время обучения */
+.game-stage:has(
+    .tutorial-step-growing
+  )
+  .plantation-slot
+  .grow-hint.growing {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(24, 42, 33, 0.56),
+      rgba(9, 21, 17, 0.64)
+    );
+
+  box-shadow:
+    0 5px 15px rgba(0, 0, 0, 0.16),
+    0 0 9px rgba(176, 255, 92, 0.34),
+    0 0 18px rgba(88, 231, 143, 0.1),
+    inset 0 1px rgba(255, 255, 255, 0.05);
+}

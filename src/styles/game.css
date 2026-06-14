@@ -287,12 +287,12 @@ body {
 .backpack-tool {
   position: absolute;
 
-  right: 58px;
-  top: 178px;
+  right: 45px;
+  top: 165px;
   z-index: 12;
 
-  width: 92px;
-  height: 130px;
+  width: 87px;
+  height: 125px;
 
   padding: 0;
   border: none;
