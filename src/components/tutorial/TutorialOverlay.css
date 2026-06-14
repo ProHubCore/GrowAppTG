@@ -746,3 +746,497 @@
 .tutorial-spotlight {
   pointer-events: none;
 }
+
+/* =========================================================
+   СПОКОЙНАЯ ПОДСВЕТКА БЕЗ РАМОК И БЕЗ СДВИГОВ
+   ========================================================= */
+
+/* Полностью убираем spotlight-рамку. */
+.tutorial-has-target .tutorial-spotlight {
+  display: none !important;
+  border: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  animation: none !important;
+}
+
+/* Дядя Джо не двигается и не меняет цвет.
+   Анимируется только мягкая тень вокруг его обёртки. */
+.tutorial-character-wrap {
+  animation: tutorialJoeSoftAura 3.2s ease-in-out infinite !important;
+}
+
+.tutorial-character {
+  animation: none !important;
+  filter: none !important;
+}
+
+/* Диалог спокойно появляется и медленно светится. */
+.tutorial-dialog {
+  animation:
+    tutorialDialogGentleEnter 520ms ease-out both,
+    tutorialDialogSoftGlow 3.4s ease-in-out 520ms infinite !important;
+}
+
+/* Ведро: убираем квадратную рамку и фон, светятся только надписи и плюс. */
+.game-stage:has(.tutorial-step-unlock-pot) .add-pot-button {
+  border-color: transparent !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.game-stage:has(.tutorial-step-unlock-pot)
+  .add-pot-button > * {
+  animation: tutorialContentGlow 2.1s ease-in-out infinite !important;
+}
+
+/* Корзинка: светится только PNG, контейнер вообще не трогаем. */
+.game-stage:has(.tutorial-step-open-seeds)
+  .plantation-seed-basket .seed-basket-image,
+.game-stage:has(.tutorial-step-open-seeds)
+  .plantation-seed-basket img {
+  animation: tutorialImageGlowStrong 2.05s ease-in-out infinite !important;
+}
+
+/* Зелёный томат: без рамки карточки, светится только её содержимое. */
+.game-stage:has(.tutorial-step-choose-seed)
+  .seed-card {
+  outline: none !important;
+  box-shadow: none !important;
+  border-color: transparent !important;
+}
+
+.game-stage:has(.tutorial-step-choose-seed)
+  .seed-card > * {
+  animation: tutorialContentGlow 2.05s ease-in-out infinite !important;
+}
+
+/* Кнопка посадки: мягкая подсветка самой кнопки, без внешней рамки. */
+.game-stage:has(.tutorial-step-plant-seed)
+  .plant-button {
+  outline: none !important;
+  animation: tutorialButtonSoftGlow 2.05s ease-in-out infinite !important;
+}
+
+/* Рост: светится только картинка растения.
+   Никаких transform — штатная позиция сохраняется. */
+.game-stage:has(.tutorial-step-growing)
+  .plant-button-image .plant,
+.game-stage:has(.tutorial-step-growing)
+  .plant-button-image img {
+  animation: tutorialGrowingPlantGlow 2.35s ease-in-out infinite !important;
+}
+
+.game-stage:has(.tutorial-step-growing)
+  .plant-area::after {
+  display: none !important;
+}
+
+/* Сбор: светится только само растение, кнопка-контейнер не трогается. */
+.game-stage:has(.tutorial-step-collect)
+  .plant-button-image.collectable .plant,
+.game-stage:has(.tutorial-step-collect)
+  .plant-button-image.collectable img {
+  animation: tutorialCollectPlantGlow 2.05s ease-in-out infinite !important;
+}
+
+.game-stage:has(.tutorial-step-collect)
+  .plant-button-image.collectable {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Район: подсветка самой кнопки без outline. */
+.game-stage:has(.tutorial-step-go-district)
+  .bottom-menu-button:last-child {
+  outline: none !important;
+  animation: tutorialButtonSoftGlow 2.1s ease-in-out infinite !important;
+}
+
+@keyframes tutorialJoeSoftAura {
+  0%, 100% {
+    filter: drop-shadow(0 10px 12px rgba(0,0,0,.46))
+            drop-shadow(0 0 7px rgba(183,255,108,.10));
+  }
+  50% {
+    filter: drop-shadow(0 10px 12px rgba(0,0,0,.46))
+            drop-shadow(0 0 15px rgba(183,255,108,.24));
+  }
+}
+
+@keyframes tutorialDialogGentleEnter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes tutorialDialogSoftGlow {
+  0%, 100% {
+    box-shadow:
+      0 14px 34px rgba(0,0,0,.54),
+      0 0 16px rgba(177,245,101,.14),
+      inset 0 1px rgba(255,255,255,.06);
+  }
+  50% {
+    box-shadow:
+      0 14px 34px rgba(0,0,0,.56),
+      0 0 30px rgba(177,245,101,.30),
+      inset 0 1px rgba(255,255,255,.08);
+  }
+}
+
+@keyframes tutorialContentGlow {
+  0%, 100% {
+    filter: brightness(1.03)
+            drop-shadow(0 0 5px rgba(195,255,120,.22));
+  }
+  50% {
+    filter: brightness(1.16)
+            drop-shadow(0 0 12px rgba(201,255,126,.58));
+  }
+}
+
+@keyframes tutorialImageGlowStrong {
+  0%, 100% {
+    filter: brightness(1.04) saturate(1.04)
+            drop-shadow(0 0 6px rgba(195,255,120,.28))
+            drop-shadow(0 0 13px rgba(73,225,149,.14));
+  }
+  50% {
+    filter: brightness(1.18) saturate(1.10)
+            drop-shadow(0 0 13px rgba(204,255,132,.68))
+            drop-shadow(0 0 25px rgba(73,225,149,.32));
+  }
+}
+
+@keyframes tutorialButtonSoftGlow {
+  0%, 100% {
+    filter: brightness(1.03)
+            drop-shadow(0 0 5px rgba(195,255,120,.18));
+  }
+  50% {
+    filter: brightness(1.14)
+            drop-shadow(0 0 13px rgba(204,255,132,.52));
+  }
+}
+
+@keyframes tutorialGrowingPlantGlow {
+  0%, 100% {
+    filter: brightness(1.03) saturate(1.02)
+            drop-shadow(0 0 5px rgba(195,255,120,.18))
+            drop-shadow(0 0 11px rgba(73,225,149,.09));
+  }
+  50% {
+    filter: brightness(1.13) saturate(1.07)
+            drop-shadow(0 0 11px rgba(204,255,132,.46))
+            drop-shadow(0 0 21px rgba(73,225,149,.22));
+  }
+}
+
+@keyframes tutorialCollectPlantGlow {
+  0%, 100% {
+    filter: brightness(1.08) saturate(1.06)
+            drop-shadow(0 0 6px rgba(195,255,120,.28))
+            drop-shadow(0 0 13px rgba(73,225,149,.13));
+  }
+  50% {
+    filter: brightness(1.20) saturate(1.12)
+            drop-shadow(0 0 14px rgba(208,255,138,.68))
+            drop-shadow(0 0 27px rgba(73,225,149,.32));
+  }
+}
+
+/* =========================================================
+   VISUAL POLISH V3
+   Без квадратных рамок и без изменения позиций элементов.
+   ========================================================= */
+
+/*
+  Старые четыре панели создавали заметный прямоугольный вырез,
+  а border у spotlight выглядел как квадратная рамка.
+  Оставляем один мягкий округлый вырез без обводки.
+*/
+.tutorial-has-target .tutorial-dim-panel {
+  display: none !important;
+}
+
+.tutorial-has-target .tutorial-spotlight {
+  display: block !important;
+  border: 0 !important;
+  border-radius: 28px !important;
+  background: transparent !important;
+  box-shadow:
+    0 0 0 9999px rgba(2, 5, 8, 0.38),
+    0 0 24px rgba(166, 255, 92, 0.16) !important;
+  animation: tutorialSpotlightSoftBreath 2.8s ease-in-out infinite !important;
+  pointer-events: none;
+}
+
+/* Корзинка и готовое растение раньше полностью скрывали spotlight. */
+.tutorial-step-open-seeds .tutorial-spotlight,
+.tutorial-step-collect .tutorial-spotlight {
+  display: block !important;
+}
+
+/* Картинка Дяди Джо двигается сама, контейнер остаётся на месте. */
+.tutorial-character {
+  transform-origin: 50% 100%;
+  animation: tutorialJoeFloat 3.4s ease-in-out infinite;
+  will-change: transform;
+}
+
+/* Диалоговое окно спокойно дышит, без движения. */
+.tutorial-dialog {
+  animation: tutorialDialogSoftGlow 3.2s ease-in-out infinite;
+}
+
+/* Добавить ведро: без рамки, только мягкая подсветка содержимого. */
+.game-stage:has(.tutorial-step-unlock-pot)
+  .add-pot-button {
+  outline: none !important;
+  border-color: transparent !important;
+  animation: tutorialButtonBrightness 2.2s ease-in-out infinite !important;
+}
+
+.game-stage:has(.tutorial-step-unlock-pot)
+  .add-pot-button :is(img, svg, span) {
+  animation: tutorialObjectGlow 2.2s ease-in-out infinite !important;
+}
+
+/* Корзинка: анимируем только PNG, не контейнер и не кнопку. */
+.game-stage:has(.tutorial-step-open-seeds)
+  .plantation-seed-basket,
+.game-stage:has(.tutorial-step-open-seeds)
+  .plantation-seed-basket button {
+  animation: none !important;
+}
+
+.game-stage:has(.tutorial-step-open-seeds)
+  .plantation-seed-basket .seed-basket-image,
+.game-stage:has(.tutorial-step-open-seeds)
+  .plantation-seed-basket img {
+  animation: tutorialBasketImageBreath 2s ease-in-out infinite !important;
+  will-change: filter;
+}
+
+/* Зелёный томат: никакой рамки карточки, подсвечиваем картинку и название. */
+.game-stage:has(.tutorial-step-choose-seed)
+  .seed-card {
+  outline: none !important;
+  box-shadow: none !important;
+  animation: none !important;
+}
+
+.game-stage:has(.tutorial-step-choose-seed)
+  .seed-card:not(:disabled)
+  :is(.seed-image, .seed-icon, .seed-name) {
+  animation: tutorialSeedChoiceGlow 2s ease-in-out infinite !important;
+}
+
+/* Кнопка «Посадить»: без внешней рамки, только мягкое свечение самой кнопки. */
+.game-stage:has(.tutorial-step-plant-seed)
+  .seed-modal .plant-button {
+  outline: none !important;
+  border: none !important;
+  animation: tutorialPlantButtonGlow 2.1s ease-in-out infinite !important;
+}
+
+/*
+  Растение на каждом этапе роста сохраняет штатный plantIdle.
+  Добавляем только glow-анимацию, которая не использует transform.
+*/
+.game-stage:has(.tutorial-step-growing)
+  .plant-button-image .plant {
+  animation:
+    plantIdle 2.8s ease-in-out infinite,
+    tutorialGrowingPlantGlow 2.25s ease-in-out infinite !important;
+}
+
+/* Готовое растение: сохраняем его штатную анимацию и добавляем glow. */
+.game-stage:has(.tutorial-step-collect)
+  .plant-button-image.collectable {
+  animation: none !important;
+}
+
+.game-stage:has(.tutorial-step-collect)
+  .plant-button-image.collectable .plant {
+  animation:
+    plantReadyPulse 1.45s ease-in-out infinite,
+    tutorialCollectPlantGlow 2s ease-in-out infinite !important;
+}
+
+/* Финальная кнопка района — округлое свечение без outline. */
+.game-stage:has(.tutorial-step-go-district)
+  .bottom-menu-button:last-child {
+  outline: none !important;
+  animation: tutorialDistrictGlow 2.1s ease-in-out infinite !important;
+}
+
+@keyframes tutorialSpotlightSoftBreath {
+  0%,
+  100% {
+    box-shadow:
+      0 0 0 9999px rgba(2, 5, 8, 0.38),
+      0 0 18px rgba(166, 255, 92, 0.11);
+  }
+
+  50% {
+    box-shadow:
+      0 0 0 9999px rgba(2, 5, 8, 0.35),
+      0 0 30px rgba(166, 255, 92, 0.22);
+  }
+}
+
+@keyframes tutorialJoeFloat {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+
+  50% {
+    transform: translateY(-5px) rotate(0.35deg);
+  }
+}
+
+@keyframes tutorialDialogSoftGlow {
+  0%,
+  100% {
+    box-shadow:
+      0 14px 34px rgba(0, 0, 0, 0.54),
+      0 0 13px rgba(179, 255, 99, 0.12),
+      inset 0 1px rgba(255, 255, 255, 0.06);
+  }
+
+  50% {
+    box-shadow:
+      0 14px 34px rgba(0, 0, 0, 0.58),
+      0 0 24px rgba(179, 255, 99, 0.24),
+      inset 0 1px rgba(255, 255, 255, 0.08);
+  }
+}
+
+@keyframes tutorialButtonBrightness {
+  0%,
+  100% {
+    filter: brightness(1.02);
+  }
+
+  50% {
+    filter: brightness(1.13);
+  }
+}
+
+@keyframes tutorialObjectGlow {
+  0%,
+  100% {
+    filter:
+      brightness(1.03)
+      drop-shadow(0 0 4px rgba(190, 255, 112, 0.25));
+  }
+
+  50% {
+    filter:
+      brightness(1.14)
+      drop-shadow(0 0 9px rgba(199, 255, 125, 0.5));
+  }
+}
+
+@keyframes tutorialBasketImageBreath {
+  0%,
+  100% {
+    filter:
+      brightness(1.06)
+      saturate(1.04)
+      drop-shadow(0 0 5px rgba(181, 255, 101, 0.3))
+      drop-shadow(0 0 12px rgba(76, 229, 150, 0.16));
+  }
+
+  50% {
+    filter:
+      brightness(1.18)
+      saturate(1.1)
+      drop-shadow(0 0 10px rgba(198, 255, 123, 0.58))
+      drop-shadow(0 0 20px rgba(76, 229, 150, 0.3));
+  }
+}
+
+@keyframes tutorialSeedChoiceGlow {
+  0%,
+  100% {
+    filter:
+      brightness(1.02)
+      drop-shadow(0 0 3px rgba(184, 255, 102, 0.2));
+    text-shadow: 0 0 5px rgba(184, 255, 102, 0.12);
+  }
+
+  50% {
+    filter:
+      brightness(1.13)
+      drop-shadow(0 0 8px rgba(197, 255, 122, 0.48));
+    text-shadow: 0 0 10px rgba(197, 255, 122, 0.28);
+  }
+}
+
+@keyframes tutorialPlantButtonGlow {
+  0%,
+  100% {
+    filter: brightness(1.02);
+    box-shadow:
+      0 5px 0 rgba(20, 84, 64, 0.9),
+      0 0 8px rgba(93, 231, 168, 0.16),
+      inset 0 0 0 2px rgba(255, 255, 255, 0.22);
+  }
+
+  50% {
+    filter: brightness(1.11);
+    box-shadow:
+      0 5px 0 rgba(20, 84, 64, 0.9),
+      0 0 16px rgba(116, 255, 194, 0.34),
+      inset 0 0 0 2px rgba(255, 255, 255, 0.25);
+  }
+}
+
+@keyframes tutorialGrowingPlantGlow {
+  0%,
+  100% {
+    filter:
+      brightness(1.02)
+      drop-shadow(0 0 4px rgba(180, 255, 111, 0.2));
+  }
+
+  50% {
+    filter:
+      brightness(1.11)
+      drop-shadow(0 0 9px rgba(198, 255, 129, 0.43))
+      drop-shadow(0 0 17px rgba(69, 224, 145, 0.2));
+  }
+}
+
+@keyframes tutorialCollectPlantGlow {
+  0%,
+  100% {
+    filter:
+      brightness(1.08)
+      drop-shadow(0 0 6px rgba(190, 255, 111, 0.34));
+  }
+
+  50% {
+    filter:
+      brightness(1.2)
+      drop-shadow(0 0 11px rgba(207, 255, 135, 0.62))
+      drop-shadow(0 0 21px rgba(76, 230, 148, 0.3));
+  }
+}
+
+@keyframes tutorialDistrictGlow {
+  0%,
+  100% {
+    filter: brightness(1.02);
+    box-shadow: 0 0 7px rgba(183, 255, 102, 0.15);
+  }
+
+  50% {
+    filter: brightness(1.12);
+    box-shadow: 0 0 15px rgba(195, 255, 121, 0.32);
+  }
+}
