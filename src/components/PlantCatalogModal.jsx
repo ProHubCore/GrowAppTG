@@ -2,8 +2,16 @@ import { HARVEST_QUALITIES } from "../data/harvestQuality";
 import "./PlantCatalogModal.css";
 
 const PLANTS = [
-  { id: "greenTomato", name: "Зелёный томат", icon: "🍅", note: "Зелёный не значит неспелый. Иногда это просто характер." },
-  { id: "psychomor", name: "Психомор", icon: "🪻", note: "Светится так, будто знает больше, чем говорит." },
+  { id: "greenTomato", name: "Кислоплод", icon: "🟢", note: "Базовый бодрящий плод района." },
+  { id: "lumenweed", name: "Люмен-трава", icon: "🪻", note: "Светится в темноте и идёт в клубные смеси." },
+  { id: "moonmint", name: "Лунная мята", icon: "🌿", note: "Охлаждает голову и усиливает музыку." },
+  { id: "velvetbud", name: "Бархатный бутон", icon: "🌺", note: "Редкий ароматный товар для спокойных заведений." },
+  { id: "psychoshroom", name: "Психомор", icon: "🍄", note: "Гриб, после которого некоторые начинают видеть звук." },
+  { id: "bluecap", name: "Синий колпак", icon: "🔵", note: "Закрытая грибная культура для опытных поставщиков." },
+  { id: "starleaf", name: "Звёздный лист", icon: "✨", note: "Искристая зелень, которую ценят танцполы." },
+  { id: "emberpod", name: "Жар-стручок", icon: "🔥", note: "Горячий плод для крепких напитков." },
+  { id: "dreamcap", name: "Сонный колпак", icon: "🌙", note: "Мягкий гриб для тихих комнат клуба." },
+  { id: "ghostmorel", name: "Призрачный сморчок", icon: "👻", note: "Редкая культура для тайных покупателей." },
 ];
 
 export default function PlantCatalogModal({ isOpen, catalog = {}, onClose }) {

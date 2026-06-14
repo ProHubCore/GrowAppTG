@@ -3,7 +3,7 @@ import { useRef, useState } from "react";
 import Pot from "./Pot";
 import Plant from "./Plant";
 import SeedBasket from "./SeedBasket";
-import ShovelTool from "./ShovelTool";
+import CareTool from "./CareTool";
 import GrowTimer from "./GrowTimer";
 
 import "./PlantArea.css";
@@ -29,6 +29,9 @@ function PlantArea({
   onRemoveClick,
   onUnlock,
   onOpenCare,
+  onChangePotType,
+  potTypeName,
+  potTypeIcon,
   careApplied,
   canCare = false,
   onPreviousPot,
@@ -38,6 +41,8 @@ function PlantArea({
   removeDisabled = false,
   collectDisabled = false,
   unlockDisabled = false,
+  isDev = false,
+  onDevClear,
 }) {
   const touchStartX = useRef(null);
   const touchStartY = useRef(null);
@@ -182,25 +187,35 @@ function PlantArea({
               )}
             </div>
 
-            {canCare && (
-              <button
-                type="button"
-                className="plant-care-button"
-                onTouchStart={stopSwipeStart}
-                onTouchEnd={stopSwipeStart}
-                onClick={onOpenCare}
-              >
-                <span className="plant-care-button__icon">✦</span>
-                <span className="plant-care-button__text">Уход</span>
-              </button>
+
+            {isDev && (
+              <div className="pot-dev-controls" onTouchStart={stopSwipeStart} onTouchEnd={stopSwipeStart}>
+                <button type="button" onClick={onDevClear}>DEV · очистить</button>
+                <button type="button" onClick={onChangePotType} disabled={!isEmpty}>DEV · тип</button>
+              </div>
             )}
 
-            {careApplied && growStep > 0 && growStep < 3 && (
+            {Array.isArray(careApplied) && careApplied.length > 0 && growStep > 0 && growStep < 3 && (
               <div className="plant-care-status">
-                {careApplied === "water" && "💧 Ускорено"}
-                {careApplied === "nutrition" && "🌿 Подкормлено"}
-                {careApplied === "joeMix" && "🧪 Смесь Джо"}
+                {careApplied.includes("water") && <span>💧</span>}
+                {careApplied.includes("nutrition") && <span>🌿</span>}
+                {careApplied.includes("joeMix") && <span>🧪</span>}
+                <b>{careApplied.length}/3</b>
               </div>
+            )}
+
+            {isEmpty && (
+              <button
+                type="button"
+                className="pot-type-change-button"
+                onTouchStart={stopSwipeStart}
+                onTouchEnd={stopSwipeStart}
+                onClick={onChangePotType}
+              >
+                <span>{potTypeIcon}</span>
+                <span>{potTypeName}</span>
+                <b>Сменить</b>
+              </button>
             )}
 
             <div
@@ -215,15 +230,17 @@ function PlantArea({
             </div>
 
             <div
-              className="plantation-shovel-tool"
+              className="plantation-care-tool"
               onTouchStart={stopSwipeStart}
               onTouchEnd={stopSwipeStart}
             >
-              <ShovelTool
-                disabled={isEmpty || removeDisabled}
-                onClick={onRemoveClick}
+              <CareTool
+                disabled={!canCare}
+                appliedCount={Array.isArray(careApplied) ? careApplied.length : careApplied ? 1 : 0}
+                onClick={onOpenCare}
               />
             </div>
+
           </>
         ) : (
           <button

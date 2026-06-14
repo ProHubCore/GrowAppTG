@@ -29,6 +29,7 @@ function SeedModal({
   onPlantSeed,
   onClose,
   tutorialStep = "completed",
+  potTypeName = "ведро",
 }) {
   if (!isOpen) return null;
 
@@ -60,7 +61,7 @@ function SeedModal({
         {!selectedSeed && (
           <>
             <div className="modal-title">Корзинка с семенами</div>
-            <div className="modal-subtitle">Выбери, что посадить</div>
+            <div className="modal-subtitle">Подходит для: {potTypeName}</div>
             <div className="seed-list">
               {availableSeeds.map((seed) => {
                 const amount = getSeedAmount(seed, seedInventory);

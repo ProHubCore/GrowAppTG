@@ -3,10 +3,10 @@ import { useMemo, useRef, useState } from "react";
 const TRUST_LEVELS = [
   { level: 0, title: "Незнакомец", required: 0, icon: "👋", reward: "Доска дел Джо" },
   { level: 1, title: "Ученик", required: 25, icon: "💧", reward: "Старая лейка: ускорение роста" },
-  { level: 2, title: "Подручный", required: 60, icon: "🌿", reward: "Питательный раствор: качество и +1 плод" },
+  { level: 2, title: "Подручный", required: 60, icon: "🌿", reward: "Доступ к покупке питательного раствора" },
   { level: 3, title: "Свой человек", required: 110, icon: "🪣", reward: "Грибная ёмкость (подготовлена к открытию)" },
   { level: 4, title: "Партнёр", required: 180, icon: "🍄", reward: "Семена Психогриба (следующая глава)" },
-  { level: 5, title: "Правая рука", required: 240, icon: "🧪", reward: "Смесь Джо и мастерская" },
+  { level: 5, title: "Правая рука", required: 240, icon: "🧪", reward: "Доступ к покупке смеси Джо и мастерская" },
 ];
 
 const QUESTS = [
@@ -14,8 +14,8 @@ const QUESTS = [
     id: "joe-first-delivery",
     title: "Первый заказ",
     label: "Дело Джо",
-    description: "Району нужны свежие зелёные томаты. Принеси Дяде Джо три штуки.",
-    icon: "🍅",
+    description: "Району нужны свежие Кислоплоды. Принеси Дяде Джо три штуки.",
+    icon: "🟢",
     previousQuestId: null,
     objective: { type: "deliver", itemId: "greenTomato", amount: 3 },
     reward: { coins: 300, trust: 25 },
@@ -24,7 +24,7 @@ const QUESTS = [
     id: "joe-club-request",
     title: "Просьба клуба",
     label: "Связь с клубом",
-    description: "Продай клубу пять зелёных томатов. Джо хочет проверить, умеешь ли ты работать не только на себя.",
+    description: "Продай клубу пять Кислоплодов. Джо хочет проверить, умеешь ли ты работать не только на себя.",
     icon: "♣",
     previousQuestId: "joe-first-delivery",
     objective: { type: "club-sale", itemId: "greenTomato", amount: 5 },
@@ -34,20 +34,20 @@ const QUESTS = [
     id: "joe-dark-seed",
     title: "Тёмное семя",
     label: "Дело магазина",
-    description: "Купи хотя бы одно семя Психомора. У Зорика появилась поставка, о которой лучше не шуметь.",
+    description: "Купи хотя бы одно семя Люмен-травы. У Зорика появилась поставка, о которой лучше не шуметь.",
     icon: "✦",
     previousQuestId: "joe-club-request",
-    objective: { type: "own-seed", itemId: "psychomor", amount: 1 },
+    objective: { type: "own-seed", itemId: "lumenweed", amount: 1 },
     reward: { coins: 200, trust: 20 },
   },
   {
     id: "joe-strange-harvest",
     title: "Странный урожай",
     label: "Особое дело",
-    description: "Вырасти Психомор и передай один плод Джо. Покупатель имени не назвал, но платит щедро.",
+    description: "Вырасти Люмен-траву и передай один плод Джо. Покупатель имени не назвал, но платит щедро.",
     icon: "◉",
     previousQuestId: "joe-dark-seed",
-    objective: { type: "deliver", itemId: "psychomor", amount: 1 },
+    objective: { type: "deliver", itemId: "lumenweed", amount: 1 },
     reward: { coins: 700, trust: 35 },
   },
   {
@@ -64,7 +64,7 @@ const QUESTS = [
     id: "joe-quality-harvest",
     title: "Не просто урожай",
     label: "Мастерство выращивания",
-    description: "Получи зелёный томат качеством не ниже хорошего. Обычного ожидания таймера уже недостаточно.",
+    description: "Получи Кислоплод качеством не ниже хорошего. Обычного ожидания таймера уже недостаточно.",
     icon: "◆",
     previousQuestId: "joe-club-status",
     objective: { type: "quality-rank", itemId: "greenTomato", rank: 1, amount: 1 },
@@ -151,7 +151,7 @@ export default function JoeHouseScreen({
     ...questState,
     completedQuestIds,
     trust,
-    clubSales: { greenTomato: questState?.clubSales?.greenTomato || 0, psychomor: questState?.clubSales?.psychomor || 0 },
+    clubSales: { greenTomato: questState?.clubSales?.greenTomato || 0, lumenweed: questState?.clubSales?.lumenweed || questState?.clubSales?.psychomor || 0 },
     careUses: { water: questState?.careUses?.water || 0, nutrition: questState?.careUses?.nutrition || 0, joeMix: questState?.careUses?.joeMix || 0 },
     ...patch,
   });
@@ -175,7 +175,7 @@ export default function JoeHouseScreen({
   };
 
   const addDevTrust = () => updateQuestState({ trust: trust + 25 });
-  const resetJoe = () => updateQuestState({ completedQuestIds: [], trust: 0, clubSales: { greenTomato: 0, psychomor: 0 }, careUses: { water: 0, nutrition: 0, joeMix: 0 } });
+  const resetJoe = () => updateQuestState({ completedQuestIds: [], trust: 0, clubSales: { greenTomato: 0, lumenweed: 0 }, careUses: { water: 0, nutrition: 0, joeMix: 0 } });
   const moveCard = (direction) => cards.length > 1 && setCardIndex((i) => (i + direction + cards.length) % cards.length);
   const setCurrentSection = (next) => { setSection(next); setCardIndex(0); };
 

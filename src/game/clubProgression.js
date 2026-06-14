@@ -7,7 +7,7 @@ export const CLUB_REPUTATION_EVENT =
 export const CLUB_LEVELS = [
   {
     level: 1,
-    title: "Новый знакомый",
+    title: "Новый поставщик",
     required: 0,
     reward: "Доступ к клубному сбыту",
   },
@@ -15,7 +15,7 @@ export const CLUB_LEVELS = [
     level: 2,
     title: "Свой человек",
     required: 50,
-    reward: "Новые семена в магазине",
+    reward: "Расширенная витрина Зорика",
   },
   {
     level: 3,

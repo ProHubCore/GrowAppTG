@@ -1,38 +1,30 @@
 export const seeds = [
   {
     id: "greenTomato",
-
-    name: "Зелёный томат",
-
-    description:
-      "Бесплатные базовые семена. Их запас никогда не заканчивается.",
-
-    icon: "🌱",
-
+    name: "Кислоплод",
+    description: "Базовый бодрящий плод района. Семена всегда есть у начинающего поставщика.",
+    icon: "🟢",
     infinite: true,
-
     growTime: 5,
-
-    harvestItemId:
-      "greenTomato",
+    harvestItemId: "greenTomato",
+    seedType: "plant",
   },
-
   {
-    id: "psychomor",
-
-    name: "Психомор",
-
-    description:
-      "Редкие семена инопланетного светящегося растения.",
-
-    image:
-      "/assets/seeds/psychomor-seeds.png",
-
+    id: "lumenweed",
+    name: "Люмен-трава",
+    description: "Светящаяся трава для клубных смесей и кальянов.",
+    image: "/assets/seeds/psychomor-seeds.png",
     infinite: false,
-
-    growTime: 3,
-
-    harvestItemId:
-      "psychomor",
+    growTime: 4,
+    harvestItemId: "lumenweed",
+    seedType: "plant",
   },
+  { id: "moonmint", name: "Лунная мята", description: "Прохладная ароматная зелень для ночных заведений района.", icon: "🌿", infinite: false, growTime: 5, harvestItemId: "moonmint", seedType: "plant" },
+  { id: "velvetbud", name: "Бархатный бутон", description: "Мягкий бутон с долгим послевкусием.", icon: "🌺", infinite: false, growTime: 6, harvestItemId: "velvetbud", seedType: "plant" },
+  { id: "starleaf", name: "Звёздный лист", description: "Хрустящая клубная зелень с искристым ароматом.", icon: "✨", infinite: false, growTime: 6, harvestItemId: "starleaf", seedType: "plant" },
+  { id: "emberpod", name: "Жар-стручок", description: "Тёплый плод для острых напитков и ритуальных смесей.", icon: "🔥", infinite: false, growTime: 8, harvestItemId: "emberpod", seedType: "plant" },
+  { id: "psychoshroom", name: "Психомор", description: "Гриб Джо. Растёт только во влажной грибной ёмкости.", icon: "🍄", infinite: false, growTime: 5, harvestItemId: "psychoshroom", seedType: "mushroom", requiredTrust: 180 },
+  { id: "bluecap", name: "Синий колпак", description: "Клубный гриб для опытных поставщиков.", icon: "🔵", infinite: false, growTime: 7, harvestItemId: "bluecap", seedType: "mushroom", requiredTrust: 180 },
+  { id: "dreamcap", name: "Сонный колпак", description: "Мягкая грибная культура для тихих залов клуба.", icon: "🌙", infinite: false, growTime: 8, harvestItemId: "dreamcap", seedType: "mushroom", requiredTrust: 180 },
+  { id: "ghostmorel", name: "Призрачный сморчок", description: "Редкий полупрозрачный гриб для закрытых заказов.", icon: "👻", infinite: false, growTime: 10, harvestItemId: "ghostmorel", seedType: "mushroom", requiredTrust: 240 },
 ];
