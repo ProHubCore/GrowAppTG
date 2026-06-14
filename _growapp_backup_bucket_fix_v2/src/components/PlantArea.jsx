@@ -16,7 +16,6 @@ function PlantArea({
   plant,
   unlockPrice,
   isSlotAvailable,
-  lockedStatusText,
   isUnlocked,
   isEmpty,
   canCollect,
@@ -215,8 +214,7 @@ function PlantArea({
                 </span>
 
                 <span className="add-pot-price">
-                  {lockedStatusText ||
-                    "Пока что недоступно"}
+                  Пока что недоступно
                 </span>
               </>
             )}

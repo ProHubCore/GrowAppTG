@@ -16,14 +16,9 @@ import ActionModal from "./ActionModal";
 import TestResetButton from "./TestResetButton";
 import usePersistentState from "../hooks/usePersistentState";
 import usePotGrowth from "../hooks/usePotGrowth";
-import useClubReputation from "../hooks/useClubReputation";
 
 import { pots } from "../data/pots";
-import {
-  getPlantationSlotState,
-  plantationSlots,
-} from "../data/plantationSlots";
-import { getClubLevel } from "../game/clubProgression";
+import { plantationSlots } from "../data/plantationSlots";
 import { plantsBySeed } from "../data/plants";
 import { seeds } from "../data/seeds";
 import { shopItems } from "../data/shopItems";
@@ -73,8 +68,6 @@ function createEmptyPotState(unlocked) {
 
 function GameScreen() {
   const [currentPotIndex, setCurrentPotIndex] = useState(0);
-  const clubReputation = useClubReputation();
-  const clubLevel = getClubLevel(clubReputation);
 
   const [potStates, setPotStates] = usePersistentState(
     "growapp-pot-states",
@@ -199,12 +192,6 @@ function GameScreen() {
     potStates[currentPotIndex] ||
     createPotState(currentPotIndex);
 
-  const currentSlotState = getPlantationSlotState(
-    currentSlot,
-    clubLevel,
-    Boolean(currentPotState.unlocked),
-  );
-
   const growStep = currentPotState.growStep;
   const timeLeft = currentPotState.timeLeft;
   const plantedSeedId = currentPotState.selectedSeedId;
@@ -228,14 +215,6 @@ function GameScreen() {
     pendingSlotIndex === null
       ? null
       : plantationSlots[pendingSlotIndex];
-
-  const pendingSlotState = getPlantationSlotState(
-    pendingSlot,
-    clubLevel,
-    pendingSlotIndex === null
-      ? false
-      : Boolean(potStates[pendingSlotIndex]?.unlocked),
-  );
 
   const updateCurrentPotState = (updates) => {
     setPotStates((previousStates) =>
@@ -280,7 +259,7 @@ function GameScreen() {
       return;
     }
 
-    if (!currentSlotState.canBuy) {
+    if (!currentSlot?.available) {
       setIsUnavailableModalOpen(true);
       return;
     }
@@ -295,13 +274,7 @@ function GameScreen() {
 
     const slot = plantationSlots[pendingSlotIndex];
 
-    const slotState = getPlantationSlotState(
-      slot,
-      clubLevel,
-      Boolean(potStates[pendingSlotIndex]?.unlocked),
-    );
-
-    if (!slotState.canBuy || slot.unlockPrice === null) {
+    if (!slot?.available || slot.unlockPrice === null) {
       setPendingSlotIndex(null);
       setIsUnavailableModalOpen(true);
       return;
@@ -642,8 +615,9 @@ function GameScreen() {
                   pot={currentPot}
                   plant={currentPlant}
                   unlockPrice={currentSlot?.unlockPrice}
-                  isSlotAvailable={currentSlotState.canBuy}
-        lockedStatusText={currentSlotState.statusText}
+                  isSlotAvailable={Boolean(
+                    currentSlot?.available,
+                  )}
                   isUnlocked={isCurrentPotUnlocked}
                   isEmpty={growStep === 0}
                   canCollect={growStep === 3}
@@ -716,10 +690,9 @@ function GameScreen() {
               coins={coins}
               confirmText="Купить"
               confirmDisabled={
-          !pendingSlot ||
-          !pendingSlotState.canBuy ||
-          coins < pendingSlot.unlockPrice
-        }
+                !pendingSlot ||
+                coins < pendingSlot.unlockPrice
+              }
               onConfirm={buyPendingSlot}
               onCancel={() => setPendingSlotIndex(null)}
             />
@@ -727,11 +700,7 @@ function GameScreen() {
             <ActionModal
               isOpen={isUnavailableModalOpen}
               title="Пока что недоступно"
-              description={
-        currentSlotState.isLevelLocked
-          ? currentSlotState.statusText
-          : "Это место появится в одном из следующих обновлений."
-      }
+              description="Это место появится в одном из следующих обновлений."
               confirmText="Понятно"
               cancelText="Закрыть"
               onConfirm={() =>

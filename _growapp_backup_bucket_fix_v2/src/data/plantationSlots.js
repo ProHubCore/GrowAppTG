@@ -5,18 +5,21 @@ export const plantationSlots = [
     requiredClubLevel: 1,
     released: true,
   },
+
   {
     id: 2,
     unlockPrice: 100,
     requiredClubLevel: 3,
     released: true,
   },
+
   {
     id: 3,
     unlockPrice: null,
     requiredClubLevel: null,
     released: false,
   },
+
   {
     id: 4,
     unlockPrice: null,
@@ -57,33 +60,32 @@ export function getPlantationSlotState(
     };
   }
 
-  const currentLevel = Math.max(
-    1,
-    Math.floor(Number(clubLevel) || 1),
-  );
+  const requiredClubLevel =
+    Number(slot.requiredClubLevel) || 1;
 
-  const requiredLevel = Math.max(
-    1,
-    Math.floor(Number(slot.requiredClubLevel) || 1),
-  );
+  const currentClubLevel =
+    Number(clubLevel) || 1;
 
-  if (currentLevel < requiredLevel) {
+  const isLevelLocked =
+    currentClubLevel < requiredClubLevel;
+
+  if (isLevelLocked) {
     return {
       canBuy: false,
       isLevelLocked: true,
       isReleased: true,
-      statusText: `Откроется на ${requiredLevel} уровне клуба`,
+      statusText: `Откроется на ${requiredClubLevel} уровне клуба`,
     };
   }
 
-  const price = Number(slot.unlockPrice);
+  const unlockPrice = Number(slot.unlockPrice);
 
   return {
-    canBuy: Number.isFinite(price) && price > 0,
+    canBuy:
+      Number.isFinite(unlockPrice) &&
+      unlockPrice > 0,
     isLevelLocked: false,
     isReleased: true,
-    statusText: Number.isFinite(price)
-      ? `${price} монет`
-      : "Пока что недоступно",
+    statusText: `${unlockPrice} монет`,
   };
 }
