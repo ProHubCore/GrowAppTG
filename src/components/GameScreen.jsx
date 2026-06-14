@@ -14,6 +14,7 @@ import ClubScreen from "./ClubScreen";
 import ShopModal from "./ShopModal";
 import ActionModal from "./ActionModal";
 import TestResetButton from "./TestResetButton";
+import TutorialOverlay from "./tutorial/TutorialOverlay";
 import usePersistentState from "../hooks/usePersistentState";
 import usePotGrowth from "../hooks/usePotGrowth";
 import useClubReputation from "../hooks/useClubReputation";
@@ -43,11 +44,12 @@ const STORAGE_KEYS = [
   "growapp-shop-stock",
   "growapp-coins",
   "growapp-club-reputation",
+  "growapp-tutorial-step",
 ];
 
 function createPotState(index) {
   return {
-    unlocked: index === 0,
+    unlocked: false,
     growStep: 0,
     selectedSeedId: null,
     growTime: DEFAULT_GROW_TIME,
@@ -75,6 +77,14 @@ function GameScreen() {
   const [currentPotIndex, setCurrentPotIndex] = useState(0);
   const clubReputation = useClubReputation();
   const clubLevel = getClubLevel(clubReputation);
+
+  const [tutorialStep, setTutorialStep] = usePersistentState(
+    "growapp-tutorial-step",
+    () =>
+      localStorage.getItem("growapp-pot-states")
+        ? "completed"
+        : "intro",
+  );
 
   const [potStates, setPotStates] = usePersistentState(
     "growapp-pot-states",
@@ -147,10 +157,7 @@ function GameScreen() {
         return {
           ...createPotState(index),
           ...savedState,
-          unlocked:
-            index === 0
-              ? true
-              : Boolean(savedState.unlocked),
+          unlocked: Boolean(savedState.unlocked),
         };
       }),
     );
@@ -220,6 +227,21 @@ function GameScreen() {
       ? currentPlantStages[growStep - 1] || null
       : null;
 
+  useEffect(() => {
+    if (
+      tutorialStep === "growing" &&
+      activeScreen === "plantation" &&
+      growStep === 3
+    ) {
+      setTutorialStep("collect");
+    }
+  }, [
+    activeScreen,
+    growStep,
+    setTutorialStep,
+    tutorialStep,
+  ]);
+
   const psychomorItem =
     shopItems.find((item) => item.id === "psychomor") ||
     null;
@@ -277,6 +299,22 @@ function GameScreen() {
 
   const handleLockedSlotClick = () => {
     if (isCurrentPotUnlocked) {
+      return;
+    }
+
+    if (
+      tutorialStep === "unlock-pot" &&
+      currentPotIndex === 0
+    ) {
+      setPotStates((previousStates) =>
+        previousStates.map((potState, index) =>
+          index === 0
+            ? createEmptyPotState(true)
+            : potState,
+        ),
+      );
+
+      setTutorialStep("open-seeds");
       return;
     }
 
@@ -338,6 +376,21 @@ function GameScreen() {
 
     setSelectedSeed(null);
     setIsSeedModalOpen(true);
+
+    if (tutorialStep === "open-seeds") {
+      setTutorialStep("choose-seed");
+    }
+  };
+
+  const selectSeed = (seed) => {
+    setSelectedSeed(seed);
+
+    if (
+      tutorialStep === "choose-seed" &&
+      seed?.id === "greenTomato"
+    ) {
+      setTutorialStep("plant-seed");
+    }
   };
 
   const closeSeedModal = () => {
@@ -386,6 +439,10 @@ function GameScreen() {
     });
 
     closeSeedModal();
+
+    if (tutorialStep === "plant-seed") {
+      setTutorialStep("growing");
+    }
   };
 
   const collectPlant = () => {
@@ -428,6 +485,10 @@ function GameScreen() {
     updateCurrentPotState(
       createEmptyPotState(true),
     );
+
+    if (tutorialStep === "collect") {
+      setTutorialStep("go-district");
+    }
 
     window.setTimeout(() => {
       setFlyingLootItems([]);
@@ -588,6 +649,7 @@ function GameScreen() {
     });
 
     setPotStates(createInitialPotStates());
+    setTutorialStep("intro");
 
     setCurrentPotIndex(0);
     setActiveScreen("plantation");
@@ -641,8 +703,18 @@ function GameScreen() {
                 <PlantArea
                   pot={currentPot}
                   plant={currentPlant}
-                  unlockPrice={currentSlot?.unlockPrice}
-                  isSlotAvailable={currentSlotState.canBuy}
+                  unlockPrice={
+                    tutorialStep === "unlock-pot" &&
+                    currentPotIndex === 0
+                      ? 0
+                      : currentSlot?.unlockPrice
+                  }
+                  isSlotAvailable={
+                    tutorialStep === "unlock-pot" &&
+                    currentPotIndex === 0
+                      ? true
+                      : currentSlotState.canBuy
+                  }
         lockedStatusText={currentSlotState.statusText}
                   isUnlocked={isCurrentPotUnlocked}
                   isEmpty={growStep === 0}
@@ -685,7 +757,7 @@ function GameScreen() {
               seeds={seeds}
               seedInventory={seedInventory}
               selectedSeed={selectedSeed}
-              onSelectSeed={setSelectedSeed}
+              onSelectSeed={selectSeed}
               onPlantSeed={plantSelectedSeed}
               onClose={closeSeedModal}
             />
@@ -807,9 +879,35 @@ function GameScreen() {
               onGoDistrict={() => {
                 setIsShopProductVisible(false);
                 setActiveScreen("district");
+
+                if (tutorialStep === "go-district") {
+                  setTutorialStep("district-finish");
+                }
               }}
             />
           )}
+
+        <TutorialOverlay
+          step={tutorialStep}
+          stageScale={stageScale}
+          activeScreen={activeScreen}
+          onContinue={() => {
+            if (tutorialStep === "intro") {
+              setActiveScreen("plantation");
+              setCurrentPotIndex(0);
+              setTutorialStep("unlock-pot");
+              return;
+            }
+
+            if (tutorialStep === "growing") {
+              return;
+            }
+
+            if (tutorialStep === "district-finish") {
+              setTutorialStep("completed");
+            }
+          }}
+        />
       </div>
     </div>
   );
