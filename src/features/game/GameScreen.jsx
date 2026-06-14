@@ -1,0 +1,1540 @@
+import { useEffect, useRef, useState } from "react";
+
+import PlantArea from "../plantation/components/PlantArea";
+import BottomMenu from "../../shared/components/BottomMenu/BottomMenu";
+import SeedModal from "../plantation/components/SeedModal";
+import RemovePlantModal from "../plantation/components/RemovePlantModal";
+import BackpackTool from "../inventory/components/BackpackTool";
+import InventoryModal from "../inventory/components/InventoryModal";
+import FlyingLoot from "../plantation/components/FlyingLoot";
+import DistrictScreen from "../district/DistrictScreen";
+import ShopScreen from "../shop/ShopScreen";
+import ClubScreen from "../club/ClubScreen";
+import JoeHouseScreen from "../joe/JoeHouseScreen";
+import ActionModal from "../../shared/components/ActionModal/ActionModal";
+import TestResetButton from "../../shared/components/TestResetButton/TestResetButton";
+import UnlockCelebration from "../progression/components/UnlockCelebration";
+import SupportScreen from "../support/SupportScreen";
+import HarvestCareModal from "../plantation/components/HarvestCareModal";
+import HarvestResultModal from "../plantation/components/HarvestResultModal";
+import PlantCatalogModal from "../catalog/components/PlantCatalogModal";
+import PotTypeModal from "../plantation/components/PotTypeModal";
+import TutorialOverlay from "../tutorial/TutorialOverlay";
+import usePersistentState from "../../core/hooks/usePersistentState";
+import useResponsiveStage from "../../core/hooks/useResponsiveStage";
+import usePotGrowth from "../plantation/hooks/usePotGrowth";
+import useClubReputation from "../club/useClubReputation";
+
+import { pots } from "../plantation/data/pots";
+import {
+  getPlantationSlotState,
+  plantationSlots,
+} from "../plantation/data/plantationSlots";
+import { CLUB_LEVELS, getClubLevel } from "../club/clubProgression";
+import { JOE_TRUST_LEVELS } from "../joe/joeProgression";
+import { plantsBySeed } from "../plantation/data/plants";
+import { seeds } from "../plantation/data/seeds";
+import { SHOP_REFRESH_MS, createShopStock, shopItems } from "../shop/shopItems";
+import { getHarvestYield, rollHarvestQuality } from "../plantation/data/harvestQuality";
+import { POT_TYPES_BY_ID, getUnlockedPotTypes } from "../plantation/data/potTypes";
+import { addQualityItems, createEmptyQualityInventory, getQualityAmount, getQualityTotal, removeAnyQuality, removeQualityItems } from "../plantation/data/qualityInventory";
+
+import "./GameScreen.css";
+
+const DEFAULT_GROW_TIME = 5;
+const INITIAL_COINS = 100000;
+
+const STAGE_WIDTH = 390;
+const STAGE_HEIGHT = 844;
+const INVENTORY_SLOT_LIMIT = 12;
+
+const STORAGE_KEYS = [
+  "growapp-pot-states",
+  "growapp-inventory",
+  "growapp-seed-inventory",
+  "growapp-shop-stock",
+  "growapp-shop-refresh-at",
+  "growapp-coins",
+  "growapp-club-reputation",
+  "growapp-tutorial-step",
+  "growapp-joe-quests",
+  "growapp-plant-catalog",
+  "growapp-quality-inventory",
+];
+
+function createPotState(index) {
+  return {
+    unlocked: false,
+    growStep: 0,
+    selectedSeedId: null,
+    growTime: DEFAULT_GROW_TIME,
+    timeLeft: DEFAULT_GROW_TIME,
+    nextGrowthAt: null,
+    careApplied: [],
+    potTypeId: "soil",
+  };
+}
+
+function createInitialPotStates() {
+  return pots.map((_, index) => createPotState(index));
+}
+
+function createEmptyPotState(unlocked) {
+  return {
+    unlocked,
+    growStep: 0,
+    selectedSeedId: null,
+    growTime: DEFAULT_GROW_TIME,
+    timeLeft: DEFAULT_GROW_TIME,
+    nextGrowthAt: null,
+    careApplied: [],
+    potTypeId: "soil",
+  };
+}
+
+function GameScreen() {
+  const isDev = import.meta.env.DEV;
+  const [currentPotIndex, setCurrentPotIndex] = useState(0);
+  const clubReputation = useClubReputation();
+  const clubLevel = getClubLevel(clubReputation);
+
+  const [tutorialStep, setTutorialStep] = usePersistentState(
+    "growapp-tutorial-step",
+    () =>
+      localStorage.getItem("growapp-pot-states")
+        ? "completed"
+        : "intro",
+  );
+
+  const [potStates, setPotStates] = usePersistentState(
+    "growapp-pot-states",
+    createInitialPotStates,
+  );
+
+  const [inventory, setInventory] = usePersistentState(
+    "growapp-inventory",
+    {
+      greenTomato: 0,
+      lumenweed: 0,
+      moonmint: 0,
+      velvetbud: 0,
+      psychoshroom: 0,
+      bluecap: 0,
+      starleaf: 0,
+      emberpod: 0,
+      dreamcap: 0,
+      ghostmorel: 0,
+    },
+  );
+
+  const [seedInventory, setSeedInventory] = usePersistentState(
+    "growapp-seed-inventory",
+    {
+      lumenweed: 0,
+      moonmint: 0,
+      velvetbud: 0,
+      psychoshroom: 0,
+      bluecap: 0,
+      starleaf: 0,
+      emberpod: 0,
+      dreamcap: 0,
+      ghostmorel: 0,
+    },
+  );
+
+  const [careInventory, setCareInventory] = usePersistentState(
+    "growapp-care-inventory",
+    { nutrition: 0, joeMix: 0 },
+  );
+
+  const [shopStock, setShopStock] = usePersistentState(
+    "growapp-shop-stock",
+    createShopStock,
+  );
+
+  const [shopRefreshAt, setShopRefreshAt] = usePersistentState(
+    "growapp-shop-refresh-at",
+    () => Date.now() + SHOP_REFRESH_MS,
+  );
+
+  const [, setShopClock] = useState(Date.now());
+
+  const [coins, setCoins] = usePersistentState(
+    "growapp-coins",
+    INITIAL_COINS,
+  );
+
+  const [joeQuestState, setJoeQuestState] = usePersistentState(
+    "growapp-joe-quests",
+    {
+      completedQuestIds: [],
+      trust: 0,
+      clubSales: {
+        greenTomato: 0,
+        lumenweed: 0,
+      },
+      careUses: {
+        water: 0,
+        nutrition: 0,
+        joeMix: 0,
+      },
+    },
+  );
+
+  const [plantCatalog, setPlantCatalog] = usePersistentState(
+    "growapp-plant-catalog",
+    {},
+  );
+
+  const [qualityInventory, setQualityInventory] = usePersistentState(
+    "growapp-quality-inventory",
+    createEmptyQualityInventory,
+  );
+
+  const [unlockQueue, setUnlockQueue] = useState([]);
+  const previousJoeTrustRef = useRef(null);
+  const previousClubReputationRef = useRef(null);
+
+  const [activeScreen, setActiveScreen] = useState("plantation");
+  const {
+    viewportRef,
+    scale: stageScale,
+    stageCenterY,
+    cropX,
+    cropY,
+    visibleWidth,
+    visibleHeight,
+  } = useResponsiveStage(
+    STAGE_WIDTH,
+    STAGE_HEIGHT,
+  );
+
+  const [isSeedModalOpen, setIsSeedModalOpen] = useState(false);
+  const [selectedSeed, setSelectedSeed] = useState(null);
+
+  const [isRemoveModalOpen, setIsRemoveModalOpen] =
+    useState(false);
+
+  const [isInventoryOpen, setIsInventoryOpen] = useState(false);
+  const [isCareModalOpen, setIsCareModalOpen] = useState(false);
+  const [isInventoryFullModalOpen, setIsInventoryFullModalOpen] = useState(false);
+  const [isCatalogOpen, setIsCatalogOpen] = useState(false);
+  const [isPotTypeModalOpen, setIsPotTypeModalOpen] = useState(false);
+  const [potTypeMode, setPotTypeMode] = useState("change");
+  const [harvestResult, setHarvestResult] = useState(null);
+
+  const [flyingLootItems, setFlyingLootItems] = useState([]);
+
+  const [pendingSlotIndex, setPendingSlotIndex] =
+    useState(null);
+
+  const [isUnavailableModalOpen, setIsUnavailableModalOpen] =
+    useState(false);
+
+  const [isResetModalOpen, setIsResetModalOpen] =
+    useState(false);
+
+  useEffect(() => {
+    const currentTrust = Math.max(0, Number(joeQuestState?.trust) || 0);
+    const previousTrust = previousJoeTrustRef.current;
+
+    if (previousTrust === null) {
+      previousJoeTrustRef.current = currentTrust;
+      return;
+    }
+
+    if (currentTrust > previousTrust) {
+      const unlockedLevels = JOE_TRUST_LEVELS.filter(
+        (level) =>
+          level.level > 0 &&
+          level.required > previousTrust &&
+          level.required <= currentTrust,
+      );
+
+      if (unlockedLevels.length > 0) {
+        setUnlockQueue((queue) => [
+          ...queue,
+          ...unlockedLevels.map((level) => ({
+            id: `joe-${level.level}-${Date.now()}`,
+            source: "joe",
+            sourceLabel: "Путь ученика · Дядя Джо",
+            level: `${level.level} · ${level.title}`,
+            icon: level.icon,
+            title: level.unlockTitle || level.reward,
+            description:
+              level.unlockDescription ||
+              `Джо открыл для тебя: ${level.reward}.`,
+            unlocks: level.unlocks || [level.reward],
+          })),
+        ]);
+      }
+    }
+
+    previousJoeTrustRef.current = currentTrust;
+  }, [joeQuestState?.trust]);
+
+  useEffect(() => {
+    const currentReputation = Math.max(0, Number(clubReputation) || 0);
+    const previousReputation = previousClubReputationRef.current;
+
+    if (previousReputation === null) {
+      previousClubReputationRef.current = currentReputation;
+      return;
+    }
+
+    if (currentReputation > previousReputation) {
+      const unlockedLevels = CLUB_LEVELS.filter(
+        (level) =>
+          level.level > 1 &&
+          level.required > previousReputation &&
+          level.required <= currentReputation,
+      );
+
+      if (unlockedLevels.length > 0) {
+        const clubUnlocks = {
+          2: [
+            "Расширенная витрина Зорика",
+            "Бархатный бутон",
+            "Звёздный лист",
+          ],
+          3: [
+            "Второе место под ёмкость",
+            "Жар-стручок",
+            "Новые клубные цены",
+          ],
+          4: [
+            "Призрачный сморчок у Зорика",
+            "Высшие клубные заказы",
+          ],
+          5: [
+            "Статус легенды района",
+            "Финальная ступень клуба",
+          ],
+        };
+
+        setUnlockQueue((queue) => [
+          ...queue,
+          ...unlockedLevels.map((level) => ({
+            id: `club-${level.level}-${Date.now()}`,
+            source: "club",
+            sourceLabel: "Репутация клуба",
+            level: `${level.level} · ${level.title}`,
+            icon: level.level >= 4 ? "★" : "♣",
+            title: level.reward,
+            description:
+              "Клуб повысил твой статус. Район начинает относиться к твоим поставкам серьёзнее.",
+            unlocks: clubUnlocks[level.level] || [level.reward],
+          })),
+        ]);
+      }
+    }
+
+    previousClubReputationRef.current = currentReputation;
+  }, [clubReputation]);
+
+  const isTutorialActive =
+    tutorialStep !== "completed";
+
+  const tutorialAllows = (action) => {
+    if (!isTutorialActive) {
+      return true;
+    }
+
+    const allowedByStep = {
+      intro: ["continue"],
+      "unlock-pot": ["unlock-pot"],
+      "open-seeds": ["open-seeds"],
+      "choose-seed": ["choose-seed"],
+      "plant-seed": ["plant-seed"],
+      growing: [],
+      collect: ["collect"],
+      "go-district": ["go-district"],
+      "district-finish": ["continue"],
+    };
+
+    return (allowedByStep[tutorialStep] || []).includes(action);
+  };
+
+  usePotGrowth(setPotStates, DEFAULT_GROW_TIME);
+
+  useEffect(() => {
+    setPotStates((previousStates) =>
+      pots.map((_, index) => {
+        const savedState = previousStates[index];
+
+        if (!savedState) {
+          return createPotState(index);
+        }
+
+        return {
+          ...createPotState(index),
+          ...savedState,
+          unlocked: Boolean(savedState.unlocked),
+        };
+      }),
+    );
+  }, [setPotStates]);
+
+
+  useEffect(() => {
+    document.body.dataset.tutorialLocked =
+      isTutorialActive ? "true" : "false";
+
+    return () => {
+      delete document.body.dataset.tutorialLocked;
+    };
+  }, [isTutorialActive]);
+
+  useEffect(() => {
+    if (!isTutorialActive) {
+      return;
+    }
+
+    if (tutorialStep === "district-finish") {
+      setActiveScreen("district");
+      setIsSeedModalOpen(false);
+      setSelectedSeed(null);
+      return;
+    }
+
+    setActiveScreen("plantation");
+    setCurrentPotIndex(0);
+    setIsInventoryOpen(false);
+    setIsCareModalOpen(false);
+    setIsCatalogOpen(false);
+    setHarvestResult(null);
+    setIsRemoveModalOpen(false);
+    setIsResetModalOpen(false);
+    setPendingSlotIndex(null);
+    setIsUnavailableModalOpen(false);
+
+    if (tutorialStep === "choose-seed") {
+      setSelectedSeed(null);
+      setIsSeedModalOpen(true);
+      return;
+    }
+
+    if (tutorialStep === "plant-seed") {
+      const tutorialSeed =
+        seeds.find((seed) => seed.id === "greenTomato") || null;
+
+      setSelectedSeed(tutorialSeed);
+      setIsSeedModalOpen(true);
+      return;
+    }
+
+    setIsSeedModalOpen(false);
+    setSelectedSeed(null);
+  }, [isTutorialActive, tutorialStep]);
+
+  useEffect(() => {
+    setInventory((previous) => {
+      const legacy = Math.max(0, Number(previous?.psychomor) || 0);
+      if (!legacy) return previous;
+      const next = { ...previous, lumenweed: (previous.lumenweed || 0) + legacy };
+      delete next.psychomor;
+      return next;
+    });
+    setSeedInventory((previous) => {
+      const legacy = Math.max(0, Number(previous?.psychomor) || 0);
+      if (!legacy) return previous;
+      const next = { ...previous, lumenweed: (previous.lumenweed || 0) + legacy };
+      delete next.psychomor;
+      return next;
+    });
+  }, [setInventory, setSeedInventory]);
+
+  useEffect(() => {
+    setQualityInventory((previous) => {
+      let next = previous || {};
+      let changed = false;
+      for (const itemId of ["greenTomato", "lumenweed", "moonmint", "velvetbud", "psychoshroom", "bluecap", "starleaf", "emberpod", "dreamcap", "ghostmorel"]) {
+        const total = Math.max(0, Number(inventory[itemId]) || 0);
+        const qualityTotal = getQualityTotal(next, itemId);
+        if (total > qualityTotal) {
+          next = addQualityItems(next, itemId, "normal", total - qualityTotal);
+          changed = true;
+        }
+      }
+      return changed ? next : previous;
+    });
+  }, [inventory, setQualityInventory]);
+
+  useEffect(() => {
+    setShopStock((previous) => {
+      const generated = createShopStock();
+      let changed = false;
+      const next = { ...previous };
+      for (const item of shopItems) {
+        if (!Number.isFinite(Number(next[item.id]))) {
+          next[item.id] = generated[item.id];
+          changed = true;
+        }
+      }
+      return changed ? next : previous;
+    });
+  }, [setShopStock]);
+
+  useEffect(() => {
+    const refreshShop = () => {
+      const now = Date.now();
+      setShopClock(now);
+      if (now >= Number(shopRefreshAt || 0)) {
+        setShopStock(createShopStock());
+        setShopRefreshAt(now + SHOP_REFRESH_MS);
+      }
+    };
+
+    refreshShop();
+    const timer = window.setInterval(refreshShop, 1000);
+    return () => window.clearInterval(timer);
+  }, [shopRefreshAt, setShopRefreshAt, setShopStock]);
+
+  const currentPot = pots[currentPotIndex];
+
+  const currentSlot =
+    plantationSlots[currentPotIndex] || null;
+
+  const currentPotState =
+    potStates[currentPotIndex] ||
+    createPotState(currentPotIndex);
+
+  const currentSlotState = getPlantationSlotState(
+    currentSlot,
+    clubLevel,
+    Boolean(currentPotState.unlocked),
+  );
+
+  const currentPotType = POT_TYPES_BY_ID[currentPotState.potTypeId] || POT_TYPES_BY_ID.soil;
+  const displayPot = { ...currentPot, name: currentPotType.name, image: currentPotType.image, icon: currentPotType.icon };
+
+  const growStep = currentPotState.growStep;
+  const timeLeft = currentPotState.timeLeft;
+  const plantedSeedId = currentPotState.selectedSeedId;
+
+  const isCurrentPotUnlocked =
+    currentPotState.unlocked;
+
+  const currentPlantStages =
+    plantsBySeed[plantedSeedId] || null;
+
+  const currentPlant =
+    growStep > 0 && currentPlantStages
+      ? currentPlantStages[growStep - 1] || null
+      : null;
+
+  useEffect(() => {
+    if (
+      tutorialStep === "growing" &&
+      activeScreen === "plantation" &&
+      growStep === 3
+    ) {
+      setTutorialStep("collect");
+    }
+  }, [
+    activeScreen,
+    growStep,
+    setTutorialStep,
+    tutorialStep,
+  ]);
+
+  const availableSeedsForCurrentPot = seeds.filter((seed) =>
+    (seed.seedType || "plant") === currentPotType.seedType &&
+    (joeQuestState.trust || 0) >= (seed.requiredTrust || 0)
+  );
+
+  const pendingSlot =
+    pendingSlotIndex === null
+      ? null
+      : plantationSlots[pendingSlotIndex];
+
+  const pendingSlotState = getPlantationSlotState(
+    pendingSlot,
+    clubLevel,
+    pendingSlotIndex === null
+      ? false
+      : Boolean(potStates[pendingSlotIndex]?.unlocked),
+  );
+
+  const updateCurrentPotState = (updates) => {
+    setPotStates((previousStates) =>
+      previousStates.map((potState, index) =>
+        index === currentPotIndex
+          ? {
+              ...potState,
+              ...updates,
+            }
+          : potState,
+      ),
+    );
+  };
+
+  const closePlantationModals = () => {
+    setIsSeedModalOpen(false);
+    setIsRemoveModalOpen(false);
+    setSelectedSeed(null);
+    setPendingSlotIndex(null);
+    setIsUnavailableModalOpen(false);
+  };
+
+  const changePot = (nextIndex) => {
+    if (isTutorialActive) {
+      return;
+    }
+
+    closePlantationModals();
+
+    const safeIndex =
+      (nextIndex + pots.length) % pots.length;
+
+    setCurrentPotIndex(safeIndex);
+  };
+
+  const showNextPot = () => {
+    changePot(currentPotIndex + 1);
+  };
+
+  const showPreviousPot = () => {
+    changePot(currentPotIndex - 1);
+  };
+
+  const handleLockedSlotClick = () => {
+    if (!tutorialAllows("unlock-pot")) {
+      return;
+    }
+
+    if (isCurrentPotUnlocked) {
+      return;
+    }
+
+    if (
+      tutorialStep === "unlock-pot" &&
+      currentPotIndex === 0
+    ) {
+      setPotStates((previousStates) =>
+        previousStates.map((potState, index) =>
+          index === 0
+            ? createEmptyPotState(true)
+            : potState,
+        ),
+      );
+
+      setTutorialStep("open-seeds");
+      return;
+    }
+
+    if (!currentSlotState.canBuy) {
+      setIsUnavailableModalOpen(true);
+      return;
+    }
+
+    setPendingSlotIndex(currentPotIndex);
+    setPotTypeMode("purchase");
+    setIsPotTypeModalOpen(true);
+  };
+
+  const choosePendingSlotType = (potTypeId) => {
+    if (pendingSlotIndex === null) return;
+    const slot = plantationSlots[pendingSlotIndex];
+    const slotState = getPlantationSlotState(slot, clubLevel, Boolean(potStates[pendingSlotIndex]?.unlocked));
+    const type = POT_TYPES_BY_ID[potTypeId];
+    if (!type || (joeQuestState.trust || 0) < type.requiredTrust || !slotState.canBuy || slot.unlockPrice === null || coins < slot.unlockPrice) return;
+    setCoins((value) => value - slot.unlockPrice);
+    setPotStates((states) => states.map((state,index)=> index===pendingSlotIndex ? { ...createEmptyPotState(true), potTypeId } : state));
+    setPendingSlotIndex(null);
+    setIsPotTypeModalOpen(false);
+  };
+
+  const openPotTypeChange = () => {
+    if (!isCurrentPotUnlocked || growStep !== 0 || isTutorialActive) return;
+    setPotTypeMode("change");
+    setIsPotTypeModalOpen(true);
+  };
+
+  const chooseCurrentPotType = (potTypeId) => {
+    const type = POT_TYPES_BY_ID[potTypeId];
+    if (!type || (joeQuestState.trust || 0) < type.requiredTrust || growStep !== 0) return;
+    updateCurrentPotState({ potTypeId });
+    setIsPotTypeModalOpen(false);
+  };
+
+  const devClearCurrentPot = () => {
+    if (!isDev || !isCurrentPotUnlocked) return;
+    updateCurrentPotState({ ...createEmptyPotState(true), potTypeId: currentPotState.potTypeId || "soil" });
+    setIsRemoveModalOpen(false);
+  };
+
+  const openSeedModal = () => {
+    if (!tutorialAllows("open-seeds")) {
+      return;
+    }
+
+    if (!isCurrentPotUnlocked) {
+      return;
+    }
+
+    if (growStep !== 0) {
+      return;
+    }
+
+    setSelectedSeed(null);
+    setIsSeedModalOpen(true);
+
+    if (tutorialStep === "open-seeds") {
+      setTutorialStep("choose-seed");
+    }
+  };
+
+  const selectSeed = (seed) => {
+    if (!tutorialAllows("choose-seed")) {
+      return;
+    }
+
+    if (tutorialStep === "choose-seed" && seed?.id !== "greenTomato") {
+      return;
+    }
+
+    setSelectedSeed(seed);
+
+    if (
+      tutorialStep === "choose-seed" &&
+      seed?.id === "greenTomato"
+    ) {
+      setTutorialStep("plant-seed");
+    }
+  };
+
+  const closeSeedModal = () => {
+    if (isTutorialActive) {
+      return;
+    }
+
+    setSelectedSeed(null);
+    setIsSeedModalOpen(false);
+  };
+
+  const plantSelectedSeed = () => {
+    if (!tutorialAllows("plant-seed")) {
+      return;
+    }
+
+    if (!selectedSeed) {
+      return;
+    }
+
+    if (!isCurrentPotUnlocked || growStep !== 0) {
+      return;
+    }
+
+    if ((selectedSeed.seedType || "plant") !== currentPotType.seedType) return;
+
+    const seedId = selectedSeed.id;
+
+    if (!selectedSeed.infinite) {
+      const currentAmount =
+        seedInventory[seedId] || 0;
+
+      if (currentAmount <= 0) {
+        return;
+      }
+
+      setSeedInventory((previousInventory) => ({
+        ...previousInventory,
+        [seedId]: Math.max(
+          0,
+          (previousInventory[seedId] || 0) - 1,
+        ),
+      }));
+    }
+
+    const growTime =
+      selectedSeed.growTime || DEFAULT_GROW_TIME;
+
+    updateCurrentPotState({
+      unlocked: true,
+      growStep: 1,
+      selectedSeedId: seedId,
+      growTime,
+      timeLeft: growTime,
+      nextGrowthAt: Date.now() + growTime * 1000,
+      careApplied: [],
+    });
+
+    closeSeedModal();
+
+    if (tutorialStep === "plant-seed") {
+      setTutorialStep("growing");
+    }
+  };
+
+  const applyPlantCare = (careType) => {
+    if (growStep <= 0 || growStep >= 3) {
+      return;
+    }
+
+    const appliedCare = Array.isArray(currentPotState.careApplied)
+      ? currentPotState.careApplied
+      : currentPotState.careApplied
+        ? [currentPotState.careApplied]
+        : [];
+
+    if (appliedCare.includes(careType)) {
+      return;
+    }
+
+    if (careType !== "water" && (careInventory[careType] || 0) <= 0) {
+      return;
+    }
+
+    const updates = { careApplied: [...appliedCare, careType] };
+
+    if (careType === "water" && currentPotState.nextGrowthAt) {
+      const now = Date.now();
+      const remaining = Math.max(0, currentPotState.nextGrowthAt - now);
+      const nextGrowthAt = now + Math.max(1000, Math.round(remaining * 0.8));
+      updates.nextGrowthAt = nextGrowthAt;
+      updates.timeLeft = Math.max(1, Math.ceil((nextGrowthAt - now) / 1000));
+    }
+
+    updateCurrentPotState(updates);
+
+    if (careType !== "water") {
+      setCareInventory((previous) => ({
+        ...previous,
+        [careType]: Math.max(0, (previous[careType] || 0) - 1),
+      }));
+    }
+
+    setJoeQuestState((previousState) => ({
+      ...previousState,
+      careUses: {
+        water: previousState?.careUses?.water || 0,
+        nutrition: previousState?.careUses?.nutrition || 0,
+        joeMix: previousState?.careUses?.joeMix || 0,
+        [careType]: (previousState?.careUses?.[careType] || 0) + 1,
+      },
+    }));
+  };
+
+  const getOccupiedInventorySlots = () => {
+    let occupied = 0;
+    Object.values(qualityInventory || {}).forEach((qualities) => {
+      Object.values(qualities || {}).forEach((amount) => {
+        if ((Number(amount) || 0) > 0) occupied += 1;
+      });
+    });
+    return occupied;
+  };
+
+  const collectPlant = () => {
+    if (!tutorialAllows("collect")) {
+      return;
+    }
+
+    if (!isCurrentPotUnlocked) {
+      return;
+    }
+
+    if (growStep !== 3 || !plantedSeedId) {
+      return;
+    }
+
+    const quality = rollHarvestQuality(currentPotState.careApplied || []);
+    const reward = getHarvestYield(currentPotState.careApplied || [], quality.id);
+
+    const seedData = seeds.find((seed) => seed.id === plantedSeedId);
+    const harvestItemId = seedData?.harvestItemId || plantedSeedId || "greenTomato";
+    const itemName = seedData?.name || "Урожай";
+    const itemIcon = seedData?.icon || (seedData?.seedType === "mushroom" ? "🍄" : "🌱");
+    const previousRecord = plantCatalog[harvestItemId] || {};
+    const firstDiscovery = !(previousRecord.qualities?.[quality.id] > 0);
+    const existingQualityStack = getQualityAmount(qualityInventory, harvestItemId, quality.id) > 0;
+    const occupiedInventorySlots = getOccupiedInventorySlots();
+
+    if (!existingQualityStack && occupiedInventorySlots >= INVENTORY_SLOT_LIMIT) {
+      setIsInventoryFullModalOpen(true);
+      return;
+    }
+
+    const newLootItems = Array.from(
+      {
+        length: reward,
+      },
+      (_, index) => ({
+        id: `${Date.now()}-${index}`,
+        startX: 190 + index * 12,
+        startY: 470 - index * 8,
+        delay: index * 120,
+        itemId: harvestItemId,
+      }),
+    );
+
+    setFlyingLootItems(newLootItems);
+
+    setInventory((previousInventory) => ({
+      ...previousInventory,
+      [harvestItemId]: (previousInventory[harvestItemId] || 0) + reward,
+    }));
+    setQualityInventory((previous) => addQualityItems(previous, harvestItemId, quality.id, reward));
+
+    setPlantCatalog((previousCatalog) => {
+      const record = previousCatalog[harvestItemId] || {
+        totalHarvested: 0,
+        qualities: {},
+        bestQualityRank: -1,
+        bestQualityName: null,
+      };
+
+      return {
+        ...previousCatalog,
+        [harvestItemId]: {
+          ...record,
+          totalHarvested: (record.totalHarvested || 0) + reward,
+          qualities: {
+            ...(record.qualities || {}),
+            [quality.id]: ((record.qualities || {})[quality.id] || 0) + 1,
+          },
+          bestQualityRank: Math.max(record.bestQualityRank ?? -1, quality.rank),
+          bestQualityName:
+            quality.rank >= (record.bestQualityRank ?? -1)
+              ? quality.name
+              : record.bestQualityName,
+        },
+      };
+    });
+
+    setHarvestResult({
+      itemId: harvestItemId,
+      itemName,
+      itemIcon,
+      amount: reward,
+      quality,
+      firstDiscovery,
+    });
+
+    updateCurrentPotState({ ...createEmptyPotState(true), potTypeId: currentPotState.potTypeId || "soil" });
+
+    if (tutorialStep === "collect") {
+      setTutorialStep("go-district");
+    }
+
+    window.setTimeout(() => {
+      setFlyingLootItems([]);
+    }, 1100);
+  };
+
+  const openRemoveModal = () => {
+    if (isTutorialActive) {
+      return;
+    }
+
+    if (!isCurrentPotUnlocked) {
+      return;
+    }
+
+    if (growStep === 0) {
+      return;
+    }
+
+    setIsRemoveModalOpen(true);
+  };
+
+  const removePlant = () => {
+    if (!isCurrentPotUnlocked) {
+      return;
+    }
+
+    if (growStep === 0) {
+      return;
+    }
+
+    updateCurrentPotState({ ...createEmptyPotState(true), potTypeId: currentPotState.potTypeId || "soil" });
+
+    setIsRemoveModalOpen(false);
+  };
+
+  const deleteQualityItem = (itemId, qualityId, count) => {
+    const safe = Math.max(0, Math.floor(Number(count) || 0));
+    setQualityInventory((previous) => removeQualityItems(previous, itemId, qualityId, safe));
+    setInventory((previous) => ({ ...previous, [itemId]: Math.max(0, (previous[itemId] || 0) - safe) }));
+  };
+
+  const openClub = () => {
+    if (isTutorialActive) {
+      return;
+    }
+
+    setActiveScreen("club");
+  };
+
+  const openShop = () => {
+    if (isTutorialActive) {
+      return;
+    }
+
+    setActiveScreen("shop");
+  };
+
+  const openJoeHouse = () => {
+    if (isTutorialActive) {
+      return;
+    }
+
+    setActiveScreen("joe-house");
+  };
+
+  const goBackToDistrict = () => {
+    if (isTutorialActive) {
+      return;
+    }
+
+    setActiveScreen("district");
+  };
+
+  const buyShopItem = (item, amount) => {
+    if (!item) {
+      return {
+        success: false,
+        message: "Товар не найден.",
+      };
+    }
+
+    const requestedAmount = Math.floor(Number(amount));
+
+    if (
+      !Number.isFinite(requestedAmount) ||
+      requestedAmount <= 0
+    ) {
+      return {
+        success: false,
+        message: "Выбери количество товара.",
+      };
+    }
+
+    const availableStock =
+      shopStock[item.id] || 0;
+
+    if (requestedAmount > availableStock) {
+      return {
+        success: false,
+        message: "У Зорика нет столько товара.",
+      };
+    }
+
+    const totalPrice =
+      requestedAmount * item.pricePerSeed;
+
+    if (coins < totalPrice) {
+      return {
+        success: false,
+        message: "Недостаточно монет.",
+      };
+    }
+
+    setCoins(
+      (previousCoins) =>
+        previousCoins - totalPrice,
+    );
+
+    setShopStock((previousStock) => ({
+      ...previousStock,
+      [item.id]: Math.max(
+        0,
+        (previousStock[item.id] || 0) -
+          requestedAmount,
+      ),
+    }));
+
+    if (item.type === "care") {
+      setCareInventory((previousInventory) => ({
+        ...previousInventory,
+        [item.id]: (previousInventory[item.id] || 0) + requestedAmount,
+      }));
+    } else {
+      setSeedInventory((previousInventory) => ({
+        ...previousInventory,
+        [item.id]: (previousInventory[item.id] || 0) + requestedAmount,
+      }));
+    }
+
+    return {
+      success: true,
+      message: `Куплено: ${item.name} — ${requestedAmount} шт.`,
+    };
+  };
+
+  const deliverJoeItems = ({ itemId, amount }) => {
+    const safeAmount = Math.max(0, Math.floor(Number(amount) || 0));
+
+    if (!itemId || safeAmount <= 0) {
+      return false;
+    }
+
+    const availableAmount = inventory[itemId] || 0;
+
+    if (availableAmount < safeAmount) {
+      return false;
+    }
+
+    setInventory((previousInventory) => ({ ...previousInventory, [itemId]: Math.max(0, (previousInventory[itemId] || 0) - safeAmount) }));
+    setQualityInventory((previous) => removeAnyQuality(previous, itemId, safeAmount).next);
+
+    return true;
+  };
+
+  const claimJoeReward = ({ coins: coinReward }) => {
+    const safeCoins = Math.max(0, Math.floor(Number(coinReward) || 0));
+
+    if (safeCoins > 0) {
+      setCoins((previousCoins) => previousCoins + safeCoins);
+    }
+  };
+
+  const handleClubSaleForJoe = ({ itemId, amount }) => {
+    const safeAmount = Math.max(0, Math.floor(Number(amount) || 0));
+
+    if (!itemId || safeAmount <= 0) {
+      return;
+    }
+
+    setJoeQuestState((previousState) => ({
+      ...previousState,
+      clubSales: {
+        greenTomato: previousState?.clubSales?.greenTomato || 0,
+        lumenweed: previousState?.clubSales?.lumenweed || previousState?.clubSales?.psychomor || 0,
+        [itemId]: (previousState?.clubSales?.[itemId] || 0) + safeAmount,
+      },
+    }));
+  };
+
+  const openResetModal = () => {
+    if (isTutorialActive) {
+      return;
+    }
+
+    closePlantationModals();
+    setIsInventoryOpen(false);
+    setIsResetModalOpen(true);
+  };
+
+  const resetAllProgress = () => {
+    for (const key of STORAGE_KEYS) {
+      localStorage.removeItem(key);
+    }
+
+    setCoins(INITIAL_COINS);
+
+    setInventory({ greenTomato: 0, lumenweed: 0, moonmint: 0, velvetbud: 0, psychoshroom: 0, bluecap: 0, starleaf: 0, emberpod: 0, dreamcap: 0, ghostmorel: 0 });
+
+    setSeedInventory({ lumenweed: 0, moonmint: 0, velvetbud: 0, psychoshroom: 0, bluecap: 0, starleaf: 0, emberpod: 0, dreamcap: 0, ghostmorel: 0 });
+    setCareInventory({ nutrition: 0, joeMix: 0 });
+
+    setShopStock(createShopStock());
+    setShopRefreshAt(Date.now() + SHOP_REFRESH_MS);
+
+    setJoeQuestState({
+      completedQuestIds: [],
+      trust: 0,
+      clubSales: {
+        greenTomato: 0,
+        lumenweed: 0,
+      },
+      careUses: {
+        water: 0,
+        nutrition: 0,
+        joeMix: 0,
+      },
+    });
+
+    setPlantCatalog({});
+    setQualityInventory({});
+    setPotStates(createInitialPotStates());
+    setTutorialStep("intro");
+
+    setCurrentPotIndex(0);
+    setActiveScreen("plantation");
+
+    setSelectedSeed(null);
+    setIsSeedModalOpen(false);
+    setIsRemoveModalOpen(false);
+    setIsInventoryOpen(false);
+    setIsCareModalOpen(false);
+    setIsCatalogOpen(false);
+    setHarvestResult(null);
+
+    setFlyingLootItems([]);
+
+    setPendingSlotIndex(null);
+    setIsUnavailableModalOpen(false);
+    setIsResetModalOpen(false);
+  };
+
+  return (
+    <div className={`game-screen game-screen--${activeScreen}`}>
+      <div className="game-viewport" ref={viewportRef}>
+        <div
+          className="game-stage"
+          style={{
+            "--stage-scale": stageScale,
+            "--stage-center-y": `${stageCenterY}px`,
+            "--visible-left": `${cropX}px`,
+            "--visible-right": `${cropX}px`,
+            "--visible-top": `${cropY}px`,
+            "--visible-bottom": `${cropY}px`,
+            "--visible-width": `${visibleWidth}px`,
+            "--visible-height": `${visibleHeight}px`,
+          }}
+        >
+        {activeScreen === "plantation" && (
+          <>
+            <div className="background" />
+
+            <div className="top-wallet">
+              {coins}
+            </div>
+
+            <TestResetButton
+              onClick={openResetModal}
+              disabled={isTutorialActive}
+            />
+
+            <BackpackTool
+              disabled={isTutorialActive}
+              onClick={() => {
+                if (!isTutorialActive) {
+                  setIsInventoryOpen(true);
+                }
+              }}
+            />
+
+            <button
+              type="button"
+              className="plant-catalog-tool"
+              onClick={() => setIsCatalogOpen(true)}
+              disabled={isTutorialActive}
+              aria-label="Открыть каталог растений"
+            >
+              📖
+            </button>
+
+            <FlyingLoot lootItems={flyingLootItems} />
+
+            <div className="game-content">
+              <div className="table-scene">
+                <PlantArea
+                  pot={displayPot}
+                  plant={currentPlant}
+                  growStep={growStep}
+                  timeLeft={timeLeft}
+                  growTime={currentPotState.growTime}
+                  unlockPrice={
+                    tutorialStep === "unlock-pot" &&
+                    currentPotIndex === 0
+                      ? 0
+                      : currentSlot?.unlockPrice
+                  }
+                  isSlotAvailable={
+                    tutorialStep === "unlock-pot" &&
+                    currentPotIndex === 0
+                      ? true
+                      : currentSlotState.canBuy
+                  }
+        lockedStatusText={currentSlotState.statusText}
+                  isUnlocked={isCurrentPotUnlocked}
+                  isEmpty={growStep === 0}
+                  canCollect={growStep === 3}
+                  onCollect={collectPlant}
+                  onSeedClick={openSeedModal}
+                  onRemoveClick={openRemoveModal}
+                  onUnlock={handleLockedSlotClick}
+                  onOpenCare={() => setIsCareModalOpen(true)}
+                  onChangePotType={openPotTypeChange}
+                  potTypeName={currentPotType.shortName}
+                  potTypeIcon={currentPotType.icon}
+                  careApplied={currentPotState.careApplied}
+                  canCare={!isTutorialActive && growStep > 0}
+                  onPreviousPot={showPreviousPot}
+                  onNextPot={showNextPot}
+                  navigationDisabled={isTutorialActive}
+                  seedDisabled={!tutorialAllows("open-seeds")}
+                  removeDisabled={isTutorialActive}
+                  collectDisabled={!tutorialAllows("collect")}
+                  unlockDisabled={!tutorialAllows("unlock-pot")}
+                  isDev={isDev}
+                  onDevClear={devClearCurrentPot}
+                />
+              </div>
+            </div>
+
+            <div className="plantation-pagination">
+              {pots.map((pot, index) => (
+                <button
+                  key={pot.id}
+                  className={`plantation-pagination-dot${
+                    index === currentPotIndex
+                      ? " active"
+                      : ""
+                  }${
+                    potStates[index]?.unlocked
+                      ? " unlocked"
+                      : ""
+                  }`}
+                  type="button"
+                  aria-label={`Перейти к ведру ${index + 1}`}
+                  disabled={isTutorialActive}
+                  onClick={() => changePot(index)}
+                />
+              ))}
+            </div>
+
+            <SeedModal
+              isOpen={
+                isSeedModalOpen &&
+                isCurrentPotUnlocked
+              }
+              seeds={availableSeedsForCurrentPot}
+              seedInventory={seedInventory}
+              selectedSeed={selectedSeed}
+              onSelectSeed={selectSeed}
+              onPlantSeed={plantSelectedSeed}
+              onClose={closeSeedModal}
+              tutorialStep={tutorialStep}
+              potTypeName={currentPotType.name}
+            />
+
+            <RemovePlantModal
+              isOpen={
+                isRemoveModalOpen &&
+                isCurrentPotUnlocked
+              }
+              onConfirm={removePlant}
+              onCancel={() =>
+                setIsRemoveModalOpen(false)
+              }
+            />
+
+            <InventoryModal
+              isOpen={isInventoryOpen}
+              qualityInventory={qualityInventory}
+              onClose={() => setIsInventoryOpen(false)}
+              onDeleteQualityItem={deleteQualityItem}
+            />
+
+            <HarvestCareModal
+              isOpen={isCareModalOpen}
+              trust={joeQuestState.trust || 0}
+              careInventory={careInventory}
+              appliedCare={currentPotState.careApplied}
+              canApplyCare={growStep > 0 && growStep < 3}
+              onChoose={applyPlantCare}
+              onRemovePlant={() => {
+                setIsCareModalOpen(false);
+                setIsRemoveModalOpen(true);
+              }}
+              onClose={() => setIsCareModalOpen(false)}
+            />
+
+            <HarvestResultModal
+              result={harvestResult}
+              onClose={() => setHarvestResult(null)}
+              onOpenCatalog={() => {
+                setHarvestResult(null);
+                setIsCatalogOpen(true);
+              }}
+            />
+
+            <PlantCatalogModal
+              isOpen={isCatalogOpen}
+              catalog={plantCatalog}
+              onClose={() => setIsCatalogOpen(false)}
+            />
+
+            <PotTypeModal
+              isOpen={isPotTypeModalOpen}
+              trust={joeQuestState.trust || 0}
+              title={potTypeMode === "purchase" ? "Купить место и выбрать ёмкость" : "Сменить пустую ёмкость"}
+              description={potTypeMode === "purchase" ? "Стоимость места одинакова. Выбери доступный тип." : "Растения в слоте нет, поэтому ёмкость можно заменить бесплатно."}
+              price={potTypeMode === "purchase" ? pendingSlot?.unlockPrice ?? null : null}
+              coins={coins}
+              onChoose={potTypeMode === "purchase" ? choosePendingSlotType : chooseCurrentPotType}
+              onClose={() => { setIsPotTypeModalOpen(false); if (potTypeMode === "purchase") setPendingSlotIndex(null); }}
+            />
+
+            <ActionModal
+              isOpen={isInventoryFullModalOpen}
+              title="Рюкзак переполнен"
+              description="Для урожая нового качества нет свободной ячейки. Удали или продай одну стопку, затем вернись и собери растение."
+              confirmText="Открыть инвентарь"
+              cancelText="Оставить урожай"
+              onConfirm={() => {
+                setIsInventoryFullModalOpen(false);
+                setIsInventoryOpen(true);
+              }}
+              onCancel={() => setIsInventoryFullModalOpen(false)}
+            />
+
+            <ActionModal
+              isOpen={isUnavailableModalOpen}
+              title="Пока что недоступно"
+              description={
+        currentSlotState.isLevelLocked
+          ? currentSlotState.statusText
+          : "Это место появится в одном из следующих обновлений."
+      }
+              confirmText="Понятно"
+              cancelText="Закрыть"
+              onConfirm={() =>
+                setIsUnavailableModalOpen(false)
+              }
+              onCancel={() =>
+                setIsUnavailableModalOpen(false)
+              }
+            />
+
+            <ActionModal
+              isOpen={isResetModalOpen}
+              title="Сбросить весь прогресс?"
+              description="Удалятся растения, урожай, семена и открытые места. После сброса на балансе будет 100 000 монет."
+              confirmText="Сбросить всё"
+              cancelText="Отмена"
+              danger
+              onConfirm={resetAllProgress}
+              onCancel={() =>
+                setIsResetModalOpen(false)
+              }
+            />
+          </>
+        )}
+
+        {activeScreen === "district" && (
+          <DistrictScreen
+            onOpenClub={openClub}
+            onOpenShop={openShop}
+            onOpenJoeHouse={openJoeHouse}
+          />
+        )}
+
+        {activeScreen === "joe-house" && (
+          <JoeHouseScreen
+            inventory={inventory}
+            seedInventory={seedInventory}
+            careInventory={careInventory}
+            clubReputation={clubReputation}
+            questState={joeQuestState}
+            plantCatalog={plantCatalog}
+            onQuestStateChange={setJoeQuestState}
+            onDeliverItems={deliverJoeItems}
+            onRewardClaimed={claimJoeReward}
+            onBack={goBackToDistrict}
+          />
+        )}
+
+        {activeScreen === "shop" && (
+          <ShopScreen
+            onGoBack={goBackToDistrict}
+            items={shopItems}
+            stock={shopStock}
+            coins={coins}
+            seedInventory={seedInventory}
+            careInventory={careInventory}
+            clubReputation={clubReputation}
+            joeTrust={joeQuestState.trust || 0}
+            refreshAt={shopRefreshAt}
+            onBuy={buyShopItem}
+            onDevRefresh={() => {
+              setShopStock(createShopStock());
+              setShopRefreshAt(Date.now() + SHOP_REFRESH_MS);
+            }}
+          />
+        )}
+
+        {activeScreen === "club" && (
+          <ClubScreen
+            inventory={inventory}
+            setInventory={setInventory}
+            qualityInventory={qualityInventory}
+            setQualityInventory={setQualityInventory}
+            coins={coins}
+            setCoins={setCoins}
+            onSaleCompleted={handleClubSaleForJoe}
+            onGoBack={goBackToDistrict}
+          />
+        )}
+
+
+        {activeScreen === "support" && (
+          <SupportScreen onGoBack={() => setActiveScreen("district")} />
+        )}
+
+        {activeScreen !== "shop" &&
+          activeScreen !== "club" &&
+          activeScreen !== "joe-house" && (
+            <BottomMenu
+              activeScreen={activeScreen}
+              tutorialStep={tutorialStep}
+              onGoPlantation={() => {
+                if (isTutorialActive) {
+                  return;
+                }
+
+                            setActiveScreen("plantation");
+              }}
+              onGoDistrict={() => {
+                if (!tutorialAllows("go-district")) {
+                  return;
+                }
+
+                setActiveScreen("district");
+
+                if (tutorialStep === "go-district") {
+                  setTutorialStep("district-finish");
+                }
+              }}
+              onGoSupport={() => {
+                if (isTutorialActive) {
+                  return;
+                }
+
+                setActiveScreen("support");
+              }}
+            />
+          )}
+
+        <UnlockCelebration
+          notification={unlockQueue[0] || null}
+          queuedCount={Math.max(0, unlockQueue.length - 1)}
+          onClose={() => setUnlockQueue((queue) => queue.slice(1))}
+        />
+
+        <TutorialOverlay
+          step={tutorialStep}
+          stageScale={stageScale}
+          activeScreen={activeScreen}
+          onContinue={() => {
+            if (!tutorialAllows("continue")) {
+              return;
+            }
+
+            if (tutorialStep === "intro") {
+              setActiveScreen("plantation");
+              setCurrentPotIndex(0);
+              setTutorialStep("unlock-pot");
+              return;
+            }
+
+            if (tutorialStep === "growing") {
+              return;
+            }
+
+            if (tutorialStep === "district-finish") {
+              setTutorialStep("completed");
+            }
+          }}
+        />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default GameScreen;

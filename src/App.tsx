@@ -1,7 +1,7 @@
-import GameScreen from "./components/GameScreen";
-import PlayerProfile from "./components/PlayerProfile";
-import GameLoadingScreen from "./components/GameLoadingScreen";
-import useGameAssets from "./hooks/useGameAssets";
+import GameScreen from "./features/game/GameScreen";
+import PlayerProfile from "./features/profile/PlayerProfile";
+import GameLoadingScreen from "./shared/components/GameLoadingScreen/GameLoadingScreen";
+import useGameAssets from "./core/hooks/useGameAssets";
 
 function App() {
   const { isReady, progress, failedAssets } = useGameAssets();

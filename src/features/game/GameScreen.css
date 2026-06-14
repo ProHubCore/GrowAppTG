@@ -1,0 +1,371 @@
+ .game-screen {
+  --design-width: 390;
+  --design-height: 844;
+  --telegram-header-safe: 0px;
+
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100dvh;
+  min-height: 100dvh;
+  overflow: hidden;
+  background-color: #16100c;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+  isolation: isolate;
+}
+
+/* Настоящий полноэкранный фон без боковых блюр-подложек. */
+.game-screen--plantation {
+  background-image: url("/assets/backgrounds/main-bg.png");
+}
+
+.game-screen--district {
+  background-image: url("/assets/district-bg.png");
+}
+
+.game-screen--shop {
+  background-image: url("/assets/shop-bg.png");
+}
+
+.game-screen--club {
+  background-image: url("/assets/club-bg.png");
+}
+
+.game-screen--joe-house {
+  background-image:
+    radial-gradient(circle at 50% 24%, rgba(255, 184, 85, 0.28), transparent 38%),
+    linear-gradient(180deg, #2a2020, #120e11);
+}
+
+.game-screen::before,
+.game-screen::after {
+  display: none;
+}
+
+html[data-telegram-app="true"] .game-screen {
+  --telegram-header-safe: 50px;
+}
+
+.game-viewport {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  background: transparent;
+}
+
+.game-stage {
+  position: absolute;
+  top: var(--stage-center-y, 50%);
+  left: 50%;
+  width: 390px;
+  height: 844px;
+  overflow: hidden;
+  transform: translate(-50%, -50%) scale(var(--stage-scale, 1));
+  transform-origin: center center;
+  isolation: isolate;
+  contain: layout paint style;
+  background: transparent;
+  box-shadow: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.game-stage img {
+  max-width: none;
+  -webkit-user-drag: none;
+  user-select: none;
+}
+
+.background {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  background-image: url("/assets/backgrounds/main-bg.png");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  pointer-events: none;
+}
+
+.game-content {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+
+  pointer-events: none;
+}
+
+.table-scene {
+  position: absolute;
+
+  left: 15px;
+  bottom: 130px;
+
+  width: 360px;
+  height: 360px;
+
+  overflow: visible;
+  pointer-events: none;
+}
+
+.top-wallet {
+  position: absolute;
+
+  top: 18px;
+  right: 18px;
+  z-index: 50;
+
+  padding: 8px 14px;
+
+  border:
+    2px solid
+    rgba(255, 226, 155, 0.6);
+
+  border-radius: 999px;
+
+  background:
+    rgba(47, 31, 20, 0.82);
+
+  color: #fff1cf;
+
+  font-size: 16px;
+  font-weight: 900;
+
+  box-shadow:
+    0 8px 18px
+    rgba(0, 0, 0, 0.28);
+
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+}
+
+/* Точки переключения между ведрами */
+
+.plantation-pagination {
+  position: absolute;
+
+  left: 50%;
+  bottom: 120px;
+  z-index: 48;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  gap: 8px;
+  padding: 7px 11px;
+
+  transform: translateX(-50%);
+
+  border:
+    1px solid
+    rgba(222, 255, 241, 0.14);
+
+  border-radius: 999px;
+
+  background:
+    rgba(28, 24, 20, 0.46);
+
+  box-shadow:
+    0 6px 18px
+    rgba(0, 0, 0, 0.2);
+
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+
+  pointer-events: auto;
+}
+
+.plantation-pagination-dot {
+  width: 7px;
+  height: 7px;
+
+  padding: 0;
+
+  border: none;
+  border-radius: 50%;
+
+  background:
+    rgba(226, 236, 230, 0.28);
+
+  box-shadow: none;
+
+  cursor: pointer;
+
+  appearance: none;
+  -webkit-appearance: none;
+
+  transition:
+    width 180ms ease,
+    background 180ms ease,
+    box-shadow 180ms ease,
+    transform 180ms ease;
+}
+
+.plantation-pagination-dot.unlocked {
+  background:
+    rgba(209, 255, 230, 0.52);
+}
+
+.plantation-pagination-dot.active {
+  width: 22px;
+
+  border-radius: 999px;
+
+  background:
+    rgba(136, 255, 195, 0.94);
+
+  box-shadow:
+    0 0 10px
+    rgba(99, 255, 181, 0.55);
+}
+
+.plantation-pagination-dot:active {
+  transform: scale(0.88);
+}
+
+.flying-loot-layer {
+  position: absolute;
+  inset: 0;
+  z-index: 45;
+
+  pointer-events: none;
+}
+
+.flying-loot-item {
+  position: absolute;
+
+  width: 34px;
+  height: 34px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 28px;
+
+  animation:
+    flyToBackpack
+    0.95s ease-in forwards;
+}
+
+@keyframes flyToBackpack {
+  0% {
+    opacity: 0;
+
+    transform:
+      translate(0, 0)
+      scale(0.7);
+  }
+
+  15% {
+    opacity: 1;
+
+    transform:
+      translate(0, -18px)
+      scale(1.15);
+  }
+
+  100% {
+    opacity: 0;
+
+    transform:
+      translate(145px, -265px)
+      scale(0.3);
+  }
+}
+.plant-catalog-tool{position:absolute;top:74px;right:18px;z-index:52;display:grid;place-items:center;width:44px;height:44px;padding:0;border:1px solid rgba(255,226,164,.16);border-radius:50%;font-size:21px;cursor:pointer;background:rgba(47,31,20,.78);box-shadow:0 8px 18px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.05);backdrop-filter:blur(6px)}.plant-catalog-tool:active{transform:scale(.94)}.plant-catalog-tool:disabled{opacity:.42}
+
+/* ==========================================================================\n   FINAL RESPONSIVE LAYOUT\n   Фон занимает реальный viewport. Мир остаётся в дизайн-координатах, а HUD\n   привязывается к вычисленной видимой области cover-сцены.\n   ========================================================================== */
+
+.game-screen {
+  --hud-gap: 14px;
+  --hud-left: calc(var(--visible-left, 0px) + var(--hud-gap));
+  --hud-right: calc(var(--visible-right, 0px) + var(--hud-gap));
+  --hud-top: calc(var(--visible-top, 0px) + var(--hud-gap) + var(--telegram-header-safe));
+  --hud-bottom: calc(var(--visible-bottom, 0px) + var(--hud-gap));
+}
+
+/* Внутренний фон сцены больше не дублирует fullscreen-фон и не создаёт швы. */
+.game-stage > .background {
+  background: transparent !important;
+}
+
+/* Критичный HUD всегда находится внутри реально видимой части cover-сцены. */
+.top-wallet {
+  top: var(--hud-top);
+  right: var(--hud-right);
+}
+
+.test-reset-button,
+.game-reset-button {
+  top: var(--hud-top) !important;
+  left: var(--hud-left) !important;
+}
+
+.backpack-tool {
+  right: calc(var(--visible-right, 0px) + 28px) !important;
+}
+
+.plant-catalog-tool {
+  right: calc(var(--visible-right, 0px) + 18px) !important;
+}
+
+.plantation-pagination {
+  bottom: calc(var(--visible-bottom, 0px) + 120px);
+}
+
+/* Нижнее меню не должно попадать под системную полосу или обрезание сцены. */
+.bottom-menu,
+.bottom-navigation,
+.game-bottom-menu {
+  bottom: calc(var(--visible-bottom, 0px) + 12px) !important;
+}
+
+/* Стрелки и интерактивные края плантации держим внутри видимой зоны. */
+.plantation-arrow--left,
+.plantation-slider__arrow--left {
+  left: calc(var(--visible-left, 0px) + 8px) !important;
+}
+
+.plantation-arrow--right,
+.plantation-slider__arrow--right {
+  right: calc(var(--visible-right, 0px) + 8px) !important;
+}
+
+/* Модальные затемнения должны перекрывать именно весь дизайн-мир. */
+.modal-overlay,
+.action-modal-overlay,
+.seed-modal-overlay,
+.inventory-modal-overlay,
+.harvest-care-modal,
+.harvest-result-modal,
+.pot-type-modal,
+.catalog-modal {
+  inset: 0;
+}
+
+/* На очень коротких экранах чуть поднимаем главную сцену, не меняя якорь ведра. */
+@media (max-height: 680px) {
+  .table-scene {
+    bottom: 112px;
+  }
+
+  .plantation-pagination {
+    bottom: calc(var(--visible-bottom, 0px) + 104px);
+  }
+}
+
+/* Планшет/desktop preview: интерфейс остаётся мобильным, но не получает борта. */
+@media (min-aspect-ratio: 3 / 2) {
+  .game-screen {
+    background-position: center center;
+  }
+}

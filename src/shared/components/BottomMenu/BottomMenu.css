@@ -1,0 +1,61 @@
+.bottom-menu {
+  position: absolute;
+  left: 20px;
+  right: 20px;
+  bottom: 22px;
+  height: 76px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  z-index: 50;
+}
+
+.bottom-menu-button {
+  flex: 1;
+  min-width: 0;
+  max-width: 150px;
+  height: 58px;
+
+  border: none;
+  border-radius: 22px;
+
+  background: rgba(32, 24, 48, 0.9);
+  color: white;
+
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 800;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+
+  cursor: pointer;
+
+  box-shadow:
+    0 8px 0 rgba(0, 0, 0, 0.22),
+    inset 0 0 0 3px rgba(255, 255, 255, 0.08);
+}
+
+.bottom-menu-button span {
+  font-size: 14px;
+}
+
+.bottom-menu-button.active {
+  background: linear-gradient(180deg, #73f5c8, #45bfa2);
+  color: #19202a;
+  box-shadow:
+    0 8px 0 rgba(20, 91, 78, 0.8),
+    inset 0 0 0 3px rgba(255, 255, 255, 0.25);
+}
+
+.bottom-menu-button:active {
+  transform: translateY(4px);
+  box-shadow:
+    0 4px 0 rgba(0, 0, 0, 0.22),
+    inset 0 0 0 3px rgba(255, 255, 255, 0.08);
+}

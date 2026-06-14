@@ -1,0 +1,150 @@
+.action-modal-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 120;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 22px;
+  background: rgba(10, 7, 5, 0.68);
+  backdrop-filter: blur(7px);
+  -webkit-backdrop-filter: blur(7px);
+  pointer-events: auto;
+}
+
+.action-modal-card {
+  position: relative;
+  width: min(100%, 326px);
+  padding: 24px 20px 18px;
+  border: 2px solid rgba(255, 225, 153, 0.52);
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(75, 51, 33, 0.98), rgba(38, 25, 18, 0.99));
+  color: #fff4d6;
+  text-align: center;
+  box-shadow:
+    0 22px 55px rgba(0, 0, 0, 0.5),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.action-modal-close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff4d6;
+  font-size: 25px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.action-modal-icon {
+  display: grid;
+  place-items: center;
+  width: 58px;
+  height: 58px;
+  margin: 0 auto 12px;
+  border: 1px solid rgba(255, 230, 169, 0.48);
+  border-radius: 19px;
+  background: rgba(255, 222, 142, 0.1);
+  font-size: 29px;
+  font-weight: 900;
+}
+
+.action-modal-card h2 {
+  margin: 0 28px 8px;
+  font-size: 23px;
+  line-height: 1.1;
+}
+
+.action-modal-card p {
+  margin: 0;
+  color: rgba(255, 244, 214, 0.78);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.action-modal-price-block {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 17px;
+}
+
+.action-modal-price-block > div {
+  padding: 11px 8px;
+  border: 1px solid rgba(255, 226, 158, 0.2);
+  border-radius: 15px;
+  background: rgba(12, 8, 6, 0.23);
+}
+
+.action-modal-price-block span,
+.action-modal-price-block strong {
+  display: block;
+}
+
+.action-modal-price-block span {
+  margin-bottom: 3px;
+  color: rgba(255, 244, 214, 0.62);
+  font-size: 12px;
+}
+
+.action-modal-price-block strong {
+  font-size: 15px;
+}
+
+.action-modal-warning {
+  margin-top: 12px;
+  padding: 9px 10px;
+  border: 1px solid rgba(255, 118, 98, 0.32);
+  border-radius: 12px;
+  background: rgba(128, 31, 23, 0.25);
+  color: #ffc2b9;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.action-modal-actions {
+  display: grid;
+  gap: 9px;
+  margin-top: 18px;
+}
+
+.action-modal-confirm,
+.action-modal-cancel {
+  min-height: 46px;
+  border-radius: 15px;
+  font-size: 15px;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.action-modal-confirm {
+  border: 1px solid rgba(255, 236, 181, 0.8);
+  background: linear-gradient(180deg, #f6d279, #c99536);
+  color: #2c1b0d;
+  box-shadow: 0 8px 18px rgba(181, 123, 35, 0.25);
+}
+
+.action-modal-confirm.danger {
+  border-color: rgba(255, 179, 165, 0.76);
+  background: linear-gradient(180deg, #ef8f7d, #b84133);
+  color: #fff8f2;
+}
+
+.action-modal-confirm:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.action-modal-cancel {
+  border: 1px solid rgba(255, 237, 194, 0.18);
+  background: rgba(255, 255, 255, 0.06);
+  color: #fff0cb;
+}

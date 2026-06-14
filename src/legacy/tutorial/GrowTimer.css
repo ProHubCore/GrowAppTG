@@ -1,0 +1,202 @@
+/*
+  Миниатюрный таймер высоко над растением.
+  !important нужен, чтобы старые стили game.css
+  больше не возвращали блок на прежнее место.
+*/
+
+.game-stage .plantation-slot .grow-hint {
+  position: absolute !important;
+  top: -34px !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: auto !important;
+  z-index: 22 !important;
+
+  transform: translateX(-50%) !important;
+
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Рост: одна короткая строка и полоска снизу */
+.game-stage .plantation-slot .grow-hint.growing {
+  width: 124px !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  padding: 5px 8px 6px !important;
+
+  border: 0 !important;
+  border-radius: 10px !important;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(13, 22, 21, 0.25),
+      rgba(6, 12, 14, 0.38)
+    ) !important;
+
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.1),
+    inset 0 1px rgba(255, 255, 255, 0.032) !important;
+
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.game-stage .plantation-slot .grow-hint-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.game-stage .plantation-slot .grow-hint-title {
+  color: rgba(248, 255, 250, 0.88);
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.018em;
+  white-space: nowrap;
+}
+
+.game-stage .plantation-slot .grow-hint-time {
+  color: rgba(214, 247, 226, 0.48);
+  font-size: 8.8px;
+  font-weight: 780;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.game-stage .plantation-slot .grow-timer-track {
+  position: relative;
+
+  width: 100%;
+  height: 2px;
+  margin-top: 5px;
+  overflow: hidden;
+
+  border-radius: 999px;
+
+  background: rgba(255, 255, 255, 0.052);
+}
+
+.game-stage .plantation-slot .grow-timer-fill {
+  position: relative;
+
+  height: 100%;
+
+  border-radius: inherit;
+
+  background:
+    linear-gradient(
+      90deg,
+      rgba(73, 224, 167, 0.82),
+      rgba(166, 239, 103, 0.88)
+    );
+
+  box-shadow:
+    0 0 4px rgba(113, 255, 178, 0.2);
+
+  transition: width 250ms ease;
+}
+
+.game-stage .plantation-slot
+  .grow-timer-fill::after {
+  content: "";
+
+  position: absolute;
+  top: 0;
+  right: 0;
+
+  width: 7px;
+  height: 100%;
+
+  border-radius: inherit;
+
+  background: rgba(255, 255, 255, 0.3);
+
+  filter: blur(2px);
+}
+
+/*
+  Урожай готов:
+  ширина строго по тексту и галочке.
+  Никакой длинной горизонтальной плашки.
+*/
+.game-stage .plantation-slot .grow-hint.ready {
+  width: max-content !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  min-height: 0 !important;
+
+  padding: 5px 7px !important;
+
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+
+  border: 0 !important;
+  border-radius: 999px !important;
+
+  background:
+    linear-gradient(
+      180deg,
+      rgba(25, 58, 35, 0.24),
+      rgba(8, 22, 15, 0.36)
+    ) !important;
+
+  box-shadow:
+    0 4px 11px rgba(0, 0, 0, 0.1),
+    inset 0 1px rgba(255, 255, 255, 0.028) !important;
+
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.game-stage .plantation-slot .grow-ready-check {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 12px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 50%;
+
+  background: rgba(166, 255, 101, 0.075);
+
+  color: rgba(224, 255, 177, 0.94);
+  font-size: 7px;
+  font-weight: 950;
+}
+
+.game-stage .plantation-slot .grow-ready-text {
+  color: rgba(241, 255, 228, 0.88);
+  font-size: 8.8px;
+  font-weight: 900;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+/* Во время обучения — мягкое свечение без бордера */
+.game-stage:has(
+    .tutorial-step-growing
+  )
+  .plantation-slot
+  .grow-hint.growing {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(23, 40, 32, 0.44),
+      rgba(8, 19, 15, 0.52)
+    ) !important;
+
+  box-shadow:
+    0 4px 12px rgba(0, 0, 0, 0.12),
+    0 0 8px rgba(176, 255, 92, 0.28),
+    0 0 16px rgba(88, 231, 143, 0.075) !important;
+}

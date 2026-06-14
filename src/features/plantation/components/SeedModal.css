@@ -1,0 +1,379 @@
+.seed-modal {
+  position: relative;
+  width: 340px;
+  max-height: 720px;
+  padding: 18px;
+  overflow-x: hidden;
+  overflow-y: auto;
+
+  border: 1px solid rgba(126, 255, 190, 0.42);
+  border-radius: 28px;
+
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(126, 255, 190, 0.12),
+      transparent 34%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(20, 35, 32, 0.98),
+      rgba(12, 18, 24, 0.98)
+    );
+
+  color: #eaffef;
+
+  box-shadow:
+    0 18px 42px rgba(0, 0, 0, 0.48),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.06),
+    0 0 28px rgba(86, 255, 170, 0.12);
+}
+
+.seed-modal::before {
+  content: "";
+
+  position: absolute;
+  top: 0;
+  left: 18px;
+  right: 18px;
+
+  height: 2px;
+
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(128, 255, 190, 0.8),
+    rgba(255, 105, 230, 0.55),
+    transparent
+  );
+
+  opacity: 0.85;
+}
+
+.seed-modal .modal-close {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+
+  width: 34px;
+  height: 34px;
+  padding: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 50%;
+
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(234, 255, 239, 0.9);
+
+  font-family: inherit;
+  font-size: 22px;
+  font-weight: 900;
+  line-height: 1;
+
+  cursor: pointer;
+  z-index: 5;
+
+  -webkit-tap-highlight-color: transparent;
+}
+
+.seed-modal .modal-close:active {
+  transform: scale(0.92);
+}
+
+.seed-modal .modal-title {
+  padding-right: 42px;
+
+  color: #eaffef;
+
+  font-size: 20px;
+  font-weight: 900;
+  line-height: 1.1;
+
+  text-shadow:
+    0 0 12px rgba(106, 255, 180, 0.18),
+    0 2px 0 rgba(0, 0, 0, 0.35);
+}
+
+.seed-modal .modal-subtitle {
+  margin-top: 6px;
+  margin-bottom: 14px;
+
+  color: rgba(234, 255, 239, 0.62);
+
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.seed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.seed-card {
+  width: 100%;
+  min-height: 82px;
+  padding: 11px;
+
+  display: flex;
+  align-items: center;
+  gap: 12px;
+
+  border: 1px solid rgba(126, 255, 190, 0.28);
+  border-radius: 20px;
+
+  background: linear-gradient(
+    180deg,
+    rgba(86, 255, 170, 0.1),
+    rgba(255, 255, 255, 0.04)
+  );
+
+  color: #eaffef;
+  text-align: left;
+  font-family: inherit;
+
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 8px 18px rgba(0, 0, 0, 0.18);
+
+  cursor: pointer;
+
+  transition:
+    transform 0.12s ease,
+    border-color 0.12s ease,
+    background 0.12s ease;
+
+  -webkit-tap-highlight-color: transparent;
+}
+
+.seed-card:hover {
+  border-color: rgba(126, 255, 190, 0.55);
+
+  background: linear-gradient(
+    180deg,
+    rgba(86, 255, 170, 0.16),
+    rgba(255, 255, 255, 0.055)
+  );
+}
+
+.seed-card:active {
+  transform: scale(0.98);
+}
+
+.seed-icon,
+.seed-image {
+  width: 54px;
+  height: 54px;
+  flex-shrink: 0;
+
+  border: 1px solid rgba(126, 255, 190, 0.2);
+  border-radius: 17px;
+
+  background:
+    radial-gradient(
+      circle at 35% 25%,
+      rgba(180, 255, 135, 0.45),
+      transparent 45%
+    ),
+    rgba(126, 255, 190, 0.11);
+
+  box-shadow:
+    inset 0 0 12px rgba(126, 255, 190, 0.12),
+    0 0 12px rgba(126, 255, 190, 0.08);
+}
+
+.seed-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 29px;
+}
+
+.seed-image {
+  padding: 4px;
+  object-fit: contain;
+
+  filter:
+    drop-shadow(0 4px 5px rgba(0, 0, 0, 0.28))
+    drop-shadow(0 0 8px rgba(126, 255, 190, 0.18));
+}
+
+.seed-icon.big,
+.seed-image.big {
+  width: 84px;
+  height: 84px;
+  margin: 0 auto 12px;
+
+  border-radius: 24px;
+}
+
+.seed-icon.big {
+  font-size: 43px;
+}
+
+.seed-image.big {
+  padding: 7px;
+}
+
+.seed-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.seed-name {
+  color: #f0fff4;
+
+  font-size: 15px;
+  font-weight: 900;
+  line-height: 1.15;
+}
+
+.seed-description {
+  margin-top: 4px;
+
+  color: rgba(234, 255, 239, 0.58);
+
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.seed-amount {
+  display: inline-flex;
+
+  margin-top: 7px;
+  padding: 4px 8px;
+
+  border: 1px solid rgba(126, 255, 190, 0.2);
+  border-radius: 999px;
+
+  background: rgba(126, 255, 190, 0.09);
+  color: #a8ffd2;
+
+  font-size: 11px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.confirm-seed-card {
+  padding: 17px;
+
+  border: 1px solid rgba(126, 255, 190, 0.28);
+  border-radius: 22px;
+
+  background:
+    radial-gradient(
+      circle at 50% 20%,
+      rgba(126, 255, 190, 0.14),
+      transparent 46%
+    ),
+    rgba(255, 255, 255, 0.045);
+
+  text-align: center;
+
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.04),
+    0 10px 22px rgba(0, 0, 0, 0.18);
+}
+
+.confirm-seed-card .seed-description {
+  max-width: 250px;
+  margin: 6px auto 0;
+}
+
+.confirm-seed-card .seed-amount {
+  margin-top: 10px;
+}
+
+.seed-unavailable-message {
+  margin-top: 12px;
+  padding: 8px 10px;
+
+  border: 1px solid rgba(255, 136, 136, 0.3);
+  border-radius: 13px;
+
+  background: rgba(255, 85, 85, 0.1);
+  color: #ffc1c1;
+
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.seed-modal .modal-actions {
+  margin-top: 16px;
+
+  display: flex;
+  gap: 10px;
+}
+
+.seed-modal .cancel-button,
+.seed-modal .plant-button {
+  flex: 1;
+  height: 46px;
+
+  border: none;
+  border-radius: 16px;
+
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 900;
+
+  cursor: pointer;
+
+  -webkit-tap-highlight-color: transparent;
+}
+
+.seed-modal .cancel-button {
+  background: rgba(255, 255, 255, 0.09);
+  color: rgba(234, 255, 239, 0.86);
+
+  box-shadow:
+    inset 0 0 0 1px rgba(255, 255, 255, 0.08),
+    0 5px 0 rgba(0, 0, 0, 0.22);
+}
+
+.seed-modal .plant-button {
+  background: linear-gradient(
+    180deg,
+    #8dffd0,
+    #38b886
+  );
+
+  color: #10281d;
+
+  box-shadow:
+    0 5px 0 rgba(20, 84, 64, 0.9),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.22);
+}
+
+.seed-modal .plant-button:disabled {
+  background: linear-gradient(
+    180deg,
+    #6d827b,
+    #43534d
+  );
+
+  color: rgba(255, 255, 255, 0.45);
+
+  box-shadow:
+    0 5px 0 rgba(20, 28, 25, 0.9),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.07);
+
+  cursor: default;
+}
+
+.seed-modal .cancel-button:active,
+.seed-modal .plant-button:not(:disabled):active {
+  transform: translateY(3px);
+
+  box-shadow:
+    0 2px 0 rgba(0, 0, 0, 0.24),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.12);
+}
