@@ -10,6 +10,7 @@ import FlyingLoot from "./FlyingLoot";
 import DistrictScreen from "./DistrictScreen";
 import ShopScreen from "./ShopScreen";
 import ClubScreen from "./ClubScreen";
+import JoeHouseScreen from "./JoeHouseScreen";
 import ShopModal from "./ShopModal";
 import ActionModal from "./ActionModal";
 import TestResetButton from "./TestResetButton";
@@ -44,6 +45,7 @@ const STORAGE_KEYS = [
   "growapp-coins",
   "growapp-club-reputation",
   "growapp-tutorial-step",
+  "growapp-joe-quests",
 ];
 
 function createPotState(index) {
@@ -115,6 +117,18 @@ function GameScreen() {
   const [coins, setCoins] = usePersistentState(
     "growapp-coins",
     INITIAL_COINS,
+  );
+
+  const [joeQuestState, setJoeQuestState] = usePersistentState(
+    "growapp-joe-quests",
+    {
+      completedQuestIds: [],
+      trust: 0,
+      clubSales: {
+        greenTomato: 0,
+        psychomor: 0,
+      },
+    },
   );
 
   const [activeScreen, setActiveScreen] = useState("plantation");
@@ -664,6 +678,15 @@ function GameScreen() {
     setActiveScreen("shop");
   };
 
+  const openJoeHouse = () => {
+    if (isTutorialActive) {
+      return;
+    }
+
+    setIsShopProductVisible(false);
+    setActiveScreen("joe-house");
+  };
+
   const goBackToDistrict = () => {
     if (isTutorialActive) {
       return;
@@ -740,6 +763,55 @@ function GameScreen() {
     };
   };
 
+  const deliverJoeItems = ({ itemId, amount }) => {
+    const safeAmount = Math.max(0, Math.floor(Number(amount) || 0));
+
+    if (!itemId || safeAmount <= 0) {
+      return false;
+    }
+
+    const availableAmount = inventory[itemId] || 0;
+
+    if (availableAmount < safeAmount) {
+      return false;
+    }
+
+    setInventory((previousInventory) => ({
+      ...previousInventory,
+      [itemId]: Math.max(
+        0,
+        (previousInventory[itemId] || 0) - safeAmount,
+      ),
+    }));
+
+    return true;
+  };
+
+  const claimJoeReward = ({ coins: coinReward }) => {
+    const safeCoins = Math.max(0, Math.floor(Number(coinReward) || 0));
+
+    if (safeCoins > 0) {
+      setCoins((previousCoins) => previousCoins + safeCoins);
+    }
+  };
+
+  const handleClubSaleForJoe = ({ itemId, amount }) => {
+    const safeAmount = Math.max(0, Math.floor(Number(amount) || 0));
+
+    if (!itemId || safeAmount <= 0) {
+      return;
+    }
+
+    setJoeQuestState((previousState) => ({
+      ...previousState,
+      clubSales: {
+        greenTomato: previousState?.clubSales?.greenTomato || 0,
+        psychomor: previousState?.clubSales?.psychomor || 0,
+        [itemId]: (previousState?.clubSales?.[itemId] || 0) + safeAmount,
+      },
+    }));
+  };
+
   const openResetModal = () => {
     if (isTutorialActive) {
       return;
@@ -768,6 +840,15 @@ function GameScreen() {
 
     setShopStock({
       psychomor: 5,
+    });
+
+    setJoeQuestState({
+      completedQuestIds: [],
+      trust: 0,
+      clubSales: {
+        greenTomato: 0,
+        psychomor: 0,
+      },
     });
 
     setPotStates(createInitialPotStates());
@@ -966,6 +1047,20 @@ function GameScreen() {
           <DistrictScreen
             onOpenClub={openClub}
             onOpenShop={openShop}
+            onOpenJoeHouse={openJoeHouse}
+          />
+        )}
+
+        {activeScreen === "joe-house" && (
+          <JoeHouseScreen
+            inventory={inventory}
+            seedInventory={seedInventory}
+            clubReputation={clubReputation}
+            questState={joeQuestState}
+            onQuestStateChange={setJoeQuestState}
+            onDeliverItems={deliverJoeItems}
+            onRewardClaimed={claimJoeReward}
+            onBack={goBackToDistrict}
           />
         )}
 
@@ -997,12 +1092,14 @@ function GameScreen() {
             setInventory={setInventory}
             coins={coins}
             setCoins={setCoins}
+            onSaleCompleted={handleClubSaleForJoe}
             onGoBack={goBackToDistrict}
           />
         )}
 
         {activeScreen !== "shop" &&
-          activeScreen !== "club" && (
+          activeScreen !== "club" &&
+          activeScreen !== "joe-house" && (
             <BottomMenu
               activeScreen={activeScreen}
               tutorialStep={tutorialStep}

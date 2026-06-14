@@ -4,11 +4,7 @@ import GameLoadingScreen from "./components/GameLoadingScreen";
 import useGameAssets from "./hooks/useGameAssets";
 
 function App() {
-  const {
-    isReady,
-    progress,
-    failedAssets,
-  } = useGameAssets();
+  const { isReady, progress, failedAssets } = useGameAssets();
 
   if (!isReady) {
     return <GameLoadingScreen progress={progress} />;

@@ -57,6 +57,30 @@ export function readClubReputation() {
   }
 }
 
+
+export function writeClubReputation(value) {
+  const reputation = normalizeReputation(value);
+
+  try {
+    localStorage.setItem(CLUB_REPUTATION_STORAGE_KEY, String(reputation));
+  } catch {
+    // В приватном режиме localStorage может быть недоступен.
+  }
+
+  window.dispatchEvent(
+    new CustomEvent(CLUB_REPUTATION_EVENT, {
+      detail: { reputation },
+    }),
+  );
+
+  return reputation;
+}
+
+export function addClubReputation(amount) {
+  const reward = normalizeReputation(amount);
+  return writeClubReputation(readClubReputation() + reward);
+}
+
 export function getClubLevelInfo(reputationValue) {
   const reputation = normalizeReputation(reputationValue);
   let currentLevel = CLUB_LEVELS[0];

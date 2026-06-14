@@ -293,7 +293,7 @@ function ReputationOverlay({ reputation, onClose }) {
   );
 }
 
-function ClubScreen({ inventory, setInventory, coins, setCoins, onGoBack }) {
+function ClubScreen({ inventory, setInventory, coins, setCoins, onSaleCompleted, onGoBack }) {
   const [screen, setScreen] = useState("dialog");
   const [selectedProductId, setSelectedProductId] = useState(null);
   const [currentOffer, setCurrentOffer] = useState(null);
@@ -389,6 +389,12 @@ function ClubScreen({ inventory, setInventory, coins, setCoins, onGoBack }) {
     }));
 
     setCoins((previousCoins) => previousCoins + currentOffer.totalPrice);
+    onSaleCompleted?.({
+      itemId: selectedProductId,
+      amount: currentOffer.amount,
+      coins: currentOffer.totalPrice,
+      reputation: reputationReward,
+    });
     saveReputation(reputation + reputationReward);
     setEarnedReputation(reputationReward);
     setResultMessage(
