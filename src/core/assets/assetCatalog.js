@@ -1,56 +1,122 @@
 // Единый реестр игровых изображений.
-// Чтобы заменить арт, меняй путь здесь или положи новый файл по текущему пути.
+// Компоненты получают пути отсюда, а не хранят случайные строки /assets/...
 
 export const ASSETS = {
   backgrounds: {
-    plantation: "/assets/backgrounds/main-bg.png",
-    district: "/assets/district-bg.png",
-    shop: "/assets/shop-bg.png",
-    club: "/assets/club-bg.png",
+    plantation: "/assets/backgrounds/plantation.png",
+    district: "/assets/backgrounds/district.png",
+    shop: "/assets/backgrounds/shop.png",
+    club: "/assets/backgrounds/club.png",
   },
   buildings: {
-    club: "/assets/club-building.png",
-    shop: "/assets/shop-building.png",
+    club: "/assets/buildings/club.png",
+    shop: "/assets/buildings/shop.png",
+    mariaIvanovnaHouse: "/assets/buildings/maria-ivanovna-house.png",
   },
   characters: {
-    joe: "/assets/characters/tutorial-dealer.png",
-    clubDealer: "/assets/club/club-dealer.png",
+    mariaIvanovna: "/assets/characters/maria-ivanovna.png",
+    clubDealer: "/assets/characters/club-dealer.png",
   },
-  pots: {
-    plantBucket: "/assets/pots/bucket-1.png",
-    mushroomBucket: null,
+  locations: {
+    mariaIvanovnaHouse: {
+      background: "/assets/locations/maria-ivanovna-house/background.png",
+      questBoard: "/assets/locations/maria-ivanovna-house/quest-board.png",
+      radio: "/assets/locations/maria-ivanovna-house/radio.png",
+    },
+  },
+  containers: {
+    basicSoilBucket: "/assets/containers/basic-soil-bucket.png",
+    hydroSoilBucket: "/assets/containers/hydro-soil-bucket.png",
+    mycoBioreactor: "/assets/containers/myco-bioreactor.png",
   },
   plants: {
     greenTomato: [
-      "/assets/plants/plant-1.png",
-      "/assets/plants/plant-2.png",
-      "/assets/plants/plant-3.png",
+      "/assets/plants/green-tomato/stage-1.png",
+      "/assets/plants/green-tomato/stage-2.png",
+      "/assets/plants/green-tomato/stage-3.png",
     ],
-    lumenweed: [
-      "/assets/plants/psychomor/psychomor-stage-1.png",
-      "/assets/plants/psychomor/psychomor-stage-2.png",
-      "/assets/plants/psychomor/psychomor-stage-3.png",
+    tabakko: [
+      "/assets/plants/tabakko/stage-1.png",
+      "/assets/plants/tabakko/stage-2.png",
+      "/assets/plants/tabakko/stage-3.png",
+    ],
+    kokaNova: [
+      "/assets/plants/koka-nova/stage-1.png",
+      "/assets/plants/koka-nova/stage-2.png",
+      "/assets/plants/koka-nova/stage-3.png",
+    ],
+    donJuana: [
+      "/assets/plants/don-juana/stage-1.png",
+      "/assets/plants/don-juana/stage-2.png",
+      "/assets/plants/don-juana/stage-3.png",
+    ],
+    xenobloom: [
+      "/assets/plants/xenobloom/stage-1.png",
+      "/assets/plants/xenobloom/stage-2.png",
+      "/assets/plants/xenobloom/stage-3.png",
+    ],
+    psychomor: [
+      "/assets/plants/psychomor/stage-1.png",
+      "/assets/plants/psychomor/stage-2.png",
+      "/assets/plants/psychomor/stage-3.png",
+    ],
+    psilocubeCebensis: [
+      "/assets/plants/psilocube-cebensis/stage-1.png",
+      "/assets/plants/psilocube-cebensis/stage-2.png",
+      "/assets/plants/psilocube-cebensis/stage-3.png",
     ],
   },
-  seeds: {
-    lumenweed: "/assets/seeds/psychomor-seeds.png",
+  seedPackets: {
+    psychomor: "/assets/seed-packets/psychomor.png",
   },
-  items: {
-    seedBasket: "/assets/items/seed-basket.png",
-    backpack: "/assets/items/backpack-1.png",
+  ui: {
+    backpack: "/assets/ui/inventory/backpack.png",
+    seedBasket: "/assets/ui/seed-basket/seed-basket.png",
+    phytoStation: "/assets/ui/care/phyto-station.png",
   },
   tools: {
-    shovel: "/assets/tools/shovel-1.png",
+    shovel: "/assets/tools/shovel.png",
   },
 };
 
-export const preloadAssets = [...new Set([
-  ...Object.values(ASSETS.backgrounds),
-  ...Object.values(ASSETS.buildings),
-  ...Object.values(ASSETS.characters),
-  ...Object.values(ASSETS.pots).filter(Boolean),
-  ...Object.values(ASSETS.plants).flat(),
-  ...Object.values(ASSETS.seeds),
-  ...Object.values(ASSETS.items),
-  ...Object.values(ASSETS.tools),
-])];
+function collectAssetPaths(value) {
+  if (typeof value === "string") return [value];
+  if (Array.isArray(value)) return value.flatMap(collectAssetPaths);
+  if (value && typeof value === "object") {
+    return Object.values(value).flatMap(collectAssetPaths);
+  }
+  return [];
+}
+
+export const allAssets = [...new Set(collectAssetPaths(ASSETS))];
+
+// Только эти файлы блокируют старт приложения. Остальной тяжёлый арт
+// догружается в фоне после показа первой сцены.
+export const criticalAssets = [
+  ASSETS.backgrounds.plantation,
+  ASSETS.characters.mariaIvanovna,
+  ASSETS.containers.basicSoilBucket,
+  ...ASSETS.plants.greenTomato,
+  ASSETS.ui.backpack,
+  ASSETS.ui.seedBasket,
+];
+
+// Ближайшие локации прогреваются после первого кадра. Тяжёлые стадии
+// редких культур остаются ленивыми и загружаются только при реальном показе.
+export const deferredAssets = [
+  ASSETS.backgrounds.district,
+  ASSETS.backgrounds.shop,
+  ASSETS.backgrounds.club,
+  ASSETS.buildings.club,
+  ASSETS.buildings.shop,
+  ASSETS.buildings.mariaIvanovnaHouse,
+  ASSETS.characters.clubDealer,
+  ASSETS.locations.mariaIvanovnaHouse.background,
+  ASSETS.locations.mariaIvanovnaHouse.questBoard,
+  ASSETS.locations.mariaIvanovnaHouse.radio,
+  ASSETS.containers.hydroSoilBucket,
+  ASSETS.containers.mycoBioreactor,
+];
+
+// Совместимое имя для существующего загрузчика.
+export const preloadAssets = criticalAssets;

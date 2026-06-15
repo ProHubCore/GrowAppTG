@@ -1,32 +1,14 @@
-import { ASSETS } from "../../../core/assets/assetCatalog";
+import { CROPS } from "./crops";
 
-export const seeds = [
-  {
-    id: "greenTomato",
-    name: "Кислоплод",
-    description: "Базовый бодрящий плод района. Семена всегда есть у начинающего поставщика.",
-    icon: "🟢",
-    infinite: true,
-    growTime: 5,
-    harvestItemId: "greenTomato",
-    seedType: "plant",
-  },
-  {
-    id: "lumenweed",
-    name: "Люмен-трава",
-    description: "Светящаяся трава для клубных смесей и кальянов.",
-    image: ASSETS.seeds.lumenweed,
-    infinite: false,
-    growTime: 4,
-    harvestItemId: "lumenweed",
-    seedType: "plant",
-  },
-  { id: "moonmint", name: "Лунная мята", description: "Прохладная ароматная зелень для ночных заведений района.", icon: "🌿", infinite: false, growTime: 5, harvestItemId: "moonmint", seedType: "plant" },
-  { id: "velvetbud", name: "Бархатный бутон", description: "Мягкий бутон с долгим послевкусием.", icon: "🌺", infinite: false, growTime: 6, harvestItemId: "velvetbud", seedType: "plant" },
-  { id: "starleaf", name: "Звёздный лист", description: "Хрустящая клубная зелень с искристым ароматом.", icon: "✨", infinite: false, growTime: 6, harvestItemId: "starleaf", seedType: "plant" },
-  { id: "emberpod", name: "Жар-стручок", description: "Тёплый плод для острых напитков и ритуальных смесей.", icon: "🔥", infinite: false, growTime: 8, harvestItemId: "emberpod", seedType: "plant" },
-  { id: "psychoshroom", name: "Психомор", description: "Гриб Джо. Растёт только во влажной грибной ёмкости.", icon: "🍄", infinite: false, growTime: 5, harvestItemId: "psychoshroom", seedType: "mushroom", requiredTrust: 180 },
-  { id: "bluecap", name: "Синий колпак", description: "Клубный гриб для опытных поставщиков.", icon: "🔵", infinite: false, growTime: 7, harvestItemId: "bluecap", seedType: "mushroom", requiredTrust: 180 },
-  { id: "dreamcap", name: "Сонный колпак", description: "Мягкая грибная культура для тихих залов клуба.", icon: "🌙", infinite: false, growTime: 8, harvestItemId: "dreamcap", seedType: "mushroom", requiredTrust: 180 },
-  { id: "ghostmorel", name: "Призрачный сморчок", description: "Редкий полупрозрачный гриб для закрытых заказов.", icon: "👻", infinite: false, growTime: 10, harvestItemId: "ghostmorel", seedType: "mushroom", requiredTrust: 240 },
-];
+export const seeds = CROPS.map((crop) => ({
+  id: crop.id,
+  name: crop.name,
+  description: crop.description,
+  icon: crop.icon,
+  image: crop.seedImage || crop.stages[0]?.image,
+  infinite: Boolean(crop.infiniteSeeds),
+  growTime: crop.growTime,
+  harvestItemId: crop.id,
+  seedType: crop.type,
+  requiredTrust: crop.shop?.requiredTrust || 0,
+}));

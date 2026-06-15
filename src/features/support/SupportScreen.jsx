@@ -32,7 +32,7 @@ function readSupportTotal() {
 
 function getSupportTitle(total) {
   if (total >= 1000) return "Легенда района";
-  if (total >= 500) return "Покровитель Джо";
+  if (total >= 500) return "Покровитель Марии Ивановны";
   if (total >= 250) return "Друг проекта";
   if (total >= 100) return "Свой человек";
   if (total > 0) return "Первый сторонник";

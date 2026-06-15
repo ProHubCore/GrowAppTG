@@ -16,8 +16,8 @@ function getWeights(care) {
 
   if (applied.includes("water")) weights = [0.52, 0.31, 0.13, 0.04];
   if (applied.includes("nutrition")) weights = [0.08, 0.42, 0.38, 0.12];
-  if (applied.includes("joeMix")) weights = [0, 0.15, 0.45, 0.40];
-  if (applied.includes("nutrition") && applied.includes("joeMix")) weights = [0, 0.08, 0.42, 0.50];
+  if (applied.includes("mariaMix")) weights = [0, 0.15, 0.45, 0.40];
+  if (applied.includes("nutrition") && applied.includes("mariaMix")) weights = [0, 0.08, 0.42, 0.50];
   if (applied.length === 3) weights = [0, 0.05, 0.35, 0.60];
 
   return weights;

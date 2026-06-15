@@ -92,7 +92,7 @@
 
 /*
   Все обычные шаги:
-  Джо крупный, слева от диалога и сильно опущен вниз.
+  Мария Ивановна крупный, слева от диалога и сильно опущен вниз.
   Нижняя часть спрятана окном, наружу выходят голова и плечи.
 */
 .tutorial-character-compact
@@ -122,7 +122,7 @@
 
 /*
   Создание ведра и корзинка:
-  Джо ещё крупнее и ниже, но не закрывает подсвеченный объект.
+  Мария Ивановна ещё крупнее и ниже, но не закрывает подсвеченный объект.
 */
 .tutorial-step-unlock-pot
   .tutorial-character-wrap,
@@ -163,7 +163,7 @@
 
 /*
   Рост, сбор и переход в район:
-  та же композиция — большой Джо слева и низко.
+  та же композиция — большой Мария Ивановна слева и низко.
 */
 .tutorial-step-growing
   .tutorial-character-wrap,
@@ -177,7 +177,7 @@
 
 /*
   Приветствие и финал:
-  крупный Джо за полноширинным диалогом.
+  крупный Мария Ивановна за полноширинным диалогом.
 */
 .tutorial-character-hero
   .tutorial-character-wrap {
@@ -283,7 +283,7 @@
 
 
 /*
-  На шаге роста Дядя Джо всегда остаётся снизу,
+  На шаге роста Мария Ивановна всегда остаётся снизу,
   даже когда подсвечивается таймер сверху.
 */
 .tutorial-step-growing
@@ -619,7 +619,7 @@
 
 
 /*
-  Мягкий игровой акцент на Дяде Джо и его диалогах.
+  Мягкий игровой акцент на Марии Ивановне и его диалогах.
   Позиции, размеры и логика туториала не меняются.
 */
 
@@ -630,15 +630,15 @@
     2.8s ease-in-out infinite;
 }
 
-/* Сам Джо мягко "дышит" и слегка плавает без мигания */
+/* Сам Мария Ивановна мягко "дышит" и слегка плавает без мигания */
 .tutorial-character {
   animation:
-    tutorialJoeSmoothFloat
+    tutorialMariaSmoothFloat
     4.6s ease-in-out infinite;
   transform-origin: center bottom;
 }
 
-@keyframes tutorialJoeSmoothFloat {
+@keyframes tutorialMariaSmoothFloat {
   0%,
   100% {
     transform: translateY(0);
@@ -705,7 +705,7 @@
 
 /*
   Фикс перехода growing -> collect:
-  Дядя Джо и диалог остаются в одной нижней позиции,
+  Мария Ивановна и диалог остаются в одной нижней позиции,
   поэтому при созревании растения ничего не прыгает наверх.
 */
 .tutorial-step-collect .tutorial-dialog {
@@ -730,7 +730,7 @@
   transition: none !important;
 }
 
-/* Финальная спокойная версия: изображение Дяди Джо не меняем и не двигаем. */
+/* Финальная спокойная версия: изображение Дяди Мария Ивановна не меняем и не двигаем. */
 .tutorial-character {
   filter: none !important;
   animation: none !important;
@@ -761,10 +761,10 @@
   animation: none !important;
 }
 
-/* Дядя Джо не двигается и не меняет цвет.
+/* Мария Ивановна не двигается и не меняет цвет.
    Анимируется только мягкая тень вокруг его обёртки. */
 .tutorial-character-wrap {
-  animation: tutorialJoeSoftAura 3.2s ease-in-out infinite !important;
+  animation: tutorialMariaSoftAura 3.2s ease-in-out infinite !important;
 }
 
 .tutorial-character {
@@ -854,7 +854,7 @@
   animation: tutorialButtonSoftGlow 2.1s ease-in-out infinite !important;
 }
 
-@keyframes tutorialJoeSoftAura {
+@keyframes tutorialMariaSoftAura {
   0%, 100% {
     filter: drop-shadow(0 10px 12px rgba(0,0,0,.46))
             drop-shadow(0 0 7px rgba(183,255,108,.10));
@@ -978,10 +978,10 @@
   display: block !important;
 }
 
-/* Картинка Дяди Джо двигается сама, контейнер остаётся на месте. */
+/* Картинка Дяди Мария Ивановна двигается сама, контейнер остаётся на месте. */
 .tutorial-character {
   transform-origin: 50% 100%;
-  animation: tutorialJoeFloat 3.4s ease-in-out infinite;
+  animation: tutorialMariaFloat 3.4s ease-in-out infinite;
   will-change: transform;
 }
 
@@ -1087,7 +1087,7 @@
   }
 }
 
-@keyframes tutorialJoeFloat {
+@keyframes tutorialMariaFloat {
   0%,
   100% {
     transform: translateY(0) rotate(0deg);

@@ -199,7 +199,7 @@ function PlantArea({
               <div className="plant-care-status">
                 {careApplied.includes("water") && <span>💧</span>}
                 {careApplied.includes("nutrition") && <span>🌿</span>}
-                {careApplied.includes("joeMix") && <span>🧪</span>}
+                {careApplied.includes("mariaMix") && <span>🧪</span>}
                 <b>{careApplied.length}/3</b>
               </div>
             )}

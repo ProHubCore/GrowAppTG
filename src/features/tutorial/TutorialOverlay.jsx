@@ -3,20 +3,20 @@ import { useEffect, useState } from "react";
 
 import "./TutorialOverlay.css";
 
-const CHARACTER_IMAGE = ASSETS.characters.joe;
+const CHARACTER_IMAGE = ASSETS.characters.mariaIvanovna;
 
 const STEPS = {
   intro: {
-    name: "Дядя Джо",
+    name: "Мария Ивановна",
     text:
-      "Здорово, брат. Район у нас тихий, пока никто лишнего не спрашивает. Давай сначала организуем тебе своё место.",
+      "Ну здравствуй, ученик. Давай сначала организуем тебе своё место и посадим первый Кислоплод.",
     buttonText: "Показывай",
     target: null,
     characterMode: "hero",
     layoutMode: "intro",
   },
   "unlock-pot": {
-    name: "Дядя Джо",
+    name: "Мария Ивановна",
     text:
       "Пока тут пусто. Нажми на новое место — первое ведро сегодня за мой счёт.",
     hint: "Нажми «Добавить ведро»",
@@ -24,7 +24,7 @@ const STEPS = {
     characterMode: "compact",
   },
   "open-seeds": {
-    name: "Дядя Джо",
+    name: "Мария Ивановна",
     text:
       "Вот, уже похоже на хозяйство. Теперь открой корзинку с семенами.",
     hint: "Нажми на корзинку",
@@ -32,7 +32,7 @@ const STEPS = {
     characterMode: "compact",
   },
   "choose-seed": {
-    name: "Дядя Джо",
+    name: "Мария Ивановна",
     text:
       "Для начала бери зелёный томат. Он простой и ошибок прощает больше остальных.",
     hint: "Выбери зелёный томат",
@@ -40,7 +40,7 @@ const STEPS = {
     characterMode: "compact",
   },
   "plant-seed": {
-    name: "Дядя Джо",
+    name: "Мария Ивановна",
     text:
       "Правильный выбор. Теперь подтверждай посадку.",
     hint: "Нажми «Посадить»",
@@ -48,7 +48,7 @@ const STEPS = {
     characterMode: "compact",
   },
   growing: {
-    name: "Дядя Джо",
+    name: "Мария Ивановна",
     text:
       "Теперь оно растёт. Здесь видно этап роста и сколько осталось. Как созреет — растение само даст понять.",
     hint: "Следи за таймером",
@@ -56,7 +56,7 @@ const STEPS = {
     characterMode: "compact",
   },
   collect: {
-    name: "Дядя Джо",
+    name: "Мария Ивановна",
     text:
       "Готово. Жми прямо на растение и забирай первый урожай.",
     hint: "Собери урожай",
@@ -64,7 +64,7 @@ const STEPS = {
     characterMode: "compact",
   },
   "go-district": {
-    name: "Дядя Джо",
+    name: "Мария Ивановна",
     text:
       "Урожай в кармане. Теперь глянем район — там клуб, магазин и люди, с которыми ещё познакомишься.",
     hint: "Перейди в «Район»",
@@ -72,10 +72,10 @@ const STEPS = {
     characterMode: "compact",
   },
   "district-finish": {
-    name: "Дядя Джо",
+    name: "Мария Ивановна",
     text:
       "Вот твой район. В клубе продают урожай, а у Зорика берут редкие семена. На сегодня хватит — дальше освоишься.",
-    buttonText: "Понял, брат",
+    buttonText: "Понял, Мария Ивановна",
     target: null,
     characterMode: "hero",
     layoutMode: "finish",

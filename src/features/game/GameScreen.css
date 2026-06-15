@@ -20,22 +20,22 @@
 
 /* Настоящий полноэкранный фон без боковых блюр-подложек. */
 .game-screen--plantation {
-  background-image: url("/assets/backgrounds/main-bg.png");
+  background-image: url("/assets/backgrounds/plantation.png");
 }
 
 .game-screen--district {
-  background-image: url("/assets/district-bg.png");
+  background-image: url("/assets/backgrounds/district.png");
 }
 
 .game-screen--shop {
-  background-image: url("/assets/shop-bg.png");
+  background-image: url("/assets/backgrounds/shop.png");
 }
 
 .game-screen--club {
-  background-image: url("/assets/club-bg.png");
+  background-image: url("/assets/backgrounds/club.png");
 }
 
-.game-screen--joe-house {
+.game-screen--maria-house {
   background-image:
     radial-gradient(circle at 50% 24%, rgba(255, 184, 85, 0.28), transparent 38%),
     linear-gradient(180deg, #2a2020, #120e11);
@@ -87,7 +87,7 @@ html[data-telegram-app="true"] .game-screen {
   z-index: 1;
   width: 100%;
   height: 100%;
-  background-image: url("/assets/backgrounds/main-bg.png");
+  background-image: url("/assets/backgrounds/plantation.png");
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;

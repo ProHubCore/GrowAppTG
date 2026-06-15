@@ -10,7 +10,7 @@ import FlyingLoot from "../plantation/components/FlyingLoot";
 import DistrictScreen from "../district/DistrictScreen";
 import ShopScreen from "../shop/ShopScreen";
 import ClubScreen from "../club/ClubScreen";
-import JoeHouseScreen from "../joe/JoeHouseScreen";
+import MariaHouseScreen from "../maria-ivanovna/MariaHouseScreen";
 import ActionModal from "../../shared/components/ActionModal/ActionModal";
 import TestResetButton from "../../shared/components/TestResetButton/TestResetButton";
 import UnlockCelebration from "../progression/components/UnlockCelebration";
@@ -31,13 +31,24 @@ import {
   plantationSlots,
 } from "../plantation/data/plantationSlots";
 import { CLUB_LEVELS, getClubLevel } from "../club/clubProgression";
-import { JOE_TRUST_LEVELS } from "../joe/joeProgression";
+import { MARIA_TRUST_LEVELS } from "../maria-ivanovna/mariaProgression";
 import { plantsBySeed } from "../plantation/data/plants";
+import { CROP_IDS, createEmptyCropInventory, createEmptySeedInventory } from "../plantation/data/crops";
 import { seeds } from "../plantation/data/seeds";
 import { SHOP_REFRESH_MS, createShopStock, shopItems } from "../shop/shopItems";
 import { getHarvestYield, rollHarvestQuality } from "../plantation/data/harvestQuality";
-import { POT_TYPES_BY_ID, getUnlockedPotTypes } from "../plantation/data/potTypes";
+import { POT_TYPES_BY_ID } from "../plantation/data/potTypes";
 import { addQualityItems, createEmptyQualityInventory, getQualityAmount, getQualityTotal, removeAnyQuality, removeQualityItems } from "../plantation/data/qualityInventory";
+import {
+  migrateCareInventory,
+  migrateCropInventory,
+  migrateMariaQuestState,
+  migratePlantCatalog,
+  migratePotStates,
+  migrateQualityInventory,
+  migrateSeedInventory,
+  migrateShopStock,
+} from "../../core/migrations/gameStateMigrations";
 
 import "./GameScreen.css";
 
@@ -57,7 +68,9 @@ const STORAGE_KEYS = [
   "growapp-coins",
   "growapp-club-reputation",
   "growapp-tutorial-step",
+  "growapp-maria-ivanovna-quests",
   "growapp-joe-quests",
+  "growapp-care-inventory",
   "growapp-plant-catalog",
   "growapp-quality-inventory",
 ];
@@ -109,47 +122,31 @@ function GameScreen() {
   const [potStates, setPotStates] = usePersistentState(
     "growapp-pot-states",
     createInitialPotStates,
+    { migrate: migratePotStates },
   );
 
   const [inventory, setInventory] = usePersistentState(
     "growapp-inventory",
-    {
-      greenTomato: 0,
-      lumenweed: 0,
-      moonmint: 0,
-      velvetbud: 0,
-      psychoshroom: 0,
-      bluecap: 0,
-      starleaf: 0,
-      emberpod: 0,
-      dreamcap: 0,
-      ghostmorel: 0,
-    },
+    createEmptyCropInventory,
+    { migrate: migrateCropInventory },
   );
 
   const [seedInventory, setSeedInventory] = usePersistentState(
     "growapp-seed-inventory",
-    {
-      lumenweed: 0,
-      moonmint: 0,
-      velvetbud: 0,
-      psychoshroom: 0,
-      bluecap: 0,
-      starleaf: 0,
-      emberpod: 0,
-      dreamcap: 0,
-      ghostmorel: 0,
-    },
+    createEmptySeedInventory,
+    { migrate: migrateSeedInventory },
   );
 
   const [careInventory, setCareInventory] = usePersistentState(
     "growapp-care-inventory",
-    { nutrition: 0, joeMix: 0 },
+    { nutrition: 0, mariaMix: 0 },
+    { migrate: migrateCareInventory },
   );
 
   const [shopStock, setShopStock] = usePersistentState(
     "growapp-shop-stock",
     createShopStock,
+    { migrate: (value) => ({ ...createShopStock(), ...migrateShopStock(value) }) },
   );
 
   const [shopRefreshAt, setShopRefreshAt] = usePersistentState(
@@ -164,35 +161,34 @@ function GameScreen() {
     INITIAL_COINS,
   );
 
-  const [joeQuestState, setJoeQuestState] = usePersistentState(
-    "growapp-joe-quests",
+  const [mariaQuestState, setMariaQuestState] = usePersistentState(
+    "growapp-maria-ivanovna-quests",
     {
       completedQuestIds: [],
       trust: 0,
-      clubSales: {
-        greenTomato: 0,
-        lumenweed: 0,
-      },
-      careUses: {
-        water: 0,
-        nutrition: 0,
-        joeMix: 0,
-      },
+      clubSales: createEmptyCropInventory(),
+      careUses: { water: 0, nutrition: 0, mariaMix: 0 },
+    },
+    {
+      legacyKeys: ["growapp-joe-quests"],
+      migrate: migrateMariaQuestState,
     },
   );
 
   const [plantCatalog, setPlantCatalog] = usePersistentState(
     "growapp-plant-catalog",
     {},
+    { migrate: migratePlantCatalog },
   );
 
   const [qualityInventory, setQualityInventory] = usePersistentState(
     "growapp-quality-inventory",
     createEmptyQualityInventory,
+    { migrate: migrateQualityInventory },
   );
 
   const [unlockQueue, setUnlockQueue] = useState([]);
-  const previousJoeTrustRef = useRef(null);
+  const previousMariaTrustRef = useRef(null);
   const previousClubReputationRef = useRef(null);
 
   const [activeScreen, setActiveScreen] = useState("plantation");
@@ -235,16 +231,16 @@ function GameScreen() {
     useState(false);
 
   useEffect(() => {
-    const currentTrust = Math.max(0, Number(joeQuestState?.trust) || 0);
-    const previousTrust = previousJoeTrustRef.current;
+    const currentTrust = Math.max(0, Number(mariaQuestState?.trust) || 0);
+    const previousTrust = previousMariaTrustRef.current;
 
     if (previousTrust === null) {
-      previousJoeTrustRef.current = currentTrust;
+      previousMariaTrustRef.current = currentTrust;
       return;
     }
 
     if (currentTrust > previousTrust) {
-      const unlockedLevels = JOE_TRUST_LEVELS.filter(
+      const unlockedLevels = MARIA_TRUST_LEVELS.filter(
         (level) =>
           level.level > 0 &&
           level.required > previousTrust &&
@@ -255,23 +251,23 @@ function GameScreen() {
         setUnlockQueue((queue) => [
           ...queue,
           ...unlockedLevels.map((level) => ({
-            id: `joe-${level.level}-${Date.now()}`,
-            source: "joe",
-            sourceLabel: "Путь ученика · Дядя Джо",
+            id: `maria-${level.level}-${Date.now()}`,
+            source: "maria",
+            sourceLabel: "Путь ученика · Мария Ивановна",
             level: `${level.level} · ${level.title}`,
             icon: level.icon,
             title: level.unlockTitle || level.reward,
             description:
               level.unlockDescription ||
-              `Джо открыл для тебя: ${level.reward}.`,
+              `Мария Ивановна открыла для тебя: ${level.reward}.`,
             unlocks: level.unlocks || [level.reward],
           })),
         ]);
       }
     }
 
-    previousJoeTrustRef.current = currentTrust;
-  }, [joeQuestState?.trust]);
+    previousMariaTrustRef.current = currentTrust;
+  }, [mariaQuestState?.trust]);
 
   useEffect(() => {
     const currentReputation = Math.max(0, Number(clubReputation) || 0);
@@ -294,16 +290,16 @@ function GameScreen() {
         const clubUnlocks = {
           2: [
             "Расширенная витрина Зорика",
-            "Бархатный бутон",
-            "Звёздный лист",
+            "Кока Нова",
+            "Дон Хуана",
           ],
           3: [
             "Второе место под ёмкость",
-            "Жар-стручок",
+            "Ксеноблум",
             "Новые клубные цены",
           ],
           4: [
-            "Призрачный сморчок у Зорика",
+            "Псилокуб Цебенсис у Зорика",
             "Высшие клубные заказы",
           ],
           5: [
@@ -428,27 +424,10 @@ function GameScreen() {
   }, [isTutorialActive, tutorialStep]);
 
   useEffect(() => {
-    setInventory((previous) => {
-      const legacy = Math.max(0, Number(previous?.psychomor) || 0);
-      if (!legacy) return previous;
-      const next = { ...previous, lumenweed: (previous.lumenweed || 0) + legacy };
-      delete next.psychomor;
-      return next;
-    });
-    setSeedInventory((previous) => {
-      const legacy = Math.max(0, Number(previous?.psychomor) || 0);
-      if (!legacy) return previous;
-      const next = { ...previous, lumenweed: (previous.lumenweed || 0) + legacy };
-      delete next.psychomor;
-      return next;
-    });
-  }, [setInventory, setSeedInventory]);
-
-  useEffect(() => {
     setQualityInventory((previous) => {
       let next = previous || {};
       let changed = false;
-      for (const itemId of ["greenTomato", "lumenweed", "moonmint", "velvetbud", "psychoshroom", "bluecap", "starleaf", "emberpod", "dreamcap", "ghostmorel"]) {
+      for (const itemId of CROP_IDS) {
         const total = Math.max(0, Number(inventory[itemId]) || 0);
         const qualityTotal = getQualityTotal(next, itemId);
         if (total > qualityTotal) {
@@ -540,7 +519,7 @@ function GameScreen() {
 
   const availableSeedsForCurrentPot = seeds.filter((seed) =>
     (seed.seedType || "plant") === currentPotType.seedType &&
-    (joeQuestState.trust || 0) >= (seed.requiredTrust || 0)
+    (mariaQuestState.trust || 0) >= (seed.requiredTrust || 0)
   );
 
   const pendingSlot =
@@ -638,7 +617,7 @@ function GameScreen() {
     const slot = plantationSlots[pendingSlotIndex];
     const slotState = getPlantationSlotState(slot, clubLevel, Boolean(potStates[pendingSlotIndex]?.unlocked));
     const type = POT_TYPES_BY_ID[potTypeId];
-    if (!type || (joeQuestState.trust || 0) < type.requiredTrust || !slotState.canBuy || slot.unlockPrice === null || coins < slot.unlockPrice) return;
+    if (!type || (mariaQuestState.trust || 0) < type.requiredTrust || !slotState.canBuy || slot.unlockPrice === null || coins < slot.unlockPrice) return;
     setCoins((value) => value - slot.unlockPrice);
     setPotStates((states) => states.map((state,index)=> index===pendingSlotIndex ? { ...createEmptyPotState(true), potTypeId } : state));
     setPendingSlotIndex(null);
@@ -653,7 +632,7 @@ function GameScreen() {
 
   const chooseCurrentPotType = (potTypeId) => {
     const type = POT_TYPES_BY_ID[potTypeId];
-    if (!type || (joeQuestState.trust || 0) < type.requiredTrust || growStep !== 0) return;
+    if (!type || (mariaQuestState.trust || 0) < type.requiredTrust || growStep !== 0) return;
     updateCurrentPotState({ potTypeId });
     setIsPotTypeModalOpen(false);
   };
@@ -805,12 +784,12 @@ function GameScreen() {
       }));
     }
 
-    setJoeQuestState((previousState) => ({
+    setMariaQuestState((previousState) => ({
       ...previousState,
       careUses: {
         water: previousState?.careUses?.water || 0,
         nutrition: previousState?.careUses?.nutrition || 0,
-        joeMix: previousState?.careUses?.joeMix || 0,
+        mariaMix: previousState?.careUses?.mariaMix || 0,
         [careType]: (previousState?.careUses?.[careType] || 0) + 1,
       },
     }));
@@ -975,12 +954,12 @@ function GameScreen() {
     setActiveScreen("shop");
   };
 
-  const openJoeHouse = () => {
+  const openMariaHouse = () => {
     if (isTutorialActive) {
       return;
     }
 
-    setActiveScreen("joe-house");
+    setActiveScreen("maria-house");
   };
 
   const goBackToDistrict = () => {
@@ -1063,7 +1042,7 @@ function GameScreen() {
     };
   };
 
-  const deliverJoeItems = ({ itemId, amount }) => {
+  const deliverMariaItems = ({ itemId, amount }) => {
     const safeAmount = Math.max(0, Math.floor(Number(amount) || 0));
 
     if (!itemId || safeAmount <= 0) {
@@ -1082,7 +1061,7 @@ function GameScreen() {
     return true;
   };
 
-  const claimJoeReward = ({ coins: coinReward }) => {
+  const claimMariaReward = ({ coins: coinReward }) => {
     const safeCoins = Math.max(0, Math.floor(Number(coinReward) || 0));
 
     if (safeCoins > 0) {
@@ -1090,18 +1069,17 @@ function GameScreen() {
     }
   };
 
-  const handleClubSaleForJoe = ({ itemId, amount }) => {
+  const handleClubSaleForMaria = ({ itemId, amount }) => {
     const safeAmount = Math.max(0, Math.floor(Number(amount) || 0));
 
     if (!itemId || safeAmount <= 0) {
       return;
     }
 
-    setJoeQuestState((previousState) => ({
+    setMariaQuestState((previousState) => ({
       ...previousState,
       clubSales: {
-        greenTomato: previousState?.clubSales?.greenTomato || 0,
-        lumenweed: previousState?.clubSales?.lumenweed || previousState?.clubSales?.psychomor || 0,
+        ...(previousState?.clubSales || {}),
         [itemId]: (previousState?.clubSales?.[itemId] || 0) + safeAmount,
       },
     }));
@@ -1124,25 +1102,22 @@ function GameScreen() {
 
     setCoins(INITIAL_COINS);
 
-    setInventory({ greenTomato: 0, lumenweed: 0, moonmint: 0, velvetbud: 0, psychoshroom: 0, bluecap: 0, starleaf: 0, emberpod: 0, dreamcap: 0, ghostmorel: 0 });
+    setInventory(createEmptyCropInventory());
 
-    setSeedInventory({ lumenweed: 0, moonmint: 0, velvetbud: 0, psychoshroom: 0, bluecap: 0, starleaf: 0, emberpod: 0, dreamcap: 0, ghostmorel: 0 });
-    setCareInventory({ nutrition: 0, joeMix: 0 });
+    setSeedInventory(createEmptySeedInventory());
+    setCareInventory({ nutrition: 0, mariaMix: 0 });
 
     setShopStock(createShopStock());
     setShopRefreshAt(Date.now() + SHOP_REFRESH_MS);
 
-    setJoeQuestState({
+    setMariaQuestState({
       completedQuestIds: [],
       trust: 0,
-      clubSales: {
-        greenTomato: 0,
-        lumenweed: 0,
-      },
+      clubSales: createEmptyCropInventory(),
       careUses: {
         water: 0,
         nutrition: 0,
-        joeMix: 0,
+        mariaMix: 0,
       },
     });
 
@@ -1322,7 +1297,7 @@ function GameScreen() {
 
             <HarvestCareModal
               isOpen={isCareModalOpen}
-              trust={joeQuestState.trust || 0}
+              trust={mariaQuestState.trust || 0}
               careInventory={careInventory}
               appliedCare={currentPotState.careApplied}
               canApplyCare={growStep > 0 && growStep < 3}
@@ -1351,7 +1326,7 @@ function GameScreen() {
 
             <PotTypeModal
               isOpen={isPotTypeModalOpen}
-              trust={joeQuestState.trust || 0}
+              trust={mariaQuestState.trust || 0}
               title={potTypeMode === "purchase" ? "Купить место и выбрать ёмкость" : "Сменить пустую ёмкость"}
               description={potTypeMode === "purchase" ? "Стоимость места одинакова. Выбери доступный тип." : "Растения в слоте нет, поэтому ёмкость можно заменить бесплатно."}
               price={potTypeMode === "purchase" ? pendingSlot?.unlockPrice ?? null : null}
@@ -1410,21 +1385,20 @@ function GameScreen() {
           <DistrictScreen
             onOpenClub={openClub}
             onOpenShop={openShop}
-            onOpenJoeHouse={openJoeHouse}
+            onOpenMariaHouse={openMariaHouse}
           />
         )}
 
-        {activeScreen === "joe-house" && (
-          <JoeHouseScreen
+        {activeScreen === "maria-house" && (
+          <MariaHouseScreen
             inventory={inventory}
             seedInventory={seedInventory}
-            careInventory={careInventory}
             clubReputation={clubReputation}
-            questState={joeQuestState}
+            questState={mariaQuestState}
             plantCatalog={plantCatalog}
-            onQuestStateChange={setJoeQuestState}
-            onDeliverItems={deliverJoeItems}
-            onRewardClaimed={claimJoeReward}
+            onQuestStateChange={setMariaQuestState}
+            onDeliverItems={deliverMariaItems}
+            onRewardClaimed={claimMariaReward}
             onBack={goBackToDistrict}
           />
         )}
@@ -1438,7 +1412,7 @@ function GameScreen() {
             seedInventory={seedInventory}
             careInventory={careInventory}
             clubReputation={clubReputation}
-            joeTrust={joeQuestState.trust || 0}
+            mariaTrust={mariaQuestState.trust || 0}
             refreshAt={shopRefreshAt}
             onBuy={buyShopItem}
             onDevRefresh={() => {
@@ -1456,7 +1430,7 @@ function GameScreen() {
             setQualityInventory={setQualityInventory}
             coins={coins}
             setCoins={setCoins}
-            onSaleCompleted={handleClubSaleForJoe}
+            onSaleCompleted={handleClubSaleForMaria}
             onGoBack={goBackToDistrict}
           />
         )}
@@ -1468,7 +1442,7 @@ function GameScreen() {
 
         {activeScreen !== "shop" &&
           activeScreen !== "club" &&
-          activeScreen !== "joe-house" && (
+          activeScreen !== "maria-house" && (
             <BottomMenu
               activeScreen={activeScreen}
               tutorialStep={tutorialStep}
@@ -1477,7 +1451,7 @@ function GameScreen() {
                   return;
                 }
 
-                            setActiveScreen("plantation");
+                setActiveScreen("plantation");
               }}
               onGoDistrict={() => {
                 if (!tutorialAllows("go-district")) {

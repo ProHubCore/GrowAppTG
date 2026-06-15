@@ -3,7 +3,7 @@ import "./HarvestCareModal.css";
 const CARE_OPTIONS = [
   { id: "water", icon: "💧", title: "Чистая вода", description: "Бесплатно. Сокращает оставшееся время роста на 20%.", requiredTrust: 25, free: true },
   { id: "nutrition", icon: "🌿", title: "Питательный раствор", description: "Расходует 1 флакон. Повышает качество и добавляет +1 плод.", requiredTrust: 60 },
-  { id: "joeMix", icon: "🧪", title: "Смесь Джо", description: "Расходует 1 флакон. Сильно повышает шанс отличного и редкого качества.", requiredTrust: 240 },
+  { id: "mariaMix", icon: "🧪", title: "Смесь Марии Ивановны", description: "Расходует 1 флакон. Сильно повышает шанс отличного и редкого качества.", requiredTrust: 240 },
 ];
 
 export default function HarvestCareModal({ isOpen, trust = 0, careInventory = {}, appliedCare = [], canApplyCare = true, onChoose, onRemovePlant, onClose }) {
@@ -37,7 +37,7 @@ export default function HarvestCareModal({ isOpen, trust = 0, careInventory = {}
                 <span className="care-option-copy">
                   <strong>{option.title}</strong>
                   <small>{option.description}</small>
-                  {!canApplyCare ? <em>Уход доступен только на 1-й и 2-й стадии роста</em> : alreadyUsed ? <em>Уже применено в этом цикле</em> : locked ? <em>Откроется при {option.requiredTrust} доверия Джо</em> : !option.free ? <em>В запасе: {amount}</em> : <em>Всегда доступно</em>}
+                  {!canApplyCare ? <em>Уход доступен только на 1-й и 2-й стадии роста</em> : alreadyUsed ? <em>Уже применено в этом цикле</em> : locked ? <em>Откроется при {option.requiredTrust} доверия Марии Ивановны</em> : !option.free ? <em>В запасе: {amount}</em> : <em>Всегда доступно</em>}
                 </span>
               </button>
             );

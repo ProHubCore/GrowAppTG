@@ -41,7 +41,7 @@ export default function PotTypeModal({
                   <small>
                     {unlocked
                       ? price === null ? "Доступно" : `Установить · ${price} монет`
-                      : `Откроется при ${type.requiredTrust} доверия Джо`}
+                      : `Откроется при ${type.requiredTrust} доверия Марии Ивановны`}
                   </small>
                 </div>
                 <span className="pot-type-arrow">›</span>

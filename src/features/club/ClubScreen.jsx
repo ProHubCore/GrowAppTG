@@ -2,22 +2,24 @@ import { ASSETS } from "../../core/assets/assetCatalog";
 import { useMemo, useRef, useState } from "react";
 import "./ClubScreen.css";
 import { HARVEST_QUALITIES } from "../plantation/data/harvestQuality";
+import { CROPS } from "../plantation/data/crops";
 import { QUALITY_PRICE_MULTIPLIERS, getQualityAmount, removeQualityItems } from "../plantation/data/qualityInventory";
 
 const REPUTATION_STORAGE_KEY = "growapp-club-reputation";
 
-const PRODUCTS = {
-  greenTomato: { id: "greenTomato", name: "Кислоплод", icon: "🟢", basePrice: 4, lore: "Бодрящий плод для коктейлей и ночных смен." },
-  lumenweed: { id: "lumenweed", name: "Люмен-трава", icon: "🪻", image: ASSETS.plants.lumenweed[2], basePrice: 10, lore: "Светящаяся трава для клубных смесей и кальянов." },
-  moonmint: { id: "moonmint", name: "Лунная мята", icon: "🌿", basePrice: 8, lore: "Охлаждает голову и делает музыку глубже." },
-  velvetbud: { id: "velvetbud", name: "Бархатный бутон", icon: "🌺", basePrice: 15, lore: "Мягкий ароматный товар для спокойных заведений." },
-  psychoshroom: { id: "psychoshroom", name: "Психомор", icon: "🍄", basePrice: 24, lore: "Грибная культура для тех, кто хочет увидеть музыку." },
-  bluecap: { id: "bluecap", name: "Синий колпак", icon: "🔵", basePrice: 34, lore: "Закрытый клубный гриб для опытных покупателей." },
-  starleaf: { id: "starleaf", name: "Звёздный лист", icon: "✨", basePrice: 18, lore: "Искристая зелень для шумных залов." },
-  emberpod: { id: "emberpod", name: "Жар-стручок", icon: "🔥", basePrice: 26, lore: "Горячий плод для крепких напитков." },
-  dreamcap: { id: "dreamcap", name: "Сонный колпак", icon: "🌙", basePrice: 30, lore: "Мягкий гриб для тихих комнат." },
-  ghostmorel: { id: "ghostmorel", name: "Призрачный сморчок", icon: "👻", basePrice: 48, lore: "Тайный гриб для особых покупателей." },
-};
+const PRODUCTS = Object.fromEntries(
+  CROPS.map((crop) => [
+    crop.id,
+    {
+      id: crop.id,
+      name: crop.name,
+      icon: crop.icon,
+      image: crop.stages.at(-1)?.image,
+      basePrice: crop.basePrice,
+      lore: crop.lore,
+    },
+  ]),
+);
 
 const LEVELS = [
   { level: 1, required: 0, title: "Новый поставщик" },

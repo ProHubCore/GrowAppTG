@@ -1,73 +1,43 @@
-# React + TypeScript + Vite
+# GrowApp
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Вертикальная Telegram Mini App на React + Vite. Главный игровой цикл: посадка культуры, рост и уход, сбор урожая, продажа в клубе, покупки у Зорика и задания Марии Ивановны.
 
-Currently, two official plugins are available:
+## Запуск
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Проверка перед публикацией:
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+npm run lint
+npm run build
 ```
+
+Готовая production-сборка создаётся в `dist/`.
+
+## Главные точки расширения
+
+- `src/features/plantation/data/crops.js` — единый каталог культур, цен, стадий, описаний и условий открытия.
+- `src/core/assets/assetCatalog.js` — единый каталог путей ко всем изображениям.
+- `src/features/maria-ivanovna/` — дом, задания и шкала доверия Марии Ивановны.
+- `src/core/migrations/gameStateMigrations.js` — перенос старых сохранений на новые идентификаторы.
+- `public/assets/` — чисто разложенные игровые изображения.
+
+Подробности находятся в `src/ARCHITECTURE.md` и `src/ART_REPLACEMENT_GUIDE.md`.
+
+## Сохранения
+
+Прогресс хранится в `localStorage`. При переименовании старых культур, смеси Джо и ветки заданий данные автоматически мигрируют в актуальную структуру. Старый ключ `growapp-joe-quests` читается только для безопасного переноса и больше не используется для новых записей.
+
+## Telegram Stars
+
+Адрес серверного endpoint задаётся через:
+
+```env
+VITE_STARS_INVOICE_ENDPOINT=...
+```
+
+Локальное значение хранится в `.env.local`, production-значение — в `.env.production`.

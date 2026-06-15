@@ -5,7 +5,7 @@ export default function UnlockCelebration({ notification, queuedCount = 0, onClo
 
   return (
     <div className="unlock-celebration" role="dialog" aria-modal="true" aria-label="Открыта новая награда">
-      <div className={`unlock-celebration__glow unlock-celebration__glow--${notification.source || "joe"}`} />
+      <div className={`unlock-celebration__glow unlock-celebration__glow--${notification.source || "maria"}`} />
 
       <section className="unlock-celebration__card">
         <div className="unlock-celebration__spark unlock-celebration__spark--one">✦</div>

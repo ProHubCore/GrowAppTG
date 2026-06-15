@@ -1,21 +1,21 @@
 import { ASSETS } from "../../core/assets/assetCatalog";
 import "./DistrictScreen.css";
 
-function DistrictScreen({ onOpenClub, onOpenShop, onOpenJoeHouse }) {
+function DistrictScreen({ onOpenClub, onOpenShop, onOpenMariaHouse }) {
   return (
     <div className="district-screen">
       <button className="district-building-button district-club-button" onClick={onOpenClub} aria-label="Клуб">
-        <img src={ASSETS.buildings.club} alt="Клуб" />
+        <img src={ASSETS.buildings.club} alt="Клуб Орбита" draggable="false" />
       </button>
+
       <button className="district-building-button district-shop-button" onClick={onOpenShop} aria-label="Магазин">
-        <img src={ASSETS.buildings.shop} alt="Магазин" />
+        <img src={ASSETS.buildings.shop} alt="Лавка Зорика" draggable="false" />
       </button>
-      <button className="district-building-button district-joe-house-button" onClick={onOpenJoeHouse} aria-label="Дом Дяди Джо">
-        <span className="district-joe-house-glow" />
-        <span className="district-joe-house-roof" />
-        <span className="district-joe-house-body"><span className="district-joe-house-window" /><span className="district-joe-house-door" /></span>
-        <span className="district-joe-house-sign">Дом Джо</span>
-        <span className="district-joe-house-notice">!</span>
+
+      <button className="district-building-button district-maria-house-button" onClick={onOpenMariaHouse} aria-label="Дом Марии Ивановны">
+        <span className="district-maria-house-glow" />
+        <img src={ASSETS.buildings.mariaIvanovnaHouse} alt="Дом Марии Ивановны" draggable="false" />
+        <span className="district-maria-house-notice">!</span>
       </button>
     </div>
   );

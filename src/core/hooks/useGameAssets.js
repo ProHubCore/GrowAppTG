@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import gameAssets from "../assets/gameAssets";
+import gameAssets, { deferredAssets } from "../assets/gameAssets";
 
-const ASSET_TIMEOUT = 15000;
+const ASSET_TIMEOUT = 15_000;
 
 function preloadImage(source) {
   return new Promise((resolve) => {
@@ -9,50 +9,48 @@ function preloadImage(source) {
     let finished = false;
 
     const finish = (success) => {
-      if (finished) {
-        return;
-      }
+      if (finished) return;
 
       finished = true;
       window.clearTimeout(timeoutId);
-
       image.onload = null;
       image.onerror = null;
-
-      resolve({
-        source,
-        success,
-      });
+      resolve({ source, success });
     };
 
-    const timeoutId = window.setTimeout(() => {
-      finish(false);
-    }, ASSET_TIMEOUT);
+    const timeoutId = window.setTimeout(() => finish(false), ASSET_TIMEOUT);
 
     image.onload = async () => {
       try {
-        if (typeof image.decode === "function") {
-          await image.decode();
-        }
+        if (typeof image.decode === "function") await image.decode();
       } catch {
-        // Некоторые браузеры могут отклонить decode,
-        // хотя само изображение уже нормально загружено.
+        // decode может отклониться даже для уже успешно загруженного файла.
       }
-
       finish(true);
     };
 
-    image.onerror = () => {
-      console.warn(`Не удалось загрузить изображение: ${source}`);
-      finish(false);
-    };
-
+    image.onerror = () => finish(false);
     image.src = source;
 
-    if (image.complete && image.naturalWidth > 0) {
-      image.onload();
-    }
+    if (image.complete && image.naturalWidth > 0) image.onload();
   });
+}
+
+function scheduleDeferredPreload() {
+  const preload = () => {
+    for (const source of deferredAssets) {
+      const image = new Image();
+      image.decoding = "async";
+      image.src = source;
+    }
+  };
+
+  if (typeof window.requestIdleCallback === "function") {
+    window.requestIdleCallback(preload, { timeout: 2500 });
+    return;
+  }
+
+  window.setTimeout(preload, 500);
 }
 
 function useGameAssets() {
@@ -64,54 +62,40 @@ function useGameAssets() {
     let cancelled = false;
 
     const loadAssets = async () => {
-      const failed = [];
-
-      await Promise.all(
+      const results = await Promise.all(
         gameAssets.map(async (source) => {
           const result = await preloadImage(source);
-
-          if (cancelled) {
-            return;
-          }
-
-          if (!result.success) {
-            failed.push(result.source);
-          }
-
-          setLoadedCount((previousCount) => previousCount + 1);
+          if (!cancelled) setLoadedCount((count) => count + 1);
+          return result;
         }),
       );
+      if (cancelled) return;
 
-      if (cancelled) {
-        return;
-      }
+      const failed = results
+        .filter((result) => !result.success)
+        .map((result) => result.source);
 
       setFailedAssets(failed);
 
-      // Даём браузеру один кадр, чтобы он спокойно применил
-      // уже декодированные изображения.
       window.requestAnimationFrame(() => {
         window.requestAnimationFrame(() => {
-          if (!cancelled) {
-            setIsReady(true);
-          }
+          if (cancelled) return;
+          setIsReady(true);
+          scheduleDeferredPreload();
         });
       });
     };
 
     loadAssets();
-
     return () => {
       cancelled = true;
     };
   }, []);
 
   const totalCount = gameAssets.length;
-
-  const progress =
-    totalCount === 0
-      ? 100
-      : Math.min(100, Math.round((loadedCount / totalCount) * 100));
+  const progress = totalCount === 0
+    ? 100
+    : Math.min(100, Math.round((loadedCount / totalCount) * 100));
 
   return {
     isReady,

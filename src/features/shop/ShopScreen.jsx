@@ -22,7 +22,7 @@ export default function ShopScreen({
   seedInventory = {},
   careInventory = {},
   clubReputation = 0,
-  joeTrust = 0,
+  mariaTrust = 0,
   refreshAt,
   onBuy,
   onDevRefresh,
@@ -66,8 +66,8 @@ export default function ShopScreen({
   const secondsLeft = Math.max(0, Math.ceil((Number(refreshAt || 0) - Date.now()) / 1000));
   const selectedStock = selected ? stock[selected.id] || 0 : 0;
   const lockedByClub = selected ? clubLevel < (selected.requiredClubLevel || 1) : false;
-  const lockedByJoe = selected ? joeTrust < (selected.requiredTrust || 0) : false;
-  const locked = lockedByClub || lockedByJoe;
+  const lockedByMaria = selected ? mariaTrust < (selected.requiredTrust || 0) : false;
+  const locked = lockedByClub || lockedByMaria;
   const maxAffordable = selected?.pricePerSeed ? Math.floor(coins / selected.pricePerSeed) : 0;
   const maxAmount = Math.max(0, Math.min(selectedStock, maxAffordable));
 
@@ -75,7 +75,7 @@ export default function ShopScreen({
     setFilter(nextFilter);
     setSelectedId(null);
     setAmount(1);
-    setMessage(nextFilter === "care" ? "Джо открывает новые составы, а Зорик добавляет их в поставку." : "Выбери товар на витрине.");
+    setMessage(nextFilter === "care" ? "Мария Ивановна открывает новые составы, а Зорик добавляет их в поставку." : "Выбери товар на витрине.");
   };
 
   const selectItem = (item) => {
@@ -116,7 +116,7 @@ export default function ShopScreen({
           <div className="shop-strip" ref={stripRef} onWheel={handleItemsWheel} aria-label="Товары магазина">
             {filteredItems.map((item) => {
               const itemStock = stock[item.id] || 0;
-              const itemLocked = clubLevel < (item.requiredClubLevel || 1) || joeTrust < (item.requiredTrust || 0);
+              const itemLocked = clubLevel < (item.requiredClubLevel || 1) || mariaTrust < (item.requiredTrust || 0);
               return (
                 <button type="button" key={item.id} className={`shop-card${selected?.id === item.id ? " selected" : ""}${itemLocked ? " locked" : ""}`} onClick={() => selectItem(item)}>
                   <div className="shop-card-art"><ItemArt item={item} /></div>
@@ -141,7 +141,7 @@ export default function ShopScreen({
             </div>
 
             {locked ? (
-              <div className="shop-lock-note">{lockedByJoe ? `Джо откроет товар при ${selected.requiredTrust} доверия` : `Нужен ${selected.requiredClubLevel} уровень клуба`}</div>
+              <div className="shop-lock-note">{lockedByMaria ? `Мария Ивановна откроет товар при ${selected.requiredTrust} доверия` : `Нужен ${selected.requiredClubLevel} уровень клуба`}</div>
             ) : selectedStock <= 0 ? (
               <div className="shop-lock-note sold">Распродано до следующей поставки</div>
             ) : (

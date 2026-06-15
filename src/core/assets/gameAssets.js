@@ -1,3 +1,4 @@
-import { preloadAssets } from "./assetCatalog";
+import { criticalAssets, deferredAssets } from "./assetCatalog";
 
-export default preloadAssets;
+export { deferredAssets };
+export default criticalAssets;
