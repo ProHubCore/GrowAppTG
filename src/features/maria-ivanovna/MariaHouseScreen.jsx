@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { ASSETS } from "../../core/assets/assetCatalog";
 import { triggerTelegramNotification } from "../../core/telegram";
@@ -126,7 +126,13 @@ export default function MariaHouseScreen({
   questState,
   plantCatalog,
   onQuestStateChange,
+  tutorialStep = "completed",
+  onTutorialAction,
 }) {
+  const isTutorialActive = tutorialStep !== "completed";
+  const canOpenBoard = !isTutorialActive || tutorialStep === "open-maria-board";
+  const canClaimTutorialQuest = !isTutorialActive || tutorialStep === "claim-first-quest";
+
   const completedQuestIds = Array.isArray(questState?.completedQuestIds)
     ? questState.completedQuestIds
     : [];
@@ -138,6 +144,26 @@ export default function MariaHouseScreen({
   const [message, setMessage] = useState("На доске — дела района. Подойди, ученик, разберёмся по порядку.");
   const [rewardPopup, setRewardPopup] = useState(null);
   const touchStartY = useRef(null);
+
+  useEffect(() => {
+    if (
+      tutorialStep === "claim-first-quest" ||
+      tutorialStep === "onboarding-finish"
+    ) {
+      setPanel("quests");
+      setSection("active");
+      setCardIndex(0);
+    }
+  }, [tutorialStep]);
+
+  useEffect(() => {
+    if (
+      tutorialStep === "claim-first-quest" &&
+      completedQuestIds.includes("maria-tabakko-delivery")
+    ) {
+      onTutorialAction?.("claim-first-quest");
+    }
+  }, [completedQuestIds, onTutorialAction, tutorialStep]);
 
   const activeQuests = useMemo(
     () => MARIA_QUESTS.filter((quest) => !completedQuestIds.includes(quest.id)),
@@ -205,6 +231,14 @@ export default function MariaHouseScreen({
     });
     setMessage("Дело закрыто. Награда твоя, записка отправлена в архив.");
     setCardIndex(0);
+
+    if (
+      tutorialStep === "claim-first-quest" &&
+      selectedQuest.id === "maria-tabakko-delivery"
+    ) {
+      onTutorialAction?.("claim-first-quest");
+    }
+
     window.setTimeout(() => setRewardPopup(null), 2300);
   };
 
@@ -225,7 +259,14 @@ export default function MariaHouseScreen({
       style={{ "--maria-house-background": `url(${ASSETS.locations.mariaIvanovnaHouse.background})` }}
     >
       <header className="maria-house-topbar">
-        <button type="button" className="maria-house-back" onClick={onBack}>← Район</button>
+        <button
+          type="button"
+          className="maria-house-back"
+          onClick={onBack}
+          disabled={isTutorialActive}
+        >
+          ← Район
+        </button>
         <div>
           <span>Старый район</span>
           <strong>Дом Марии Ивановны</strong>
@@ -236,8 +277,15 @@ export default function MariaHouseScreen({
         <button
           type="button"
           className="maria-house-object maria-house-board"
-          onClick={() => setPanel("quests")}
+          onClick={() => {
+            if (!canOpenBoard) return;
+            setPanel("quests");
+            if (tutorialStep === "open-maria-board") {
+              onTutorialAction?.("open-maria-board");
+            }
+          }}
           aria-label="Открыть доску дел"
+          disabled={isTutorialActive && !canOpenBoard}
         >
           <img src={ASSETS.locations.mariaIvanovnaHouse.questBoard} alt="Доска дел" draggable="false" />
           <span>Доска дел</span>
@@ -247,8 +295,12 @@ export default function MariaHouseScreen({
         <button
           type="button"
           className="maria-house-object maria-house-radio"
-          onClick={() => setMessage("Космо-волна 4.20 FM. Мария Ивановна говорит, под неё урожай растёт веселее.")}
+          onClick={() => {
+            if (isTutorialActive) return;
+            setMessage("Космо-волна 4.20 FM. Мария Ивановна говорит, под неё урожай растёт веселее.");
+          }}
           aria-label="Включить радио"
+          disabled={isTutorialActive}
         >
           <img src={ASSETS.locations.mariaIvanovnaHouse.radio} alt="Космо-радио" draggable="false" />
           <span>Космо-волна</span>
@@ -257,8 +309,12 @@ export default function MariaHouseScreen({
         <button
           type="button"
           className="maria-house-object maria-house-character"
-          onClick={() => setPanel("path")}
+          onClick={() => {
+            if (isTutorialActive) return;
+            setPanel("path");
+          }}
           aria-label="Открыть путь доверия"
+          disabled={isTutorialActive}
         >
           <img src={ASSETS.characters.mariaIvanovna} alt="Мария Ивановна" draggable="false" />
           <span>Путь ученика</span>
@@ -284,7 +340,7 @@ export default function MariaHouseScreen({
 
       {panel && (
         <div className="maria-panel-overlay" onMouseDown={(event) => {
-          if (event.target === event.currentTarget) setPanel(null);
+          if (!isTutorialActive && event.target === event.currentTarget) setPanel(null);
         }}>
           {panel === "quests" ? (
             <section className="maria-panel maria-quests-panel">
@@ -293,12 +349,33 @@ export default function MariaHouseScreen({
                   <span>Доска поручений</span>
                   <h2>Дела Марии Ивановны</h2>
                 </div>
-                <button type="button" onClick={() => setPanel(null)} aria-label="Закрыть">×</button>
+                <button
+                  type="button"
+                  onClick={() => setPanel(null)}
+                  aria-label="Закрыть"
+                  disabled={isTutorialActive}
+                >
+                  ×
+                </button>
               </header>
 
               <div className="maria-panel-tabs">
-                <button type="button" className={section === "active" ? "active" : ""} onClick={() => setCurrentSection("active")}>Активные · {activeQuests.length}</button>
-                <button type="button" className={section === "archive" ? "active" : ""} onClick={() => setCurrentSection("archive")}>Архив · {archivedQuests.length}</button>
+                <button
+                  type="button"
+                  className={section === "active" ? "active" : ""}
+                  onClick={() => setCurrentSection("active")}
+                  disabled={isTutorialActive}
+                >
+                  Активные · {activeQuests.length}
+                </button>
+                <button
+                  type="button"
+                  className={section === "archive" ? "active" : ""}
+                  onClick={() => setCurrentSection("archive")}
+                  disabled={isTutorialActive}
+                >
+                  Архив · {archivedQuests.length}
+                </button>
               </div>
 
               {selectedQuest ? (
@@ -309,7 +386,9 @@ export default function MariaHouseScreen({
                     if (touchStartY.current === null) return;
                     const delta = (event.changedTouches[0]?.clientY ?? touchStartY.current) - touchStartY.current;
                     touchStartY.current = null;
-                    if (Math.abs(delta) > 48) moveCard(delta < 0 ? 1 : -1);
+                    if (!isTutorialActive && Math.abs(delta) > 48) {
+                      moveCard(delta < 0 ? 1 : -1);
+                    }
                   }}
                 >
                   <div className="maria-quest-topline">
@@ -330,7 +409,12 @@ export default function MariaHouseScreen({
                   <div className="maria-quest-reward">Награда: 🪙 {selectedQuest.reward.coins} · 🤝 +{selectedQuest.reward.trust}</div>
 
                   {section === "active" && (
-                    <button type="button" className="maria-quest-complete" disabled={!canComplete} onClick={() => finishQuest()}>
+                    <button
+                      type="button"
+                      className="maria-quest-complete"
+                      disabled={!canComplete || !canClaimTutorialQuest}
+                      onClick={() => finishQuest()}
+                    >
                       {isLocked ? "Дело закрыто цепочкой" : canComplete ? "Забрать награду" : "Условие не выполнено"}
                     </button>
                   )}
@@ -339,7 +423,7 @@ export default function MariaHouseScreen({
                 <div className="maria-empty-panel">{section === "archive" ? "Архив пока пуст." : "Все текущие дела закрыты."}</div>
               )}
 
-              {cards.length > 1 && (
+              {cards.length > 1 && !isTutorialActive && (
                 <div className="maria-card-navigation">
                   <button type="button" onClick={() => moveCard(-1)}>↑ Предыдущее</button>
                   <button type="button" onClick={() => moveCard(1)}>Следующее ↓</button>

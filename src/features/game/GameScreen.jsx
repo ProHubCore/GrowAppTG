@@ -107,10 +107,7 @@ function GameScreen() {
 
   const [tutorialStep, setTutorialStep] = usePersistentState(
     "growapp-tutorial-step",
-    () =>
-      localStorage.getItem("growapp-pot-states")
-        ? "completed"
-        : "intro",
+    "intro",
   );
 
   const [potStates, setPotStates] = usePersistentState(
@@ -349,6 +346,10 @@ function GameScreen() {
       collect: ["collect"],
       "go-district": ["go-district"],
       "district-finish": ["continue"],
+      "open-maria-house": ["open-maria-house"],
+      "open-maria-board": ["open-maria-board"],
+      "claim-first-quest": ["claim-first-quest"],
+      "onboarding-finish": ["continue"],
     };
 
     return (allowedByStep[tutorialStep] || []).includes(action);
@@ -429,8 +430,22 @@ function GameScreen() {
       return;
     }
 
-    if (tutorialStep === "district-finish") {
+    if (
+      tutorialStep === "district-finish" ||
+      tutorialStep === "open-maria-house"
+    ) {
       setActiveScreen("district");
+      setIsSeedModalOpen(false);
+      setSelectedSeed(null);
+      return;
+    }
+
+    if (
+      tutorialStep === "open-maria-board" ||
+      tutorialStep === "claim-first-quest" ||
+      tutorialStep === "onboarding-finish"
+    ) {
+      setActiveScreen("maria-house");
       setIsSeedModalOpen(false);
       setSelectedSeed(null);
       return;
@@ -1060,11 +1075,15 @@ function GameScreen() {
   };
 
   const openMariaHouse = () => {
-    if (isTutorialActive) {
+    if (!tutorialAllows("open-maria-house")) {
       return;
     }
 
     setActiveScreen("maria-house");
+
+    if (tutorialStep === "open-maria-house") {
+      setTutorialStep("open-maria-board");
+    }
   };
 
   const goBackToDistrict = () => {
@@ -1481,6 +1500,22 @@ function GameScreen() {
             onDeliverItems={deliverMariaItems}
             onRewardClaimed={claimMariaReward}
             onBack={goBackToDistrict}
+            tutorialStep={tutorialStep}
+            onTutorialAction={(action) => {
+              if (
+                action === "open-maria-board" &&
+                tutorialStep === "open-maria-board"
+              ) {
+                setTutorialStep("claim-first-quest");
+              }
+
+              if (
+                action === "claim-first-quest" &&
+                tutorialStep === "claim-first-quest"
+              ) {
+                setTutorialStep("onboarding-finish");
+              }
+            }}
           />
         )}
 
@@ -1579,6 +1614,11 @@ function GameScreen() {
             }
 
             if (tutorialStep === "district-finish") {
+              setTutorialStep("open-maria-house");
+              return;
+            }
+
+            if (tutorialStep === "onboarding-finish") {
               setTutorialStep("completed");
             }
           }}

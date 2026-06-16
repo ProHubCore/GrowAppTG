@@ -2,6 +2,9 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./styles/game.css";
 import App from "./App";
+import { prepareReleaseState } from "./core/bootstrap/prepareReleaseState";
+
+prepareReleaseState();
 
 const root = document.getElementById("root");
 
