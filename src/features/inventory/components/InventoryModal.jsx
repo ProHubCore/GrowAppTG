@@ -9,9 +9,15 @@ import {
 import "./InventoryModal.css";
 
 const SLOT_COUNT = 20;
-const QUICK_SLOT_COUNT = 3;
-const LAYOUT_STORAGE_KEY = "growapp-backpack-layout-v2";
-const QUICK_STORAGE_KEY = "growapp-backpack-quick-v2";
+const LAYOUT_STORAGE_KEY = "growapp-backpack-layout-v3";
+const LEGACY_LAYOUT_STORAGE_KEY = "growapp-backpack-layout-v2";
+const LEGACY_QUICK_STORAGE_KEY = "growapp-backpack-quick-v2";
+
+const CATEGORY_TABS = [
+  { id: "harvest", label: "Урожай", icon: "✦" },
+  { id: "seed", label: "Семена", icon: "🌱" },
+  { id: "care", label: "Расходники", icon: "🧪" },
+];
 
 const QUALITY_CLASS = {
   normal: "normal",
@@ -20,53 +26,51 @@ const QUALITY_CLASS = {
   rare: "rare",
 };
 
-const UTILITY_ITEMS = {
-  wateringCan: {
-    name: "Старая лейка",
-    icon: "💧",
-    description: "Постоянный инструмент. Срезает 20% времени текущей стадии.",
-    category: "tool",
-    categoryLabel: "Инструмент",
-  },
+const CONSUMABLE_ITEMS = {
   nutrition: {
     name: "Питательный раствор",
     icon: "🌿",
-    description: "Расходник для повышения качества и дополнительного урожая.",
-    category: "care",
-    categoryLabel: "Уход",
+    description: "Насыщает растение минералами: повышает шанс хорошего, отличного и редкого качества и добавляет ещё одну единицу к урожаю.",
   },
   mariaMix: {
     name: "Смесь Марьи Ивановны",
     icon: "🧪",
-    description: "Редкий состав с высоким шансом отличного качества.",
-    category: "care",
-    categoryLabel: "Уход",
+    description: "Фирменная смесь Марьи Ивановны. Сильно повышает шанс отличного и редкого качества. Особенно хорошо работает вместе с питательным раствором.",
   },
 };
 
-function readStoredArray(key, length) {
+function createEmptyLayouts() {
+  return Object.fromEntries(
+    CATEGORY_TABS.map(({ id }) => [id, Array.from({ length: SLOT_COUNT }, () => null)]),
+  );
+}
+
+function readStoredLayout() {
   try {
-    const parsed = JSON.parse(localStorage.getItem(key) || "null");
-    return Array.isArray(parsed) ? parsed.slice(0, length) : [];
+    const current = JSON.parse(localStorage.getItem(LAYOUT_STORAGE_KEY) || "null");
+    if (current && typeof current === "object" && !Array.isArray(current)) return current;
+
+    const legacy = JSON.parse(localStorage.getItem(LEGACY_LAYOUT_STORAGE_KEY) || "null");
+    return Array.isArray(legacy) ? { legacy } : null;
   } catch {
-    return [];
+    return null;
   }
 }
 
-function writeStoredArray(key, value) {
+function writeStoredLayout(value) {
   try {
-    localStorage.setItem(key, JSON.stringify(value));
+    localStorage.setItem(LAYOUT_STORAGE_KEY, JSON.stringify(value));
   } catch {
-    // Игра продолжает работать даже при запрещённом localStorage.
+    // Инвентарь продолжит работать и без доступа к localStorage.
   }
 }
 
-function reconcileLayout(previous, availableKeys) {
+function reconcileCategoryOrder(previousOrder, availableKeys) {
   const validKeys = new Set(availableKeys);
   const used = new Set();
   const next = Array.from({ length: SLOT_COUNT }, () => null);
 
-  previous.slice(0, SLOT_COUNT).forEach((key, index) => {
+  (Array.isArray(previousOrder) ? previousOrder : []).slice(0, SLOT_COUNT).forEach((key, index) => {
     if (key && validKeys.has(key) && !used.has(key)) {
       next[index] = key;
       used.add(key);
@@ -85,43 +89,81 @@ function reconcileLayout(previous, availableKeys) {
   return next;
 }
 
-function reconcileQuick(previous, availableKeys) {
-  const validKeys = new Set(availableKeys);
-  const used = new Set();
+function reconcileLayouts(previous, stacks) {
+  const next = createEmptyLayouts();
+  const legacyOrder = Array.isArray(previous?.legacy) ? previous.legacy : [];
 
-  return Array.from({ length: QUICK_SLOT_COUNT }, (_, index) => {
-    const key = previous[index];
-    if (!key || !validKeys.has(key) || used.has(key)) return null;
-    used.add(key);
-    return key;
+  CATEGORY_TABS.forEach(({ id }) => {
+    const availableKeys = stacks.filter((stack) => stack.category === id).map((stack) => stack.key);
+    const previousOrder = Array.isArray(previous?.[id])
+      ? previous[id]
+      : legacyOrder.filter((key) => availableKeys.includes(key));
+
+    next[id] = reconcileCategoryOrder(previousOrder, availableKeys);
   });
+
+  return next;
 }
 
-function ItemArt({ stack, compact = false }) {
-  const size = compact ? 34 : 46;
-
+function ItemArt({ stack }) {
   if (stack.image) {
     return (
       <img
         className="backpack-item-image"
         src={stack.image}
         alt={stack.name}
-        style={{ width: size, height: size }}
         draggable="false"
       />
     );
   }
 
-  return (
-    <span className="backpack-item-emoji" style={{ fontSize: compact ? 23 : 30 }}>
-      {stack.icon}
-    </span>
-  );
+  return <span className="backpack-item-emoji">{stack.icon}</span>;
 }
 
 function buildStacks({ qualityInventory, seedInventory, careInventory }) {
-  const cropById = Object.fromEntries(CROPS.map((crop) => [crop.id, crop]));
   const stacks = [];
+
+  Object.entries(CONSUMABLE_ITEMS).forEach(([itemId, meta]) => {
+    const count = Math.max(0, Number(careInventory[itemId]) || 0);
+    if (count <= 0) return;
+
+    stacks.push({
+      key: `care:${itemId}`,
+      type: "care",
+      category: "care",
+      categoryLabel: "Расходник",
+      itemId,
+      count,
+      countLabel: `x${count}`,
+      name: meta.name,
+      icon: meta.icon,
+      image: null,
+      description: meta.description,
+      sortRank: itemId === "mariaMix" ? 1 : 0,
+    });
+  });
+
+  CROPS.forEach((crop) => {
+    const count = crop.infiniteSeeds ? Infinity : Math.max(0, Number(seedInventory[crop.id]) || 0);
+    if (!crop.infiniteSeeds && count <= 0) return;
+
+    stacks.push({
+      key: `seed:${crop.id}`,
+      type: "seed",
+      category: "seed",
+      categoryLabel: "Семена",
+      itemId: crop.id,
+      count,
+      countLabel: crop.infiniteSeeds ? "∞" : `x${count}`,
+      name: crop.name,
+      icon: crop.icon,
+      image: crop.seedImage || crop.stages[0]?.image,
+      description: crop.infiniteSeeds
+        ? `${crop.description} Базовый запас этих семян не заканчивается.`
+        : `${crop.description} Посади семена в свободное ведро.`,
+      sortRank: crop.requiredTrust || 0,
+    });
+  });
 
   CROPS.forEach((crop) => {
     HARVEST_QUALITIES.forEach((quality) => {
@@ -141,59 +183,14 @@ function buildStacks({ qualityInventory, seedInventory, careInventory }) {
         name: crop.name,
         icon: crop.icon,
         image: crop.stages.at(-1)?.image,
-        description: `${quality.name} качество`,
+        description: crop.description,
         basePrice: crop.basePrice,
-        sortRank: 30 + quality.rank,
+        sortRank: quality.rank,
       });
     });
   });
 
-  CROPS.forEach((crop) => {
-    const count = crop.infiniteSeeds ? Infinity : Math.max(0, seedInventory[crop.id] || 0);
-    if (!crop.infiniteSeeds && count <= 0) return;
-
-    stacks.push({
-      key: `seed:${crop.id}`,
-      type: "seed",
-      category: "seed",
-      categoryLabel: "Семена",
-      itemId: crop.id,
-      count,
-      countLabel: crop.infiniteSeeds ? "∞" : `x${count}`,
-      name: `Семена: ${crop.name}`,
-      icon: crop.icon,
-      image: crop.seedImage || crop.stages[0]?.image,
-      description: crop.infiniteSeeds
-        ? "Базовые семена всегда доступны"
-        : "Можно посадить в свободное ведро",
-      sortRank: 20,
-    });
-  });
-
-  Object.entries(UTILITY_ITEMS).forEach(([itemId, meta]) => {
-    const count = Math.max(0, careInventory[itemId] || 0);
-    if (count <= 0) return;
-
-    stacks.push({
-      key: `utility:${itemId}`,
-      type: meta.category === "tool" ? "tool" : "care",
-      category: meta.category,
-      categoryLabel: meta.categoryLabel,
-      itemId,
-      count,
-      countLabel: itemId === "wateringCan" ? "1" : `x${count}`,
-      name: meta.name,
-      icon: meta.icon,
-      image: null,
-      description: meta.description,
-      sortRank: meta.category === "tool" ? 0 : 10,
-    });
-  });
-
-  return stacks.map((stack) => ({
-    ...stack,
-    crop: cropById[stack.itemId],
-  }));
+  return stacks;
 }
 
 function getDropTarget(clientX, clientY) {
@@ -206,8 +203,15 @@ export default function InventoryModal({
   qualityInventory = {},
   seedInventory = {},
   careInventory = {},
+  appliedCare = [],
+  canPlantSeed = false,
+  canUseCare = false,
+  onPlantSeed,
+  onUseCare,
   onClose,
   onDeleteQualityItem,
+  onDeleteSeedItem,
+  onDeleteCareItem,
 }) {
   const stacks = useMemo(
     () => buildStacks({ qualityInventory, seedInventory, careInventory }),
@@ -217,130 +221,111 @@ export default function InventoryModal({
     () => Object.fromEntries(stacks.map((stack) => [stack.key, stack])),
     [stacks],
   );
-  const stackKeys = useMemo(() => stacks.map((stack) => stack.key), [stacks]);
 
-  const [layout, setLayout] = useState(() =>
-    reconcileLayout(readStoredArray(LAYOUT_STORAGE_KEY, SLOT_COUNT), []),
-  );
-  const [quickSlots, setQuickSlots] = useState(() =>
-    reconcileQuick(readStoredArray(QUICK_STORAGE_KEY, QUICK_SLOT_COUNT), []),
-  );
+  const [layouts, setLayouts] = useState(() => reconcileLayouts(readStoredLayout(), stacks));
+  const [activeCategory, setActiveCategory] = useState("harvest");
   const [selectedKey, setSelectedKey] = useState(null);
+  const [deleteConfirmKey, setDeleteConfirmKey] = useState(null);
   const [dragState, setDragState] = useState(null);
+
   const dragRef = useRef(null);
+  const dragGhostRef = useRef(null);
+  const dragFrameRef = useRef(null);
+  const dragPositionRef = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
-    setLayout((previous) => reconcileLayout(previous, stackKeys));
-    setQuickSlots((previous) => reconcileQuick(previous, stackKeys));
+    setLayouts((previous) => reconcileLayouts(previous, stacks));
     setSelectedKey((previous) => (previous && stackMap[previous] ? previous : null));
-  }, [stackKeys, stackMap]);
+  }, [stacks, stackMap]);
 
   useEffect(() => {
-    writeStoredArray(LAYOUT_STORAGE_KEY, layout);
-  }, [layout]);
+    writeStoredLayout(layouts);
+  }, [layouts]);
 
   useEffect(() => {
-    writeStoredArray(QUICK_STORAGE_KEY, quickSlots);
-  }, [quickSlots]);
+    try {
+      localStorage.removeItem(LEGACY_QUICK_STORAGE_KEY);
+    } catch {
+      // Ничего страшного, если хранилище недоступно.
+    }
+  }, []);
+
+  useEffect(() => () => {
+    if (dragFrameRef.current) cancelAnimationFrame(dragFrameRef.current);
+  }, []);
 
   if (!isOpen) return null;
 
+  const activeLayout = layouts[activeCategory] || createEmptyLayouts()[activeCategory];
   const selected = selectedKey ? stackMap[selectedKey] : null;
-  const usedSlots = layout.filter(Boolean).length;
-  const categoryCounts = stacks.reduce(
-    (counts, stack) => ({ ...counts, [stack.category]: (counts[stack.category] || 0) + 1 }),
-    {},
-  );
+  const draggedStack = dragState?.key ? stackMap[dragState.key] : null;
 
   const closeInventory = () => {
-    setDragState(null);
     dragRef.current = null;
+    setDragState(null);
     setSelectedKey(null);
+    setDeleteConfirmKey(null);
     onClose();
   };
 
-  const moveToSlot = (key, sourceType, sourceIndex, targetIndex) => {
-    setLayout((previous) => {
-      const next = [...previous];
-      const existingIndex = next.indexOf(key);
-
-      if (existingIndex !== -1) {
-        const targetKey = next[targetIndex];
-        next[targetIndex] = key;
-        next[existingIndex] = targetKey || null;
-      } else if (!next[targetIndex]) {
-        next[targetIndex] = key;
-      }
-
-      return next;
-    });
-
-    if (sourceType === "quick" && sourceIndex !== null) {
-      setQuickSlots((previous) => {
-        const next = [...previous];
-        next[sourceIndex] = null;
-        return next;
-      });
-    }
+  const switchCategory = (categoryId) => {
+    setActiveCategory(categoryId);
+    setSelectedKey(null);
+    setDeleteConfirmKey(null);
+    dragRef.current = null;
+    setDragState(null);
   };
 
-  const moveToQuickSlot = (key, sourceType, sourceIndex, targetIndex) => {
-    setQuickSlots((previous) => {
-      if (sourceType === "quick" && sourceIndex === targetIndex) return previous;
+  const moveToSlot = (key, targetIndex) => {
+    setLayouts((previous) => {
+      const current = [...(previous[activeCategory] || [])];
+      const sourceIndex = current.indexOf(key);
+      if (sourceIndex === -1 || sourceIndex === targetIndex) return previous;
 
-      const next = [...previous];
-      const duplicateIndex = next.indexOf(key);
-      if (duplicateIndex !== -1) next[duplicateIndex] = null;
+      const targetKey = current[targetIndex] || null;
+      current[targetIndex] = key;
+      current[sourceIndex] = targetKey;
 
-      if (sourceType === "quick" && sourceIndex !== null) {
-        const targetKey = next[targetIndex];
-        next[targetIndex] = key;
-        next[sourceIndex] = targetKey || null;
-      } else {
-        next[targetIndex] = key;
-      }
-
+      const next = { ...previous, [activeCategory]: current };
+      writeStoredLayout(next);
       return next;
     });
   };
 
   const handleDrop = (drag, dropTarget) => {
-    if (!dropTarget) return;
-    const [targetType, rawIndex] = dropTarget.split(":");
-    const targetIndex = Number(rawIndex);
-
-    if (!Number.isInteger(targetIndex)) return;
-
-    if (targetType === "slot" && targetIndex >= 0 && targetIndex < SLOT_COUNT) {
-      moveToSlot(drag.key, drag.sourceType, drag.sourceIndex, targetIndex);
-    }
-
-    if (targetType === "quick" && targetIndex >= 0 && targetIndex < QUICK_SLOT_COUNT) {
-      moveToQuickSlot(drag.key, drag.sourceType, drag.sourceIndex, targetIndex);
-    }
+    if (!dropTarget?.startsWith("slot:")) return;
+    const targetIndex = Number(dropTarget.split(":")[1]);
+    if (!Number.isInteger(targetIndex) || targetIndex < 0 || targetIndex >= SLOT_COUNT) return;
+    moveToSlot(drag.key, targetIndex);
   };
 
-  const beginPointerDrag = (event, key, sourceType, sourceIndex) => {
+  const positionDragGhost = (x, y) => {
+    dragPositionRef.current = { x, y };
+    if (dragFrameRef.current) return;
+
+    dragFrameRef.current = requestAnimationFrame(() => {
+      dragFrameRef.current = null;
+      const ghost = dragGhostRef.current;
+      if (!ghost) return;
+      const position = dragPositionRef.current;
+      ghost.style.transform = `translate3d(${position.x}px, ${position.y}px, 0) translate(-50%, -55%) rotate(2deg) scale(1.04)`;
+    });
+  };
+
+  const beginPointerDrag = (event, key, sourceIndex) => {
     if (event.button !== undefined && event.button !== 0) return;
 
     event.preventDefault();
     event.currentTarget.setPointerCapture?.(event.pointerId);
-
-    const nextDrag = {
+    dragRef.current = {
       key,
-      sourceType,
       sourceIndex,
       pointerId: event.pointerId,
       startX: event.clientX,
       startY: event.clientY,
-      x: event.clientX,
-      y: event.clientY,
       started: false,
       dropTarget: null,
     };
-
-    dragRef.current = nextDrag;
-    setDragState(nextDrag);
   };
 
   const updatePointerDrag = (event) => {
@@ -348,18 +333,21 @@ export default function InventoryModal({
     if (!current || current.pointerId !== event.pointerId) return;
 
     const distance = Math.hypot(event.clientX - current.startX, event.clientY - current.startY);
-    const started = current.started || distance > 7;
-    const dropTarget = started ? getDropTarget(event.clientX, event.clientY) : null;
-    const nextDrag = {
-      ...current,
-      x: event.clientX,
-      y: event.clientY,
-      started,
-      dropTarget,
-    };
+    if (!current.started && distance <= 8) return;
 
-    dragRef.current = nextDrag;
-    setDragState(nextDrag);
+    event.preventDefault();
+    const dropTarget = getDropTarget(event.clientX, event.clientY);
+
+    if (!current.started) {
+      current.started = true;
+      current.dropTarget = dropTarget;
+      setDragState({ key: current.key, sourceIndex: current.sourceIndex, dropTarget });
+    } else if (current.dropTarget !== dropTarget) {
+      current.dropTarget = dropTarget;
+      setDragState((previous) => previous ? { ...previous, dropTarget } : previous);
+    }
+
+    positionDragGhost(event.clientX, event.clientY);
   };
 
   const endPointerDrag = (event) => {
@@ -368,7 +356,6 @@ export default function InventoryModal({
 
     if (current.started) {
       handleDrop(current, getDropTarget(event.clientX, event.clientY));
-      setSelectedKey(current.key);
     } else {
       setSelectedKey(current.key);
     }
@@ -383,39 +370,67 @@ export default function InventoryModal({
   };
 
   const autoSort = () => {
-    const sortedKeys = [...stacks]
+    const sortedKeys = stacks
+      .filter((stack) => stack.category === activeCategory)
       .sort((left, right) => {
         if (left.sortRank !== right.sortRank) return left.sortRank - right.sortRank;
-        if (left.name !== right.name) return left.name.localeCompare(right.name, "ru");
-        return (right.quality?.rank || 0) - (left.quality?.rank || 0);
+        return left.name.localeCompare(right.name, "ru");
       })
       .map((stack) => stack.key);
 
-    setLayout([...sortedKeys, ...Array.from({ length: SLOT_COUNT - sortedKeys.length }, () => null)]);
-  };
-
-  const pinSelected = () => {
-    if (!selected) return;
-
-    setQuickSlots((previous) => {
-      const next = [...previous];
-      const existingIndex = next.indexOf(selected.key);
-      if (existingIndex !== -1) {
-        next[existingIndex] = null;
-        return next;
-      }
-
-      const emptyIndex = next.indexOf(null);
-      next[emptyIndex === -1 ? 0 : emptyIndex] = selected.key;
+    setLayouts((previous) => {
+      const next = {
+        ...previous,
+        [activeCategory]: [
+          ...sortedKeys,
+          ...Array.from({ length: Math.max(0, SLOT_COUNT - sortedKeys.length) }, () => null),
+        ].slice(0, SLOT_COUNT),
+      };
+      writeStoredLayout(next);
       return next;
     });
   };
 
-  const selectedIsPinned = selected ? quickSlots.includes(selected.key) : false;
-  const draggedStack = dragState?.key ? stackMap[dragState.key] : null;
+  const selectedCareAlreadyApplied = selected?.type === "care" && appliedCare.includes(selected.itemId);
+  const canUseSelectedCare = canUseCare && !selectedCareAlreadyApplied;
+  const selectedHarvestPrice = selected?.type === "harvest"
+    ? Math.round(selected.basePrice * QUALITY_PRICE_MULTIPLIERS[selected.qualityId])
+    : null;
+
+  const canDiscardSelected = Boolean(
+    selected && !(selected.type === "seed" && !Number.isFinite(selected.count)),
+  );
+
+  const requestDeleteSelected = () => {
+    if (!selected || !canDiscardSelected) return;
+    setDeleteConfirmKey(selected.key);
+  };
+
+  const confirmDeleteSelected = () => {
+    const item = deleteConfirmKey ? stackMap[deleteConfirmKey] : null;
+    if (!item || (item.type === "seed" && !Number.isFinite(item.count))) {
+      setDeleteConfirmKey(null);
+      return;
+    }
+
+    if (item.type === "harvest") {
+      onDeleteQualityItem?.(item.itemId, item.qualityId, item.count);
+    } else if (item.type === "seed") {
+      onDeleteSeedItem?.(item.itemId, item.count);
+    } else if (item.type === "care") {
+      onDeleteCareItem?.(item.itemId, item.count);
+    }
+
+    setDeleteConfirmKey(null);
+    setSelectedKey(null);
+  };
 
   return (
-    <div className="modal-overlay backpack-inventory-overlay" onPointerUp={endPointerDrag} onPointerCancel={cancelPointerDrag}>
+    <div
+      className="modal-overlay backpack-inventory-overlay"
+      onPointerUp={endPointerDrag}
+      onPointerCancel={cancelPointerDrag}
+    >
       <section className="backpack-inventory" aria-label="Рюкзак">
         <div className="backpack-top-flap" aria-hidden="true">
           <span className="backpack-top-flap__stitch" />
@@ -424,93 +439,41 @@ export default function InventoryModal({
         </div>
 
         <header className="backpack-header">
-          <div>
-            <div className="backpack-kicker">Снаряжение района</div>
-            <h2 className="backpack-title">Рюкзак</h2>
-          </div>
-          <div className="backpack-capacity" aria-label={`Занято ${usedSlots} из ${SLOT_COUNT} ячеек`}>
-            <strong>{usedSlots}</strong>
-            <span>/ {SLOT_COUNT}</span>
-          </div>
-          <button className="backpack-close" type="button" onClick={closeInventory} aria-label="Закрыть рюкзак">
-            ×
-          </button>
+          <h2 className="backpack-title">Рюкзак</h2>
         </header>
 
-        <div className="backpack-category-strip" aria-label="Состав рюкзака">
-          <span><b>{categoryCounts.tool || 0}</b> инструменты</span>
-          <span><b>{categoryCounts.seed || 0}</b> семена</span>
-          <span><b>{categoryCounts.harvest || 0}</b> урожай</span>
-        </div>
-
-        <section className="backpack-quick-section">
-          <div className="backpack-section-heading">
-            <div>
-              <strong>Быстрые карманы</strong>
-              <span>Перетащи сюда нужные предметы</span>
-            </div>
-            <button className="backpack-sort-button" type="button" onClick={autoSort}>
-              Уложить
+        <nav className="backpack-tabs" aria-label="Разделы рюкзака">
+          {CATEGORY_TABS.map((tab) => (
+            <button
+              key={tab.id}
+              className={`backpack-tab${activeCategory === tab.id ? " active" : ""}`}
+              type="button"
+              onClick={() => switchCategory(tab.id)}
+            >
+              <span className="backpack-tab-icon">{tab.icon}</span>
+              <span className="backpack-tab-label">{tab.label}</span>
             </button>
-          </div>
-
-          <div className="backpack-quick-row">
-            {quickSlots.map((key, index) => {
-              const stack = key ? stackMap[key] : null;
-              const isDropTarget = dragState?.started && dragState.dropTarget === `quick:${index}`;
-
-              return (
-                <button
-                  key={`quick-${index}`}
-                  className={`backpack-quick-slot${stack ? " filled" : ""}${isDropTarget ? " drop-target" : ""}`}
-                  type="button"
-                  data-backpack-drop={`quick:${index}`}
-                  onPointerDown={stack ? (event) => beginPointerDrag(event, stack.key, "quick", index) : undefined}
-                  onPointerMove={stack ? updatePointerDrag : undefined}
-                  onPointerUp={stack ? endPointerDrag : undefined}
-                  onPointerCancel={stack ? cancelPointerDrag : undefined}
-                  onClick={() => stack && setSelectedKey(stack.key)}
-                  aria-label={stack ? `${stack.name}, быстрый карман ${index + 1}` : `Пустой быстрый карман ${index + 1}`}
-                >
-                  <span className="backpack-quick-number">{index + 1}</span>
-                  {stack ? (
-                    <>
-                      <ItemArt stack={stack} compact />
-                      <span className="backpack-quick-count">{stack.countLabel}</span>
-                    </>
-                  ) : (
-                    <span className="backpack-quick-empty">+</span>
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        </section>
+          ))}
+        </nav>
 
         <section className="backpack-main-pocket">
-          <div className="backpack-main-pocket__label">
-            <span>Главное отделение</span>
-            <small>зажми и перетащи</small>
-          </div>
-
           <div className="backpack-grid">
-            {layout.map((key, index) => {
+            {activeLayout.map((key, index) => {
               const stack = key ? stackMap[key] : null;
               const isSelected = stack && selectedKey === stack.key;
-              const isDragging = stack && dragState?.started && dragState.key === stack.key && dragState.sourceType === "slot";
-              const isDropTarget = dragState?.started && dragState.dropTarget === `slot:${index}`;
+              const isDragging = stack && dragState?.key === stack.key;
+              const isDropTarget = dragState?.dropTarget === `slot:${index}`;
 
               return (
                 <button
-                  key={`slot-${index}`}
+                  key={`${activeCategory}-slot-${index}`}
                   className={`backpack-slot${stack ? " filled" : " empty"}${isSelected ? " selected" : ""}${isDragging ? " dragging-source" : ""}${isDropTarget ? " drop-target" : ""}`}
                   type="button"
                   data-backpack-drop={`slot:${index}`}
-                  onPointerDown={stack ? (event) => beginPointerDrag(event, stack.key, "slot", index) : undefined}
+                  onPointerDown={stack ? (event) => beginPointerDrag(event, stack.key, index) : undefined}
                   onPointerMove={stack ? updatePointerDrag : undefined}
                   onPointerUp={stack ? endPointerDrag : undefined}
                   onPointerCancel={stack ? cancelPointerDrag : undefined}
-                  onClick={() => stack && setSelectedKey(stack.key)}
                   aria-label={stack ? `${stack.name}, ${stack.countLabel}` : `Пустая ячейка ${index + 1}`}
                 >
                   <span className="backpack-slot-index">{String(index + 1).padStart(2, "0")}</span>
@@ -533,63 +496,151 @@ export default function InventoryModal({
           </div>
         </section>
 
-        <section className={`backpack-inspector${selected ? " has-item" : ""}`}>
-          {selected ? (
-            <>
-              <div className={`backpack-inspector-art category-${selected.category} quality-${QUALITY_CLASS[selected.qualityId] || "none"}`}>
+        <footer className="backpack-bottom-actions">
+          <button className="backpack-sort-button" type="button" onClick={autoSort}>
+            <span aria-hidden="true">⇅</span>
+            Сортировать
+          </button>
+
+          <button className="backpack-close-bottom" type="button" onClick={closeInventory}>
+            Закрыть рюкзак
+          </button>
+        </footer>
+
+        {selected && (
+          <div
+            className="backpack-item-modal-layer"
+            role="presentation"
+            onPointerDown={(event) => {
+              event.stopPropagation();
+              if (event.target === event.currentTarget) setSelectedKey(null);
+            }}
+            onPointerUp={(event) => event.stopPropagation()}
+          >
+            <section
+              className={`backpack-item-modal category-${selected.category} quality-${QUALITY_CLASS[selected.qualityId] || "none"}`}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="backpack-item-modal-title"
+            >
+              <button
+                className="backpack-item-modal-close"
+                type="button"
+                onClick={() => setSelectedKey(null)}
+                aria-label="Закрыть информацию о предмете"
+              >
+                ×
+              </button>
+
+              <div className="backpack-item-modal-art">
                 <ItemArt stack={selected} />
+                <span className="backpack-item-modal-count">{selected.countLabel}</span>
               </div>
-              <div className="backpack-inspector-copy">
-                <div className="backpack-inspector-meta">
-                  <span>{selected.categoryLabel}</span>
-                  {selected.quality && <b>{selected.quality.icon} {selected.quality.name}</b>}
+
+              <h3 id="backpack-item-modal-title" className="backpack-item-modal-title">
+                {selected.name}
+              </h3>
+
+              <p className="backpack-item-modal-description">{selected.description}</p>
+
+              {selected.type === "harvest" && (
+                <div className="backpack-item-modal-stats">
+                  <div>
+                    <span>Качество</span>
+                    <strong className={`quality-${QUALITY_CLASS[selected.qualityId]}`}>
+                      {selected.quality.icon} {selected.quality.name}
+                    </strong>
+                  </div>
+                  <div>
+                    <span>Ориентир цены</span>
+                    <strong>{selectedHarvestPrice} монет за штуку</strong>
+                  </div>
                 </div>
-                <strong className="backpack-inspector-name">{selected.name}</strong>
-                <p>{selected.description}</p>
-                {selected.type === "harvest" && (
-                  <small>
-                    Цена: около {Math.round(selected.basePrice * QUALITY_PRICE_MULTIPLIERS[selected.qualityId])} монет за штуку
-                  </small>
+              )}
+
+              <div className="backpack-item-modal-actions">
+                {selected.type === "seed" && (
+                  <button
+                    className="backpack-item-modal-primary"
+                    type="button"
+                    disabled={!canPlantSeed}
+                    onClick={() => onPlantSeed?.(selected.itemId)}
+                  >
+                    Посадить
+                  </button>
                 )}
-              </div>
-              <div className="backpack-inspector-actions">
-                <button className={`backpack-pin-button${selectedIsPinned ? " active" : ""}`} type="button" onClick={pinSelected}>
-                  {selectedIsPinned ? "Снять" : "В карман"}
-                </button>
+
+                {selected.type === "care" && (
+                  <button
+                    className="backpack-item-modal-primary"
+                    type="button"
+                    disabled={!canUseSelectedCare}
+                    onClick={() => onUseCare?.(selected.itemId)}
+                  >
+                    Использовать
+                  </button>
+                )}
+
                 {selected.type === "harvest" && (
                   <button
-                    className="backpack-delete-button"
+                    className="backpack-item-modal-secondary"
                     type="button"
-                    onClick={() => {
-                      onDeleteQualityItem(selected.itemId, selected.qualityId, selected.count);
-                      setSelectedKey(null);
-                    }}
+                    onClick={() => setSelectedKey(null)}
+                  >
+                    Закрыть
+                  </button>
+                )}
+
+                {canDiscardSelected && (
+                  <button
+                    className="backpack-item-modal-delete"
+                    type="button"
+                    onClick={requestDeleteSelected}
                   >
                     Выбросить
                   </button>
                 )}
               </div>
-            </>
-          ) : (
-            <div className="backpack-inspector-empty">
-              <span>↕</span>
-              <div>
-                <strong>Разложи всё по-своему</strong>
-                <p>Нажми на предмет для информации или перетащи его в другую ячейку.</p>
-              </div>
-            </div>
-          )}
-        </section>
 
-        <div className="backpack-bottom-seam" aria-hidden="true" />
+              {deleteConfirmKey === selected.key && (
+                <div className="backpack-delete-confirm-layer" role="presentation">
+                  <section
+                    className="backpack-delete-confirm"
+                    role="alertdialog"
+                    aria-modal="true"
+                    aria-labelledby="backpack-delete-confirm-title"
+                  >
+                    <div className="backpack-delete-confirm-icon" aria-hidden="true">!</div>
+                    <h4 id="backpack-delete-confirm-title">Выбросить предмет?</h4>
+                    <p>
+                      «{selected.name}» {selected.countLabel}. Вернуть его после удаления уже не получится.
+                    </p>
+                    <div className="backpack-delete-confirm-actions">
+                      <button
+                        className="backpack-item-modal-secondary"
+                        type="button"
+                        onClick={() => setDeleteConfirmKey(null)}
+                      >
+                        Отмена
+                      </button>
+                      <button
+                        className="backpack-item-modal-delete"
+                        type="button"
+                        onClick={confirmDeleteSelected}
+                      >
+                        Выбросить
+                      </button>
+                    </div>
+                  </section>
+                </div>
+              )}
+            </section>
+          </div>
+        )}
       </section>
 
-      {dragState?.started && draggedStack && (
-        <div
-          className="backpack-drag-ghost"
-          style={{ left: dragState.x, top: dragState.y }}
-          aria-hidden="true"
-        >
+      {dragState && draggedStack && (
+        <div ref={dragGhostRef} className="backpack-drag-ghost" aria-hidden="true">
           <span className={`backpack-item-card category-${draggedStack.category} quality-${QUALITY_CLASS[draggedStack.qualityId] || "none"}`}>
             <ItemArt stack={draggedStack} />
           </span>

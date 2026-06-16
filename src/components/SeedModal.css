@@ -133,26 +133,6 @@
   pointer-events: none;
 }
 
-.seed-box-brand {
-  position: absolute;
-  top: 18px;
-  right: 50px;
-
-  padding: 4px 7px 3px;
-  border: 1px solid rgba(179, 255, 211, 0.28);
-  border-radius: 6px;
-
-  background: rgba(28, 55, 38, 0.42);
-  color: #a6f1c3;
-
-  font-size: 8px;
-  font-weight: 1000;
-  letter-spacing: 1.6px;
-  line-height: 1;
-
-  box-shadow: 0 0 10px rgba(91, 255, 163, 0.09);
-}
-
 .seed-box-lid-title {
   color: #ffe7ba;
   font-size: 23px;
@@ -162,14 +142,6 @@
   text-shadow:
     0 2px 0 rgba(0, 0, 0, 0.55),
     0 0 14px rgba(255, 211, 132, 0.08);
-}
-
-.seed-box-lid-caption {
-  margin-top: 9px;
-  color: rgba(255, 235, 201, 0.58);
-  font-size: 11px;
-  font-weight: 800;
-  line-height: 1.2;
 }
 
 .seed-box-hinge {
@@ -238,35 +210,6 @@
   font-size: 11px;
   font-weight: 800;
   line-height: 1.2;
-}
-
-.seed-box-counter {
-  min-width: 42px;
-  padding: 7px 7px 6px;
-
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-
-  border: 1px solid rgba(169, 244, 198, 0.17);
-  border-radius: 10px;
-
-  background: rgba(69, 117, 83, 0.1);
-  color: #b6ffd0;
-
-  font-size: 17px;
-  font-weight: 1000;
-  line-height: 0.9;
-
-  box-shadow: inset 0 0 10px rgba(126, 255, 190, 0.04);
-}
-
-.seed-box-counter span {
-  margin-top: 5px;
-  color: rgba(200, 255, 220, 0.46);
-  font-size: 7px;
-  letter-spacing: 0.7px;
-  text-transform: uppercase;
 }
 
 .seed-list {
@@ -728,5 +671,192 @@
 
   .seed-name {
     font-size: 12px;
+  }
+}
+
+/* Отдельная геометрия коробки семян под Telegram Mini App. */
+.seed-modal-overlay {
+  --seed-overlay-top-gap: max(
+    70px,
+    calc(env(safe-area-inset-top, 0px) + 58px)
+  );
+  --seed-overlay-bottom-gap: max(
+    14px,
+    calc(env(safe-area-inset-bottom, 0px) + 10px)
+  );
+
+  box-sizing: border-box;
+  min-height: 100%;
+  padding:
+    var(--seed-overlay-top-gap)
+    10px
+    var(--seed-overlay-bottom-gap);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: none;
+
+  /* Коробка остаётся неподвижной. Скроллится только список пакетиков. */
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background:
+    radial-gradient(circle at 50% 46%, rgba(120, 255, 170, 0.1), transparent 34%),
+    rgba(0, 0, 0, 0.69);
+}
+
+.seed-modal-overlay .seed-modal {
+  width: min(354px, calc(100vw - 20px));
+  max-height: calc(
+    100dvh - var(--seed-overlay-top-gap) - var(--seed-overlay-bottom-gap)
+  );
+  margin: 0;
+  overflow: hidden;
+  flex: 0 0 auto;
+  transform: translateY(clamp(-30px, -3dvh, -14px)) translateZ(0);
+}
+
+.seed-modal-overlay .seed-box-lid {
+  min-height: 88px;
+  padding: 25px 54px 18px 18px;
+}
+
+.seed-modal-overlay .seed-box-lid-title {
+  max-width: 230px;
+  font-size: 20px;
+  letter-spacing: 1.25px;
+}
+
+.seed-modal-overlay .seed-box-tray:not(.confirm-tray) {
+  display: flex;
+  min-height: 0;
+  max-height: calc(
+    100dvh - var(--seed-overlay-top-gap) - var(--seed-overlay-bottom-gap) - 132px
+  );
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.seed-modal-overlay .seed-box-tray-header {
+  min-height: 30px;
+  margin-bottom: 11px;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.seed-scroll-hint {
+  margin-top: 5px;
+  color: rgba(255, 239, 208, 0.48);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.seed-list-viewport {
+  position: relative;
+  min-height: 0;
+  overflow: visible;
+}
+
+.seed-list-viewport.is-scrollable {
+  max-height: min(
+    366px,
+    calc(
+      100dvh - var(--seed-overlay-top-gap) - var(--seed-overlay-bottom-gap) - 206px
+    )
+  );
+  padding: 3px 4px 10px 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(168, 244, 197, 0.38) rgba(25, 18, 13, 0.28);
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 10px,
+    #000 calc(100% - 18px),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    #000 10px,
+    #000 calc(100% - 18px),
+    transparent 100%
+  );
+}
+
+.seed-list-viewport.is-scrollable::-webkit-scrollbar {
+  width: 4px;
+}
+
+.seed-list-viewport.is-scrollable::-webkit-scrollbar-track {
+  border-radius: 999px;
+  background: rgba(25, 18, 13, 0.28);
+}
+
+.seed-list-viewport.is-scrollable::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: rgba(168, 244, 197, 0.38);
+}
+
+.seed-modal-overlay .seed-list {
+  align-items: stretch;
+}
+
+.seed-modal-overlay .seed-card,
+.seed-modal-overlay .seed-empty-slot {
+  contain: layout paint;
+}
+
+.seed-modal-overlay .confirm-tray {
+  max-height: calc(
+    100dvh - var(--seed-overlay-top-gap) - var(--seed-overlay-bottom-gap) - 132px
+  );
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-height: 700px) {
+  .seed-modal-overlay {
+    --seed-overlay-top-gap: max(
+      58px,
+      calc(env(safe-area-inset-top, 0px) + 50px)
+    );
+  }
+
+  .seed-modal-overlay .seed-modal {
+    transform: translateY(-12px) translateZ(0);
+  }
+
+  .seed-list-viewport.is-scrollable {
+    max-height: calc(
+      100dvh - var(--seed-overlay-top-gap) - var(--seed-overlay-bottom-gap) - 198px
+    );
+  }
+}
+
+@media (max-width: 360px) {
+  .seed-modal-overlay {
+    padding-right: 7px;
+    padding-left: 7px;
+  }
+
+  .seed-modal-overlay .seed-modal {
+    width: calc(100vw - 14px);
+  }
+
+  .seed-modal-overlay .seed-box-lid-title {
+    max-width: 205px;
+    font-size: 18px;
+    letter-spacing: 1px;
   }
 }

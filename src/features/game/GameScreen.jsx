@@ -73,6 +73,7 @@ const STORAGE_KEYS = [
   "growapp-care-inventory",
   "growapp-plant-catalog",
   "growapp-quality-inventory",
+  "growapp-backpack-layout-v3",
   "growapp-backpack-layout-v2",
   "growapp-backpack-quick-v2",
 ];
@@ -968,6 +969,29 @@ function GameScreen() {
     setInventory((previous) => ({ ...previous, [itemId]: Math.max(0, (previous[itemId] || 0) - safe) }));
   };
 
+  const deleteSeedItem = (itemId, count) => {
+    const seed = seeds.find((item) => item.id === itemId);
+    if (!seed || seed.infinite) return;
+
+    const safe = Math.max(0, Math.floor(Number(count) || 0));
+    if (safe <= 0) return;
+
+    setSeedInventory((previous) => ({
+      ...previous,
+      [itemId]: Math.max(0, (previous[itemId] || 0) - safe),
+    }));
+  };
+
+  const deleteCareItem = (itemId, count) => {
+    const safe = Math.max(0, Math.floor(Number(count) || 0));
+    if (safe <= 0 || itemId === "wateringCan") return;
+
+    setCareInventory((previous) => ({
+      ...previous,
+      [itemId]: Math.max(0, (previous[itemId] || 0) - safe),
+    }));
+  };
+
   const openClub = () => {
     if (isTutorialActive) {
       return;
@@ -1338,8 +1362,25 @@ function GameScreen() {
               qualityInventory={qualityInventory}
               seedInventory={seedInventory}
               careInventory={careInventory}
+              appliedCare={Array.isArray(currentPotState.careApplied) ? currentPotState.careApplied : []}
+              canPlantSeed={isCurrentPotUnlocked && growStep === 0}
+              canUseCare={growStep > 0 && growStep < 3}
+              onPlantSeed={(cropId) => {
+                const seed = seeds.find((item) => item.id === cropId);
+                if (!seed || !isCurrentPotUnlocked || growStep !== 0) return;
+                setSelectedSeed(seed);
+                setIsInventoryOpen(false);
+                setIsSeedModalOpen(true);
+              }}
+              onUseCare={(careType) => {
+                if (growStep <= 0 || growStep >= 3) return;
+                applyPlantCare(careType);
+                setIsInventoryOpen(false);
+              }}
               onClose={() => setIsInventoryOpen(false)}
               onDeleteQualityItem={deleteQualityItem}
+              onDeleteSeedItem={deleteSeedItem}
+              onDeleteCareItem={deleteCareItem}
             />
 
             <HarvestCareModal

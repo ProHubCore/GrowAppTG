@@ -20,14 +20,12 @@ function SeedIcon({ seed, big = false }) {
   return <div className={`seed-icon${big ? " big" : ""}`}>{seed.icon}</div>;
 }
 
-function SeedBoxLid({ potTypeName }) {
+function SeedBoxLid() {
   return (
     <div className="seed-box-lid" aria-hidden="true">
       <span className="seed-box-hinge left" />
       <span className="seed-box-hinge right" />
-      <div className="seed-box-brand">GROW</div>
-      <div className="seed-box-lid-title">СЕМЕНА</div>
-      <div className="seed-box-lid-caption">Ячейки для: {potTypeName}</div>
+      <div className="seed-box-lid-title">КОРОБКА СЕМЯН</div>
     </div>
   );
 }
@@ -41,7 +39,6 @@ function SeedModal({
   onPlantSeed,
   onClose,
   tutorialStep = "completed",
-  potTypeName = "ведро",
 }) {
   if (!isOpen) return null;
 
@@ -57,9 +54,10 @@ function SeedModal({
   const selectedSeedUnavailable =
     selectedSeed && !selectedSeed.infinite && selectedSeedAmount <= 0;
   const needsEmptySlot = availableSeeds.length % 2 !== 0;
+  const hasScrollableSeeds = availableSeeds.length > 4;
 
   return (
-    <div className="modal-overlay">
+    <div className="modal-overlay seed-modal-overlay">
       <div className="seed-modal">
         <button
           type="button"
@@ -73,24 +71,27 @@ function SeedModal({
 
         {!selectedSeed && (
           <>
-            <SeedBoxLid potTypeName={potTypeName} />
+            <SeedBoxLid />
 
             <div className="seed-box-tray">
               <div className="seed-box-tray-header">
                 <div>
-                  <div className="modal-title">Выбери семена</div>
-                  <div className="modal-subtitle">
-                    Нажми на нужный пакетик
-                  </div>
-                </div>
-                <div className="seed-box-counter">
-                  {availableSeeds.length}
-                  <span>шт.</span>
+                  <div className="modal-title">Мои семена</div>
+                  {hasScrollableSeeds && (
+                    <div className="seed-scroll-hint">
+                      Листай семена вверх и вниз
+                    </div>
+                  )}
                 </div>
               </div>
 
-              <div className="seed-list">
-                {availableSeeds.map((seed, index) => {
+              <div
+                className={`seed-list-viewport${
+                  hasScrollableSeeds ? " is-scrollable" : ""
+                }`}
+              >
+                <div className="seed-list">
+                  {availableSeeds.map((seed, index) => {
                   const amount = getSeedAmount(seed, seedInventory);
                   const disabled =
                     tutorialActive &&
@@ -135,12 +136,13 @@ function SeedModal({
                   );
                 })}
 
-                {needsEmptySlot && (
-                  <div className="seed-empty-slot" aria-hidden="true">
-                    <span className="seed-empty-slot-ring" />
-                    <span>Свободная ячейка</span>
-                  </div>
-                )}
+                  {needsEmptySlot && (
+                    <div className="seed-empty-slot" aria-hidden="true">
+                      <span className="seed-empty-slot-ring" />
+                      <span>Свободная ячейка</span>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </>
@@ -148,7 +150,7 @@ function SeedModal({
 
         {selectedSeed && (
           <>
-            <SeedBoxLid potTypeName={potTypeName} />
+            <SeedBoxLid />
 
             <div className="seed-box-tray confirm-tray">
               <div className="modal-title">Посадить растение?</div>
