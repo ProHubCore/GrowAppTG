@@ -1,3 +1,5 @@
+import { GAME_ECONOMY } from "../../economy/gameEconomy";
+
 export const plantationSlots = [
   {
     id: 1,
@@ -7,13 +9,13 @@ export const plantationSlots = [
   },
   {
     id: 2,
-    unlockPrice: 100,
+    unlockPrice: GAME_ECONOMY.equipment.secondSlot,
     requiredClubLevel: 3,
     released: true,
   },
   {
     id: 3,
-    unlockPrice: 500,
+    unlockPrice: GAME_ECONOMY.equipment.thirdSlot,
     requiredClubLevel: 5,
     released: true,
   },

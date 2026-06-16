@@ -25,6 +25,7 @@ import usePotGrowth from "../plantation/hooks/usePotGrowth";
 import useClubReputation from "../club/useClubReputation";
 import { triggerTelegramHaptic, triggerTelegramNotification } from "../../core/telegram";
 import { requestGameProgressReset } from "../../core/bootstrap/prepareReleaseState";
+import { GAME_ECONOMY } from "../economy/gameEconomy";
 
 import { pots } from "../plantation/data/pots";
 import {
@@ -53,9 +54,9 @@ import {
 
 import "./GameScreen.css";
 
-const DEFAULT_GROW_TIME = 90;
+const DEFAULT_GROW_TIME = GAME_ECONOMY.crops.tabakko.growTime;
 const TUTORIAL_GROW_TIME = 8;
-const INITIAL_COINS = 40;
+const INITIAL_COINS = GAME_ECONOMY.startingCoins;
 
 const STAGE_WIDTH = 390;
 const STAGE_HEIGHT = 844;
@@ -258,7 +259,7 @@ function GameScreen() {
           ...unlockedLevels.map((level) => ({
             id: `maria-${level.level}-${Date.now()}`,
             source: "maria",
-            sourceLabel: "Путь ученика · Мария Ивановна",
+            sourceLabel: "Доверие Марии Ивановны",
             level: `${level.level} · ${level.title}`,
             icon: level.icon,
             title: level.unlockTitle || level.reward,
@@ -1229,6 +1230,9 @@ function GameScreen() {
     }));
   };
 
+  const activeMariaQuest = MARIA_QUESTS.find(
+    (quest) => !(mariaQuestState.completedQuestIds || []).includes(quest.id),
+  );
 
   return (
     <div className={`game-screen game-screen--${activeScreen}`}>
@@ -1275,16 +1279,6 @@ function GameScreen() {
                 }
               }}
             />
-
-            <button
-              type="button"
-              className="plant-catalog-tool"
-              onClick={() => setIsCatalogOpen(true)}
-              disabled={isTutorialActive}
-              aria-label="Открыть каталог растений"
-            >
-              📖
-            </button>
 
             <FlyingLoot lootItems={flyingLootItems} />
 
@@ -1514,6 +1508,7 @@ function GameScreen() {
             onOpenShop={openShop}
             onOpenMariaHouse={openMariaHouse}
             showMariaNotice={(mariaQuestState.completedQuestIds || []).length < MARIA_QUESTS.length}
+            missionTitle={activeMariaQuest ? `Текущее дело: ${activeMariaQuest.title}` : "Первая глава закрыта"}
           />
         )}
 

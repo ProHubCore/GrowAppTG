@@ -1,6 +1,7 @@
 import { CROPS } from "../plantation/data/crops";
+import { GAME_ECONOMY } from "../economy/gameEconomy";
 
-export const SHOP_REFRESH_MS = 30 * 60_000;
+export const SHOP_REFRESH_MS = GAME_ECONOMY.shopRefreshMs;
 
 const cropItems = CROPS.filter((crop) => crop.shop).map((crop) => ({
   id: crop.id,
@@ -24,7 +25,7 @@ const toolItems = [
     name: "Старая лейка",
     icon: "💧",
     description: "Постоянный инструмент. Один раз на каждой стадии срезает ровно 20% полной длительности стадии.",
-    pricePerSeed: 120,
+    pricePerSeed: GAME_ECONOMY.equipment.wateringCan,
     minStock: 1,
     maxStock: 1,
     requiredClubLevel: 1,
@@ -39,7 +40,7 @@ const careItems = [
     name: "Питательный раствор",
     icon: "🌿",
     description: "Расходник на один цикл. Повышает качество и гарантирует дополнительный плод.",
-    pricePerSeed: 36,
+    pricePerSeed: GAME_ECONOMY.care.nutrition,
     minStock: 2,
     maxStock: 6,
     requiredClubLevel: 1,
@@ -51,7 +52,7 @@ const careItems = [
     name: "Смесь Марии Ивановны",
     icon: "🧪",
     description: "Секретный состав. Сильно повышает шанс отличного и редкого качества.",
-    pricePerSeed: 85,
+    pricePerSeed: GAME_ECONOMY.care.mariaMix,
     minStock: 1,
     maxStock: 3,
     requiredClubLevel: 3,

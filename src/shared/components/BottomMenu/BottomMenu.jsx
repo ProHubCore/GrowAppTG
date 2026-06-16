@@ -11,44 +11,42 @@ function BottomMenu({
   const tutorialActive = tutorialStep !== "completed";
   const districtAllowed = tutorialStep === "go-district";
 
-  return (
-    <div className="bottom-menu">
-      <button
-        className={`bottom-menu-button ${
-          activeScreen === "plantation" ? "active" : ""
-        }`}
-        disabled={tutorialActive}
-        onClick={onGoPlantation}
-      >
-        🪴
-        <span>Плантация</span>
-        {readyPlants > 0 && (
-          <b className="bottom-menu-badge" aria-label={`Готово растений: ${readyPlants}`}>
-            {readyPlants}
-          </b>
-        )}
-      </button>
+  if (activeScreen === "district") {
+    return (
+      <div className="location-dock">
+        <button type="button" className="location-dock__main" disabled={tutorialActive} onClick={onGoPlantation}>
+          <span aria-hidden="true">⌂</span>
+          <strong>ПЛАНТАЦИЯ</strong>
+          {readyPlants > 0 && <b>{readyPlants} готово</b>}
+        </button>
+        <button type="button" className="location-dock__side" disabled={tutorialActive} onClick={onGoSupport} aria-label="Поддержать проект">
+          ★
+        </button>
+      </div>
+    );
+  }
 
+  if (activeScreen === "support") {
+    return (
+      <div className="location-dock location-dock--single">
+        <button type="button" className="location-dock__main" onClick={onGoDistrict}>
+          <strong>GROW STREET</strong>
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="location-dock location-dock--single">
       <button
-        className={`bottom-menu-button ${
-          activeScreen === "district" ? "active" : ""
-        }`}
+        type="button"
+        className="location-dock__main location-dock__main--street"
         disabled={tutorialActive && !districtAllowed}
         onClick={onGoDistrict}
       >
-        🌆
-        <span>Район</span>
-      </button>
-
-      <button
-        className={`bottom-menu-button ${
-          activeScreen === "support" ? "active" : ""
-        }`}
-        disabled={tutorialActive}
-        onClick={onGoSupport}
-      >
-        ⭐
-        <span>Stars</span>
+        <span aria-hidden="true">▥</span>
+        <strong>GROW STREET</strong>
+        {readyPlants > 0 && <b>{readyPlants} готово</b>}
       </button>
     </div>
   );

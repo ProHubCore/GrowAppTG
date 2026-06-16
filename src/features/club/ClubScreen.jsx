@@ -1,45 +1,92 @@
+import { useEffect, useMemo, useState } from "react";
 import { ASSETS } from "../../core/assets/assetCatalog";
-import { triggerTelegramNotification } from "../../core/telegram";
-import { useMemo, useRef, useState } from "react";
+import { triggerTelegramNotification, triggerTelegramHaptic } from "../../core/telegram";
 import "./ClubScreen.css";
 import { HARVEST_QUALITIES } from "../plantation/data/harvestQuality";
 import { CROPS } from "../plantation/data/crops";
 import { QUALITY_PRICE_MULTIPLIERS, getQualityAmount, removeQualityItems } from "../plantation/data/qualityInventory";
-import { getClubLevelInfo } from "./clubProgression";
+import { getClubLevelInfo, writeClubReputation } from "./clubProgression";
+import { createClubLineup } from "./clubBuyers";
+import { GAME_ECONOMY } from "../economy/gameEconomy";
 
-const REPUTATION_STORAGE_KEY = "growapp-club-reputation";
+const SESSION_KEY = "growapp-club-negotiation-v2";
 
-const PRODUCTS = Object.fromEntries(
-  CROPS.map((crop) => [
-    crop.id,
-    {
-      id: crop.id,
-      name: crop.name,
-      icon: crop.icon,
-      image: crop.stages.at(-1)?.image,
-      basePrice: crop.basePrice,
-      lore: crop.lore,
-    },
-  ]),
-);
-
+const PRODUCTS = Object.fromEntries(CROPS.map((crop) => [crop.id, {
+  id: crop.id,
+  name: crop.name,
+  icon: crop.icon,
+  image: crop.stages.at(-1)?.image,
+  basePrice: crop.basePrice,
+  lore: crop.lore,
+}]));
 
 function readRep() {
-  try { return Math.max(0, Math.floor(Number(localStorage.getItem(REPUTATION_STORAGE_KEY)) || 0)); } catch { return 0; }
+  try { return Math.max(0, Math.floor(Number(localStorage.getItem("growapp-club-reputation")) || 0)); } catch { return 0; }
 }
 
+function readSession() {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(SESSION_KEY) || "null");
+    if (parsed?.expiresAt > Date.now() && Array.isArray(parsed.buyers)) return parsed;
+  } catch {}
+  return null;
+}
+
+function createSession() {
+  return { expiresAt: Date.now() + GAME_ECONOMY.clubBuyerRefreshMs, buyers: createClubLineup(3) };
+}
+
+function saveSession(session) {
+  try { localStorage.setItem(SESSION_KEY, JSON.stringify(session)); } catch {}
+}
 
 function ProductArt({ product }) {
   if (product.image) return <img src={product.image} alt={product.name} draggable="false" />;
   return <span>{product.icon}</span>;
 }
 
+function priceMood(multiplier) {
+  if (multiplier <= 0.94) return { label: "Легко согласится", tone: "safe" };
+  if (multiplier <= 1.06) return { label: "Честная цена", tone: "fair" };
+  if (multiplier <= 1.2) return { label: "Рискованный торг", tone: "risk" };
+  return { label: "Почти наглость", tone: "danger" };
+}
+
 export default function ClubScreen({ inventory, setInventory, qualityInventory = {}, setQualityInventory, coins, setCoins, onSaleCompleted, onGoBack }) {
-  const stripRef = useRef(null);
   const [reputation, setReputation] = useState(readRep);
+  const [session, setSession] = useState(() => {
+    const existing = readSession();
+    if (existing) return existing;
+    const created = createSession();
+    saveSession(created);
+    return created;
+  });
+  const [buyerId, setBuyerId] = useState(null);
   const [selectedKey, setSelectedKey] = useState(null);
   const [amount, setAmount] = useState(1);
-  const [notice, setNotice] = useState("Сегодня клуб берёт свежий товар. Чем выше качество — тем выше цена и уважение.");
+  const [askMultiplier, setAskMultiplier] = useState(1.05);
+  const [notice, setNotice] = useState("Выбери товар и стол. Покупатель первым назовёт цену — принимать её необязательно.");
+  const [dealResult, setDealResult] = useState(null);
+  const [clock, setClock] = useState(Date.now());
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      const now = Date.now();
+      setClock(now);
+      setSession((current) => {
+        if (current.expiresAt > now) return current;
+        const next = createSession();
+        saveSession(next);
+        setBuyerId(null);
+        setSelectedKey(null);
+        setDealResult(null);
+        setNotice("В клуб пришли новые лица. Спрос и характер покупателей изменились.");
+        return next;
+      });
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, []);
+
   const levelInfo = useMemo(() => getClubLevelInfo(reputation), [reputation]);
   const clubPriceBonus = Math.max(0, (levelInfo.currentLevel.level - 1) * 5);
   const clubPriceMultiplier = 1 + clubPriceBonus / 100;
@@ -50,126 +97,176 @@ export default function ClubScreen({ inventory, setInventory, qualityInventory =
       product,
       quality,
       amount: getQualityAmount(qualityInventory, product.id, quality.id),
-      price: Math.max(1, Math.round(product.basePrice * (QUALITY_PRICE_MULTIPLIERS[quality.id] || 1) * clubPriceMultiplier)),
-    }))
+      marketPrice: Math.max(1, Math.round(product.basePrice * (QUALITY_PRICE_MULTIPLIERS[quality.id] || 1) * clubPriceMultiplier)),
+    })),
   ).filter((stack) => stack.amount > 0), [qualityInventory, clubPriceMultiplier]);
 
-  const selected = stacks.find((stack) => stack.key === selectedKey) || stacks[0] || null;
+  const selected = stacks.find((stack) => stack.key === selectedKey) || null;
+  const buyer = session.buyers.find((entry) => entry.id === buyerId) || null;
   const safeAmount = selected ? Math.min(Math.max(1, amount), selected.amount) : 0;
-  const repPerItem = selected ? 2 + (selected.quality.rank || 0) : 0;
-  const total = selected ? safeAmount * selected.price : 0;
+  const preferenceBonus = buyer && selected
+    ? buyer.prefers === selected.product.id ? 1.16 : buyer.prefers ? 0.94 : 1
+    : 1;
+  const rareBonus = selected?.quality.id === "rare" && buyer?.id === "vespa" ? 1.22 : 1;
+  const fairUnit = selected ? Math.max(1, Math.round(selected.marketPrice * preferenceBonus * rareBonus)) : 0;
+  const openingUnit = buyer ? Math.max(1, Math.round(fairUnit * buyer.openingFactor)) : 0;
+  const askUnit = Math.max(1, Math.round(fairUnit * askMultiplier));
+  const mood = priceMood(askMultiplier);
+  const feeRate = GAME_ECONOMY.negotiation.clubFeeRate;
 
-
-  const scrollStock = (direction) => {
-    stripRef.current?.scrollBy({
-      left: direction * Math.max(220, stripRef.current.clientWidth * 0.72),
-      behavior: "smooth",
+  const updateSession = (updater) => {
+    setSession((current) => {
+      const next = updater(current);
+      saveSession(next);
+      return next;
     });
   };
 
-  const handleStockWheel = (event) => {
-    if (!stripRef.current || Math.abs(event.deltaY) <= Math.abs(event.deltaX)) return;
-    event.preventDefault();
-    stripRef.current.scrollLeft += event.deltaY;
-  };
-
-  const saveRep = (value) => {
-    const next = Math.max(0, Math.floor(value));
-    setReputation(next);
-    try { localStorage.setItem(REPUTATION_STORAGE_KEY, String(next)); } catch {}
-    window.dispatchEvent(new CustomEvent("growapp-club-reputation-change", { detail: { reputation: next } }));
-  };
-
-  const choose = (stack) => {
+  const selectStack = (stack) => {
     setSelectedKey(stack.key);
     setAmount(1);
+    setDealResult(null);
     setNotice(stack.product.lore);
   };
 
-  const sell = () => {
-    if (!selected || safeAmount <= 0) return;
+  const selectBuyer = (entry) => {
+    if (entry.left) return;
+    setBuyerId(entry.id);
+    setAskMultiplier(1.05);
+    setDealResult(null);
+    setNotice(entry.line);
+  };
+
+  const finishSale = (unitPrice, source) => {
+    if (!selected || !buyer || safeAmount <= 0) return;
+    const gross = safeAmount * unitPrice;
+    const fee = Math.max(1, Math.round(gross * feeRate));
+    const payout = Math.max(1, gross - fee);
+    const repPerItem = 2 + selected.quality.rank + (source === "counter" ? 1 : 0);
+    const gainedRep = safeAmount * repPerItem;
+
     setQualityInventory?.((previous) => removeQualityItems(previous, selected.product.id, selected.quality.id, safeAmount));
     setInventory((previous) => ({ ...previous, [selected.product.id]: Math.max(0, (previous[selected.product.id] || 0) - safeAmount) }));
-    setCoins((previous) => previous + total);
-    const gainedRep = safeAmount * repPerItem;
-    saveRep(reputation + gainedRep);
-    onSaleCompleted?.({ itemId: selected.product.id, amount: safeAmount, coins: total, reputation: gainedRep, qualityId: selected.quality.id });
+    setCoins((previous) => previous + payout);
+    const nextRep = writeClubReputation(reputation + gainedRep);
+    setReputation(nextRep);
+    onSaleCompleted?.({ itemId: selected.product.id, amount: safeAmount, coins: payout, reputation: gainedRep, qualityId: selected.quality.id });
     triggerTelegramNotification("success");
-    setNotice(`Типусиан забрал ${safeAmount} шт. Ты получил ${total} монет и ${gainedRep} репутации клуба.`);
+    updateSession((current) => ({
+      ...current,
+      buyers: current.buyers.map((entry) => entry.id === buyer.id ? { ...entry, left: true } : entry),
+    }));
+    setDealResult({ type: "success", title: source === "counter" ? "Торг удался" : "Сделка закрыта", text: `На руки ● ${payout}. Комиссия клуба: ${fee}. Репутация: +${gainedRep}.` });
     setSelectedKey(null);
+    setBuyerId(null);
     setAmount(1);
   };
 
-  return (
-    <div className="club-screen">
-      <img className="club-npc club-npc-smoker" src={ASSETS.characters.clubDealer} alt="Типусиан" draggable="false" onError={(event) => { event.currentTarget.style.display = "none"; }} />
-      <button className="club-back-hitbox" type="button" onClick={onGoBack} aria-label="Назад" />
-      <div className="club-wallet">🪙 {coins}</div>
+  const acceptOpening = () => finishSale(openingUnit, "opening");
 
-      <section className="club-board">
-        <header className="club-board-header">
-          <div>
-            <span>КЛУБНЫЙ СБЫТ</span>
-            <h1>Свежий спрос</h1>
-          </div>
-          <div className="club-level-badge">LVL {levelInfo.currentLevel.level}</div>
+  const counterOffer = () => {
+    if (!selected || !buyer || buyer.left) return;
+    const premium = Math.max(0, askMultiplier - 1);
+    const qualityBoost = selected.quality.rank * 0.045;
+    const preferenceBoost = buyer.prefers === selected.product.id ? 0.08 : 0;
+    const reputationBoost = Math.min(0.12, reputation / 3500);
+    const patiencePenalty = (buyer.patience - buyer.patienceLeft) * 0.08;
+    const chance = Math.max(0.08, Math.min(0.93, buyer.tolerance + qualityBoost + preferenceBoost + reputationBoost - premium * 1.7 - patiencePenalty));
+
+    triggerTelegramHaptic("medium");
+    if (Math.random() <= chance) {
+      finishSale(askUnit, "counter");
+      return;
+    }
+
+    const nextPatience = buyer.patienceLeft - 1;
+    if (nextPatience <= 0) {
+      const nextRep = writeClubReputation(Math.max(0, reputation - GAME_ECONOMY.negotiation.rejectionReputationLoss));
+      setReputation(nextRep);
+      updateSession((current) => ({ ...current, buyers: current.buyers.map((entry) => entry.id === buyer.id ? { ...entry, patienceLeft: 0, left: true } : entry) }));
+      setDealResult({ type: "fail", title: "Перегнул с ценой", text: `Покупатель ушёл. Урожай остался у тебя, но клуб снял ${GAME_ECONOMY.negotiation.rejectionReputationLoss} REP.` });
+      setBuyerId(null);
+      return;
+    }
+
+    updateSession((current) => ({ ...current, buyers: current.buyers.map((entry) => entry.id === buyer.id ? { ...entry, patienceLeft: nextPatience, openingFactor: Math.min(1.03, entry.openingFactor + 0.04) } : entry) }));
+    setAskMultiplier((value) => Math.max(0.9, Number((value - 0.08).toFixed(2))));
+    setDealResult({ type: "warn", title: "Не согласен", text: `${buyer.name} поднял своё предложение, но терпения осталось: ${nextPatience}. Можно принять или снизить запрос.` });
+  };
+
+  const activeBuyers = session.buyers.filter((entry) => !entry.left);
+  const refreshSeconds = Math.max(0, Math.ceil((session.expiresAt - clock) / 1000));
+  const refreshMinutes = Math.floor(refreshSeconds / 60);
+  const refreshRemainder = String(refreshSeconds % 60).padStart(2, "0");
+
+  return (
+    <main className="club-screen">
+      <img className="club-npc" src={ASSETS.characters.clubDealer} alt="Хозяин клуба" draggable="false" />
+      <div className="club-wallet">● {coins}</div>
+
+      <section className="club-deal-room">
+        <header className="club-heading">
+          <div><span>GROW STREET · НОЧНОЙ СБЫТ</span><h1>Стол переговоров</h1></div>
+          <div className="club-level"><small>НОВЫЕ ЛИЦА {refreshMinutes}:{refreshRemainder}</small><strong>{levelInfo.currentLevel.title}</strong></div>
         </header>
 
-        <div className="club-rep-compact">
-          <div className="club-rep-copy">
-            <strong>Репутация клуба</strong>
-            <small>{levelInfo.currentLevel.title} · {reputation} REP · цены +{clubPriceBonus}%</small>
-          </div>
-          <div className="club-rep-track"><div style={{ width: `${levelInfo.progressPercent}%` }} /></div>
-          <span>{levelInfo.nextLevel ? `${levelInfo.nextLevel.required - reputation} до уровня` : "MAX"}</span>
+        <div className="club-reputation-line">
+          <span>{reputation} REP</span>
+          <div><i style={{ width: `${levelInfo.progressPercent}%` }} /></div>
+          <b>цены +{clubPriceBonus}%</b>
         </div>
 
-        <div className="club-lore-note">
-          <strong>Типусиан:</strong> «Мы не спрашиваем, кто ты и с какой планеты. Главное — чтобы товар был свежий.»
-        </div>
-
-        <div className="club-strip-shell">
-          <button type="button" className="club-strip-arrow left" onClick={() => scrollStock(-1)} disabled={stacks.length <= 2} aria-label="Предыдущие товары">‹</button>
-          <div className="club-stock-strip" ref={stripRef} onWheel={handleStockWheel}>
-            {stacks.length === 0 ? (
-              <div className="club-empty">В рюкзаке пока нечего продавать. Вырасти урожай и возвращайся.</div>
-            ) : stacks.map((stack) => (
-              <button type="button" key={stack.key} className={`club-stock-card${selected?.key === stack.key ? " selected" : ""}`} onClick={() => choose(stack)}>
-                <div className="club-stock-art"><ProductArt product={stack.product} /></div>
-                <strong>{stack.product.name}</strong>
-                <small>{stack.quality.icon} {stack.quality.name}</small>
-                <div><span>{stack.amount} шт.</span><b>🪙 {stack.price}</b></div>
+        <section className="club-buyers">
+          <div className="club-section-title"><span>1</span><strong>Выбери покупателя</strong><small>{activeBuyers.length} за столами</small></div>
+          <div className="club-buyers-grid">
+            {session.buyers.map((entry) => (
+              <button key={entry.id} type="button" className={`${buyer?.id === entry.id ? "selected" : ""}${entry.left ? " left" : ""}`} onClick={() => selectBuyer(entry)} disabled={entry.left}>
+                <span>{entry.left ? "×" : entry.avatar}</span>
+                <div><strong>{entry.name}</strong><small>{entry.left ? "ушёл" : entry.role}</small></div>
+                {!entry.left && <b>{entry.patienceLeft} ход.</b>}
               </button>
             ))}
           </div>
-          <button type="button" className="club-strip-arrow right" onClick={() => scrollStock(1)} disabled={stacks.length <= 2} aria-label="Следующие товары">›</button>
-        </div>
+        </section>
 
-        {selected && (
-          <article className="club-sale-box">
-            <div className="club-sale-top">
-              <div className="club-sale-art"><ProductArt product={selected.product} /></div>
-              <div>
-                <span>{selected.quality.icon} {selected.quality.name}</span>
-                <h2>{selected.product.name}</h2>
-                <p>{notice}</p>
-              </div>
+        <section className="club-stock">
+          <div className="club-section-title"><span>2</span><strong>Положи товар</strong><small>{stacks.length} партий</small></div>
+          <div className="club-stock-grid">
+            {stacks.length === 0 ? <div className="club-empty">В рюкзаке нет урожая. Клуб не торгует обещаниями.</div> : stacks.map((stack) => (
+              <button key={stack.key} type="button" className={selected?.key === stack.key ? "selected" : ""} onClick={() => selectStack(stack)}>
+                <div className="club-stock-art"><ProductArt product={stack.product} /></div>
+                <strong>{stack.product.name}</strong>
+                <small>{stack.quality.icon} {stack.quality.name}</small>
+                <b>{stack.amount} шт.</b>
+              </button>
+            ))}
+          </div>
+        </section>
+
+        {buyer && selected ? (
+          <section className="club-negotiation">
+            <div className="club-negotiation__header">
+              <div><span>{buyer.name} предлагает</span><strong>● {openingUnit} <small>за штуку</small></strong></div>
+              <div className="club-amount"><button onClick={() => setAmount((value) => Math.max(1, value - 1))}>−</button><strong>{safeAmount}</strong><button onClick={() => setAmount((value) => Math.min(selected.amount, value + 1))}>+</button></div>
             </div>
-            <div className="club-sale-controls">
-              <div className="club-stepper">
-                <button type="button" onClick={() => setAmount((value) => Math.max(1, value - 1))}>−</button>
-                <strong>{safeAmount}</strong>
-                <button type="button" onClick={() => setAmount((value) => Math.min(selected.amount, value + 1))}>+</button>
-              </div>
-              <div className="club-sale-result"><span>Получишь</span><strong>🪙 {total} · +{safeAmount * repPerItem} REP</strong></div>
-              <button type="button" className="club-sell-button" onClick={sell}>Продать клубу</button>
+
+            <div className="club-ask-row">
+              {[0.92, 1.05, 1.16, 1.28, 1.4].map((value) => (
+                <button key={value} type="button" className={Math.abs(askMultiplier - value) < .01 ? "active" : ""} onClick={() => setAskMultiplier(value)}>● {Math.round(fairUnit * value)}</button>
+              ))}
             </div>
-          </article>
-        )}
+            <div className={`club-risk ${mood.tone}`}><span>{mood.label} · рынок ● {fairUnit}</span><b>Твоя цена: ● {askUnit} × {safeAmount}</b></div>
+            <div className="club-deal-actions">
+              <button type="button" className="club-accept" onClick={acceptOpening}>Принять ● {Math.max(1, safeAmount * openingUnit - Math.max(1, Math.round(safeAmount * openingUnit * feeRate)))}</button>
+              <button type="button" className="club-counter" onClick={counterOffer}>Торговаться</button>
+            </div>
+          </section>
+        ) : <div className="club-notice">{notice}</div>}
 
-        {!selected && stacks.length > 0 && <div className="club-notice">{notice}</div>}
-
+        {dealResult && <div className={`club-result ${dealResult.type}`}><strong>{dealResult.title}</strong><p>{dealResult.text}</p><button type="button" onClick={() => setDealResult(null)}>Понятно</button></div>}
       </section>
-    </div>
+
+      <button type="button" className="club-grow-street" onClick={onGoBack}>GROW STREET</button>
+    </main>
   );
 }

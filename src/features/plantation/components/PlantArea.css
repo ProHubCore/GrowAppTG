@@ -696,3 +696,6 @@
 
 /* Единый флакон: уход и удаление растения */
 .plantation-care-tool{right:18px!important;bottom:42px!important;z-index:34!important}.care-tool{width:62px!important;height:62px!important;border-radius:22px!important;background:radial-gradient(circle at 35% 24%,rgba(185,255,219,.25),transparent 55%),linear-gradient(160deg,rgba(34,74,58,.95),rgba(21,39,33,.94))!important}.care-tool-icon{font-size:31px!important}
+
+/* Релизная навигация мест выращивания: свайп основной, кнопки только подсказывают направление. */
+.plantation-arrow{top:54%!important;width:27px!important;height:48px!important;border:1px solid rgba(223,255,235,.15)!important;border-radius:13px!important;background:linear-gradient(180deg,rgba(29,47,39,.66),rgba(18,29,25,.66))!important;box-shadow:0 7px 14px rgba(0,0,0,.24)!important;backdrop-filter:none!important;color:rgba(224,255,237,.6)!important;font-size:25px!important;font-weight:400!important;opacity:.7!important}.plantation-arrow-left{left:7px!important}.plantation-arrow-right{right:7px!important}.plantation-arrow:active:not(:disabled){transform:translateY(-50%) scale(.9)!important;opacity:1!important}.plantation-arrow:disabled{opacity:.16!important}

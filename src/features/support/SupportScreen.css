@@ -253,3 +253,6 @@
   font-weight: 850;
   background: rgba(12, 11, 18, 0.34);
 }
+
+/* Выход вынесен в единый нижний док Grow Street. */
+.support-screen__header{padding-top:8px}.support-screen__back{display:none!important}

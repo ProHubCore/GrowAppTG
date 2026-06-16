@@ -38,7 +38,7 @@ function getSupportTitle(total) {
   return "Новый житель";
 }
 
-export default function SupportScreen({ onGoBack }) {
+export default function SupportScreen() {
   const [amount, setAmount] = useState(50);
   const [supportTotal, setSupportTotal] = useState(readSupportTotal);
   const [status, setStatus] = useState("idle");
@@ -115,14 +115,6 @@ export default function SupportScreen({ onGoBack }) {
   return (
     <main className="support-screen">
       <header className="support-screen__header">
-        <button
-          type="button"
-          className="support-screen__back"
-          onClick={onGoBack}
-        >
-          ← Назад
-        </button>
-
         <div className="support-screen__eyebrow">GrowApp · Telegram Stars</div>
         <h1>Поддержать разработку</h1>
         <p>

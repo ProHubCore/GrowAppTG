@@ -849,7 +849,7 @@
 
 /* Район: подсветка самой кнопки без outline. */
 .game-stage:has(.tutorial-step-go-district)
-  .bottom-menu-button:last-child {
+  .location-dock__main--street {
   outline: none !important;
   animation: tutorialButtonSoftGlow 2.1s ease-in-out infinite !important;
 }
@@ -1067,7 +1067,7 @@
 
 /* Финальная кнопка района — округлое свечение без outline. */
 .game-stage:has(.tutorial-step-go-district)
-  .bottom-menu-button:last-child {
+  .location-dock__main--street {
   outline: none !important;
   animation: tutorialDistrictGlow 2.1s ease-in-out infinite !important;
 }
