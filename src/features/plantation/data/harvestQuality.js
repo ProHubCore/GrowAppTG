@@ -14,11 +14,17 @@ function getWeights(care) {
   const applied = normalizeCare(care);
   let weights = [0.58, 0.28, 0.11, 0.03];
 
-  if (applied.includes("water")) weights = [0.52, 0.31, 0.13, 0.04];
-  if (applied.includes("nutrition")) weights = [0.08, 0.42, 0.38, 0.12];
-  if (applied.includes("mariaMix")) weights = [0, 0.15, 0.45, 0.40];
-  if (applied.includes("nutrition") && applied.includes("mariaMix")) weights = [0, 0.08, 0.42, 0.50];
-  if (applied.length === 3) weights = [0, 0.05, 0.35, 0.60];
+  if (applied.includes("nutrition")) {
+    weights = [0.08, 0.42, 0.38, 0.12];
+  }
+
+  if (applied.includes("mariaMix")) {
+    weights = [0, 0.15, 0.45, 0.40];
+  }
+
+  if (applied.includes("nutrition") && applied.includes("mariaMix")) {
+    weights = [0, 0.08, 0.42, 0.50];
+  }
 
   return weights;
 }
@@ -37,14 +43,17 @@ export function rollHarvestQuality(care = "none") {
 }
 
 export function getQualityById(qualityId) {
-  return HARVEST_QUALITIES.find((quality) => quality.id === qualityId) || HARVEST_QUALITIES[0];
+  return HARVEST_QUALITIES.find((quality) => quality.id === qualityId)
+    || HARVEST_QUALITIES[0];
 }
 
 export function getHarvestYield(care, qualityId) {
   const applied = normalizeCare(care);
   let amount = Math.floor(Math.random() * 3) + 1;
+
   if (applied.includes("nutrition")) amount += 1;
   if (qualityId === "excellent" || qualityId === "rare") amount += 1;
-  if (applied.length === 3) amount += 1;
+  if (applied.includes("nutrition") && applied.includes("mariaMix")) amount += 1;
+
   return amount;
 }

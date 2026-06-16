@@ -20,6 +20,18 @@ function SeedIcon({ seed, big = false }) {
   return <div className={`seed-icon${big ? " big" : ""}`}>{seed.icon}</div>;
 }
 
+function SeedBoxLid({ potTypeName }) {
+  return (
+    <div className="seed-box-lid" aria-hidden="true">
+      <span className="seed-box-hinge left" />
+      <span className="seed-box-hinge right" />
+      <div className="seed-box-brand">GROW</div>
+      <div className="seed-box-lid-title">СЕМЕНА</div>
+      <div className="seed-box-lid-caption">Ячейки для: {potTypeName}</div>
+    </div>
+  );
+}
+
 function SeedModal({
   isOpen,
   seeds,
@@ -44,6 +56,7 @@ function SeedModal({
     : 0;
   const selectedSeedUnavailable =
     selectedSeed && !selectedSeed.infinite && selectedSeedAmount <= 0;
+  const needsEmptySlot = availableSeeds.length % 2 !== 0;
 
   return (
     <div className="modal-overlay">
@@ -53,86 +66,139 @@ function SeedModal({
           className="modal-close"
           onClick={onClose}
           disabled={tutorialActive}
-          aria-label="Закрыть корзинку"
+          aria-label="Закрыть коробку с семенами"
         >
           ×
         </button>
 
         {!selectedSeed && (
           <>
-            <div className="modal-title">Корзинка с семенами</div>
-            <div className="modal-subtitle">Подходит для: {potTypeName}</div>
-            <div className="seed-list">
-              {availableSeeds.map((seed) => {
-                const amount = getSeedAmount(seed, seedInventory);
-                const disabled =
-                  tutorialActive &&
-                  (!canChooseSeed || seed.id !== "greenTomato");
+            <SeedBoxLid potTypeName={potTypeName} />
 
-                return (
-                  <button
-                    type="button"
-                    key={seed.id}
-                    className="seed-card"
-                    disabled={disabled}
-                    onClick={() => onSelectSeed(seed)}
-                  >
-                    <SeedIcon seed={seed} />
-                    <div className="seed-info">
-                      <div className="seed-name">{seed.name}</div>
-                      <div className="seed-description">{seed.description}</div>
-                      <div className="seed-amount">
-                        {seed.infinite ? "Семена: ∞" : `Семена: ${amount}`}
+            <div className="seed-box-tray">
+              <div className="seed-box-tray-header">
+                <div>
+                  <div className="modal-title">Выбери семена</div>
+                  <div className="modal-subtitle">
+                    Нажми на нужный пакетик
+                  </div>
+                </div>
+                <div className="seed-box-counter">
+                  {availableSeeds.length}
+                  <span>шт.</span>
+                </div>
+              </div>
+
+              <div className="seed-list">
+                {availableSeeds.map((seed, index) => {
+                  const amount = getSeedAmount(seed, seedInventory);
+                  const disabled =
+                    tutorialActive &&
+                    (!canChooseSeed || seed.id !== "tabakko");
+
+                  return (
+                    <button
+                      type="button"
+                      key={seed.id}
+                      data-seed-id={seed.id}
+                      className="seed-card"
+                      disabled={disabled}
+                      onClick={() => onSelectSeed(seed)}
+                    >
+                      <div className="seed-card-topline">
+                        <span className="seed-card-index">
+                          {String(index + 1).padStart(2, "0")}
+                        </span>
+                        <span className="seed-card-stock">
+                          {seed.infinite ? "∞" : `×${amount}`}
+                        </span>
                       </div>
-                    </div>
-                  </button>
-                );
-              })}
+
+                      <div className="seed-card-visual">
+                        <SeedIcon seed={seed} />
+                      </div>
+
+                      <div className="seed-info">
+                        <div className="seed-name">{seed.name}</div>
+                        <div className="seed-description">
+                          {seed.description}
+                        </div>
+                      </div>
+
+                      <div className="seed-card-footer">
+                        <span>
+                          {seed.infinite ? "Базовые" : "В наличии"}
+                        </span>
+                        <strong>Выбрать</strong>
+                      </div>
+                    </button>
+                  );
+                })}
+
+                {needsEmptySlot && (
+                  <div className="seed-empty-slot" aria-hidden="true">
+                    <span className="seed-empty-slot-ring" />
+                    <span>Свободная ячейка</span>
+                  </div>
+                )}
+              </div>
             </div>
           </>
         )}
 
         {selectedSeed && (
           <>
-            <div className="modal-title">Посадить растение?</div>
-            <div className="modal-subtitle">
-              Хочешь посадить «{selectedSeed.name}»?
-            </div>
-            <div className="confirm-seed-card">
-              <SeedIcon seed={selectedSeed} big />
-              <div className="seed-name">{selectedSeed.name}</div>
-              <div className="seed-description">{selectedSeed.description}</div>
-              <div className="seed-amount">
-                {selectedSeed.infinite
-                  ? "Доступно: ∞"
-                  : `Доступно: ${selectedSeedAmount}`}
+            <SeedBoxLid potTypeName={potTypeName} />
+
+            <div className="seed-box-tray confirm-tray">
+              <div className="modal-title">Посадить растение?</div>
+              <div className="modal-subtitle">
+                Пакетик «{selectedSeed.name}» выбран
               </div>
-              {selectedSeedUnavailable && (
-                <div className="seed-unavailable-message">
-                  Семена закончились. Загляни к Зорику.
+
+              <div className="confirm-seed-card">
+                <div className="confirm-seed-stamp">ВЫБРАНО</div>
+                <div className="confirm-seed-visual">
+                  <SeedIcon seed={selectedSeed} big />
                 </div>
-              )}
-            </div>
-            <div className="modal-actions">
-              <button
-                type="button"
-                className="cancel-button"
-                onClick={onClose}
-                disabled={tutorialActive}
-              >
-                Отмена
-              </button>
-              <button
-                type="button"
-                className="plant-button"
-                onClick={onPlantSeed}
-                disabled={
-                  selectedSeedUnavailable ||
-                  (tutorialActive && !canPlantSeed)
-                }
-              >
-                Посадить
-              </button>
+                <div className="seed-name">{selectedSeed.name}</div>
+                <div className="seed-description">
+                  {selectedSeed.description}
+                </div>
+                <div className="seed-amount">
+                  {selectedSeed.infinite
+                    ? "Доступно: ∞"
+                    : `Доступно: ${selectedSeedAmount}`}
+                </div>
+                {selectedSeedUnavailable && (
+                  <div className="seed-unavailable-message">
+                    Семена закончились. Загляни к Зорику.
+                  </div>
+                )}
+              </div>
+
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  className="cancel-button"
+                  onClick={onClose}
+                  disabled={tutorialActive}
+                >
+                  Отмена
+                </button>
+                <button
+                  type="button"
+                  className="plant-button seed-modal-plant-button"
+                  data-action="plant"
+                  onClick={onPlantSeed}
+                  disabled={
+                    selectedSeedUnavailable ||
+                    (tutorialActive && !canPlantSeed)
+                  }
+                >
+                  Посадить
+                </button>
+              </div>
             </div>
           </>
         )}

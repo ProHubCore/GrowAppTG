@@ -27,47 +27,23 @@ export const ASSETS = {
   containers: {
     basicSoilBucket: "/assets/containers/basic-soil-bucket.png",
     hydroSoilBucket: "/assets/containers/hydro-soil-bucket.png",
-    mycoBioreactor: "/assets/containers/myco-bioreactor.png",
   },
   plants: {
-    greenTomato: [
-      "/assets/plants/green-tomato/stage-1.png",
-      "/assets/plants/green-tomato/stage-2.png",
-      "/assets/plants/green-tomato/stage-3.png",
-    ],
     tabakko: [
       "/assets/plants/tabakko/stage-1.png",
       "/assets/plants/tabakko/stage-2.png",
       "/assets/plants/tabakko/stage-3.png",
+    ],
+    greenTomato: [
+      "/assets/plants/green-tomato/stage-1.png",
+      "/assets/plants/green-tomato/stage-2.png",
+      "/assets/plants/green-tomato/stage-3.png",
     ],
     kokaNova: [
       "/assets/plants/koka-nova/stage-1.png",
       "/assets/plants/koka-nova/stage-2.png",
       "/assets/plants/koka-nova/stage-3.png",
     ],
-    donJuana: [
-      "/assets/plants/don-juana/stage-1.png",
-      "/assets/plants/don-juana/stage-2.png",
-      "/assets/plants/don-juana/stage-3.png",
-    ],
-    xenobloom: [
-      "/assets/plants/xenobloom/stage-1.png",
-      "/assets/plants/xenobloom/stage-2.png",
-      "/assets/plants/xenobloom/stage-3.png",
-    ],
-    psychomor: [
-      "/assets/plants/psychomor/stage-1.png",
-      "/assets/plants/psychomor/stage-2.png",
-      "/assets/plants/psychomor/stage-3.png",
-    ],
-    psilocubeCebensis: [
-      "/assets/plants/psilocube-cebensis/stage-1.png",
-      "/assets/plants/psilocube-cebensis/stage-2.png",
-      "/assets/plants/psilocube-cebensis/stage-3.png",
-    ],
-  },
-  seedPackets: {
-    psychomor: "/assets/seed-packets/psychomor.png",
   },
   ui: {
     backpack: "/assets/ui/inventory/backpack.png",
@@ -95,8 +71,8 @@ export const allAssets = [...new Set(collectAssetPaths(ASSETS))];
 export const criticalAssets = [
   ASSETS.backgrounds.plantation,
   ASSETS.characters.mariaIvanovna,
-  ASSETS.containers.basicSoilBucket,
-  ...ASSETS.plants.greenTomato,
+  ASSETS.containers.hydroSoilBucket,
+  ...ASSETS.plants.tabakko,
   ASSETS.ui.backpack,
   ASSETS.ui.seedBasket,
 ];
@@ -114,8 +90,8 @@ export const deferredAssets = [
   ASSETS.locations.mariaIvanovnaHouse.background,
   ASSETS.locations.mariaIvanovnaHouse.questBoard,
   ASSETS.locations.mariaIvanovnaHouse.radio,
-  ASSETS.containers.hydroSoilBucket,
-  ASSETS.containers.mycoBioreactor,
+  ...ASSETS.plants.greenTomato,
+  ...ASSETS.plants.kokaNova,
 ];
 
 // Совместимое имя для существующего загрузчика.

@@ -143,19 +143,13 @@ function findSeedBasket() {
   );
 }
 
-function findTomatoSeed() {
+function findTabakkoSeed() {
   return (
     findBySelectors([
-      '[data-seed-id="greenTomato"]',
-      '[data-seed-id="green-tomato"]',
-      '[data-seed="greenTomato"]',
-      '[data-seed="green-tomato"]',
+      '[data-seed-id="tabakko"]',
+      '[data-seed="tabakko"]',
     ]) ||
-    findByText([
-      "зелёный томат",
-      "зеленый томат",
-      "томат",
-    ])
+    findByText(["табакко"])
   );
 }
 
@@ -226,12 +220,12 @@ function resolvePlantingRecoveryTarget() {
     };
   }
 
-  const tomatoSeed = findTomatoSeed();
+  const tabakkoSeed = findTabakkoSeed();
 
-  if (tomatoSeed) {
+  if (tabakkoSeed) {
     return {
-      target: tomatoSeed,
-      focus: "tomato",
+      target: tabakkoSeed,
+      focus: "tabakko",
       phase: "planting",
     };
   }
@@ -292,15 +286,15 @@ function resolveAllowedTarget(tutorialContainer) {
 
   if (
     text.includes("выбер") ||
-    text.includes("томат") ||
+    text.includes("табакко") ||
     text.includes("семечк")
   ) {
-    const tomatoSeed = findTomatoSeed();
+    const tabakkoSeed = findTabakkoSeed();
 
-    if (tomatoSeed) {
+    if (tabakkoSeed) {
       return {
-        target: tomatoSeed,
-        focus: "tomato",
+        target: tabakkoSeed,
+        focus: "tabakko",
         phase: "seed",
       };
     }

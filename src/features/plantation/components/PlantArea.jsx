@@ -29,10 +29,9 @@ function PlantArea({
   onRemoveClick,
   onUnlock,
   onOpenCare,
-  onChangePotType,
-  potTypeName,
-  potTypeIcon,
   careApplied,
+  wateredStages = [],
+  hasWateringCan = false,
   canCare = false,
   onPreviousPot,
   onNextPot,
@@ -191,31 +190,20 @@ function PlantArea({
             {isDev && (
               <div className="pot-dev-controls" onTouchStart={stopSwipeStart} onTouchEnd={stopSwipeStart}>
                 <button type="button" onClick={onDevClear}>DEV · очистить</button>
-                <button type="button" onClick={onChangePotType} disabled={!isEmpty}>DEV · тип</button>
               </div>
             )}
 
-            {Array.isArray(careApplied) && careApplied.length > 0 && growStep > 0 && growStep < 3 && (
+            {growStep > 0 && growStep < 3 && (
+              (Array.isArray(careApplied) && careApplied.length > 0) ||
+              (Array.isArray(wateredStages) && wateredStages.length > 0)
+            ) && (
               <div className="plant-care-status">
-                {careApplied.includes("water") && <span>💧</span>}
-                {careApplied.includes("nutrition") && <span>🌿</span>}
-                {careApplied.includes("mariaMix") && <span>🧪</span>}
-                <b>{careApplied.length}/3</b>
+                {Array.isArray(wateredStages) && wateredStages.length > 0 && (
+                  <span>💧 {wateredStages.length}/2</span>
+                )}
+                {Array.isArray(careApplied) && careApplied.includes("nutrition") && <span>🌿</span>}
+                {Array.isArray(careApplied) && careApplied.includes("mariaMix") && <span>🧪</span>}
               </div>
-            )}
-
-            {isEmpty && (
-              <button
-                type="button"
-                className="pot-type-change-button"
-                onTouchStart={stopSwipeStart}
-                onTouchEnd={stopSwipeStart}
-                onClick={onChangePotType}
-              >
-                <span>{potTypeIcon}</span>
-                <span>{potTypeName}</span>
-                <b>Сменить</b>
-              </button>
             )}
 
             <div
@@ -237,6 +225,8 @@ function PlantArea({
               <CareTool
                 disabled={!canCare}
                 appliedCount={Array.isArray(careApplied) ? careApplied.length : careApplied ? 1 : 0}
+                wateredCount={Array.isArray(wateredStages) ? wateredStages.length : 0}
+                hasWateringCan={hasWateringCan}
                 onClick={onOpenCare}
               />
             </div>

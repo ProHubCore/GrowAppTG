@@ -49,12 +49,10 @@ body[data-tutorial-focus="basket"]
     .plantation-seed-basket img,
     [class*="basket"] img
   ),
-body[data-tutorial-focus="tomato"]
+body[data-tutorial-focus="tabakko"]
   :is(
-    [data-seed-id="greenTomato"] img,
-    [data-seed-id="green-tomato"] img,
-    [data-seed="greenTomato"] img,
-    [data-seed="green-tomato"] img
+    [data-seed-id="tabakko"] img,
+    [data-seed="tabakko"] img
   ) {
   animation: tutorialImageGlowOnly 2s ease-in-out infinite !important;
 }

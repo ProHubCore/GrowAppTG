@@ -15,13 +15,13 @@ export const CLUB_LEVELS = [
     level: 2,
     title: "Свой человек",
     required: 50,
-    reward: "Расширенная витрина Зорика",
+    reward: "Повышенный спрос клуба",
   },
   {
     level: 3,
     title: "Надёжный поставщик",
     required: 150,
-    reward: "Второе ведро за 100 монет",
+    reward: "Второе место под ведро за 100 монет",
   },
   {
     level: 4,

@@ -16,4 +16,4 @@ export const plantsBySeed = Object.fromEntries(
   ]),
 );
 
-export const plants = plantsBySeed.greenTomato;
+export const plants = plantsBySeed.tabakko;

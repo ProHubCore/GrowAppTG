@@ -1,4 +1,8 @@
-import { CROP_IDS, createEmptyCropInventory, createEmptySeedInventory } from "../../features/plantation/data/crops";
+import {
+  CROP_IDS,
+  createEmptyCropInventory,
+  createEmptySeedInventory,
+} from "../../features/plantation/data/crops";
 
 export const LEGACY_CROP_ID_MAP = {
   lumenweed: "tabakko",
@@ -42,6 +46,7 @@ export const migrateSeedInventory = (value) =>
 export function migrateCareInventory(value) {
   const source = value && typeof value === "object" ? value : {};
   return {
+    wateringCan: safeNumber(source.wateringCan) > 0 ? 1 : 0,
     nutrition: safeNumber(source.nutrition),
     mariaMix: safeNumber(source.mariaMix) + safeNumber(source.joeMix),
   };
@@ -61,12 +66,68 @@ export function migrateShopStock(value) {
 
 export function migratePotStates(value) {
   if (!Array.isArray(value)) return value;
-  return value.map((pot) => ({
-    ...pot,
-    selectedSeedId: pot?.selectedSeedId ? mapCropId(pot.selectedSeedId) : null,
-    careApplied: (Array.isArray(pot?.careApplied) ? pot.careApplied : pot?.careApplied ? [pot.careApplied] : [])
-      .map((careId) => (careId === "joeMix" ? "mariaMix" : careId)),
-  }));
+
+  return value.map((pot) => {
+    const mappedSeedId = pot?.selectedSeedId
+      ? mapCropId(pot.selectedSeedId)
+      : null;
+    const validSeedId = mappedSeedId && CROP_IDS.includes(mappedSeedId)
+      ? mappedSeedId
+      : null;
+
+    const legacyCareApplied = [
+      ...new Set(
+        (Array.isArray(pot?.careApplied)
+          ? pot.careApplied
+          : pot?.careApplied
+            ? [pot.careApplied]
+            : []
+        ).map((careId) => (careId === "joeMix" ? "mariaMix" : careId)),
+      ),
+    ];
+    const careApplied = legacyCareApplied.filter((careId) => careId !== "water");
+
+    const wateredStages = [
+      ...new Set(
+        (Array.isArray(pot?.wateredStages) ? pot.wateredStages : [])
+          .map(Number)
+          .filter((stage) => stage === 1 || stage === 2),
+      ),
+    ];
+
+    const growStep = Math.max(0, Math.floor(Number(pot?.growStep) || 0));
+
+    // В старой версии вода применялась один раз за весь цикл.
+    // Считаем текущую стадию уже политой, чтобы старое сохранение не дало двойной бонус.
+    if (
+      legacyCareApplied.includes("water") &&
+      wateredStages.length === 0 &&
+      (growStep === 1 || growStep === 2)
+    ) {
+      wateredStages.push(growStep);
+    }
+
+    if (growStep > 0 && !validSeedId) {
+      return {
+        ...pot,
+        growStep: 0,
+        selectedSeedId: null,
+        timeLeft: Math.max(1, Number(pot?.growTime) || 5),
+        nextGrowthAt: null,
+        careApplied: [],
+        wateredStages: [],
+        potTypeId: "soil",
+      };
+    }
+
+    return {
+      ...pot,
+      selectedSeedId: validSeedId,
+      careApplied,
+      wateredStages,
+      potTypeId: "soil",
+    };
+  });
 }
 
 export function migrateQualityInventory(value) {
@@ -78,7 +139,8 @@ export function migrateQualityInventory(value) {
     if (!CROP_IDS.includes(newId) || !qualities || typeof qualities !== "object") continue;
     next[newId] ||= {};
     for (const [qualityId, amount] of Object.entries(qualities)) {
-      next[newId][qualityId] = safeNumber(next[newId][qualityId]) + safeNumber(amount);
+      next[newId][qualityId] =
+        safeNumber(next[newId][qualityId]) + safeNumber(amount);
     }
   }
 
@@ -93,53 +155,78 @@ export function migratePlantCatalog(value) {
     const newId = mapCropId(oldId);
     if (!CROP_IDS.includes(newId) || !record || typeof record !== "object") continue;
 
-    const previous = next[newId] || { totalHarvested: 0, qualities: {}, bestQualityRank: -1 };
+    const previous = next[newId] || {
+      totalHarvested: 0,
+      qualities: {},
+      bestQualityRank: -1,
+    };
     const candidateRank = Number(record.bestQualityRank ?? -1);
     const previousRank = Number(previous.bestQualityRank ?? -1);
     const qualities = { ...(previous.qualities || {}) };
 
     for (const [qualityId, amount] of Object.entries(record.qualities || {})) {
-      qualities[qualityId] = safeNumber(qualities[qualityId]) + safeNumber(amount);
+      qualities[qualityId] =
+        safeNumber(qualities[qualityId]) + safeNumber(amount);
     }
 
     next[newId] = {
       ...previous,
-      totalHarvested: safeNumber(previous.totalHarvested) + safeNumber(record.totalHarvested),
+      totalHarvested:
+        safeNumber(previous.totalHarvested) + safeNumber(record.totalHarvested),
       qualities,
       bestQualityRank: Math.max(previousRank, candidateRank),
-      bestQualityName: candidateRank > previousRank ? record.bestQualityName : previous.bestQualityName,
+      bestQualityName:
+        candidateRank > previousRank
+          ? record.bestQualityName
+          : previous.bestQualityName,
     };
   }
 
   return next;
 }
 
-const QUEST_ID_MAP = {
-  "joe-first-delivery": "maria-first-delivery",
-  "joe-club-request": "maria-club-request",
-  "joe-dark-seed": "maria-dark-seed",
-  "joe-strange-harvest": "maria-strange-harvest",
-  "joe-club-status": "maria-club-status",
-  "joe-quality-harvest": "maria-quality-harvest",
-  "joe-nutrition-care": "maria-nutrition-care",
-  "joe-rare-discovery": "maria-rare-discovery",
+const MARIA_QUEST_TRUST = {
+  "maria-tabakko-delivery": 25,
+  "maria-buy-watering-can": 10,
+  "maria-first-watering": 25,
+  "maria-kisloplod-seed": 15,
+  "maria-kisloplod-harvest": 35,
+  "maria-koka-seed": 15,
+  "maria-koka-harvest": 35,
+  "maria-quality-tabakko": 20,
+  "maria-nutrition-care": 60,
 };
 
 export function migrateMariaQuestState(value) {
   const source = value && typeof value === "object" ? value : {};
   const completedQuestIds = Array.isArray(source.completedQuestIds)
-    ? [...new Set(source.completedQuestIds.map((id) => QUEST_ID_MAP[id] || id))]
+    ? [
+        ...new Set(
+          source.completedQuestIds.filter((id) => Object.hasOwn(MARIA_QUEST_TRUST, id)),
+        ),
+      ]
     : [];
+
+  const trust = completedQuestIds.reduce(
+    (total, questId) => total + MARIA_QUEST_TRUST[questId],
+    0,
+  );
+
+  const hasCurrentProgress = completedQuestIds.length > 0;
 
   return {
     ...source,
     completedQuestIds,
-    trust: safeNumber(source.trust),
-    clubSales: migrateCropInventory(source.clubSales),
+    trust,
+    clubSales: hasCurrentProgress
+      ? migrateCropInventory(source.clubSales)
+      : createEmptyCropInventory(),
     careUses: {
-      water: safeNumber(source.careUses?.water),
-      nutrition: safeNumber(source.careUses?.nutrition),
-      mariaMix: safeNumber(source.careUses?.mariaMix) + safeNumber(source.careUses?.joeMix),
+      water: hasCurrentProgress ? safeNumber(source.careUses?.water) : 0,
+      nutrition: hasCurrentProgress ? safeNumber(source.careUses?.nutrition) : 0,
+      mariaMix: hasCurrentProgress
+        ? safeNumber(source.careUses?.mariaMix) + safeNumber(source.careUses?.joeMix)
+        : 0,
     },
   };
 }

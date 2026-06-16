@@ -6,92 +6,103 @@ import "./MariaHouseScreen.css";
 
 const QUESTS = [
   {
-    id: "maria-first-delivery",
-    title: "Первый заказ",
+    id: "maria-tabakko-delivery",
+    title: "Первая связка",
     label: "Дело Марии Ивановны",
-    description: "Району нужны свежие Кислоплоды. Принеси Марии Ивановне три штуки.",
-    icon: "🟢",
+    description: "Начнём с простого. Вырасти и принеси Марии Ивановне три листа Табакко.",
+    icon: "🌿",
     previousQuestId: null,
-    objective: { type: "deliver", itemId: "greenTomato", amount: 3 },
+    objective: { type: "deliver", itemId: "tabakko", amount: 3 },
     reward: { coins: 300, trust: 25 },
   },
   {
-    id: "maria-club-request",
-    title: "Просьба клуба",
-    label: "Связь с клубом",
-    description: "Продай клубу пять Кислоплодов. Мария Ивановна проверит, умеешь ли ты работать на район.",
-    icon: "♣",
-    previousQuestId: "maria-first-delivery",
-    objective: { type: "club-sale", itemId: "greenTomato", amount: 5 },
-    reward: { coins: 350, trust: 30 },
-  },
-  {
-    id: "maria-dark-seed",
-    title: "Новая поставка",
+    id: "maria-buy-watering-can",
+    title: "Инструмент садовода",
     label: "Дело магазина",
-    description: "Купи хотя бы одно семя Табакко. У Зорика появилась свежая поставка.",
-    icon: "🌿",
-    previousQuestId: "maria-club-request",
-    objective: { type: "own-seed", itemId: "tabakko", amount: 1 },
-    reward: { coins: 200, trust: 20 },
+    description: "Мария Ивановна договорилась с Зориком. Купи у него старую лейку — она останется у тебя навсегда.",
+    icon: "💧",
+    previousQuestId: "maria-tabakko-delivery",
+    objective: { type: "own-tool", itemId: "wateringCan", amount: 1 },
+    reward: { coins: 150, trust: 10 },
   },
   {
-    id: "maria-strange-harvest",
-    title: "Ароматный урожай",
+    id: "maria-first-watering",
+    title: "Полив по уму",
+    label: "Урок Марии Ивановны",
+    description: "Посади Табакко и полей любую стадию роста. Лейка должна срезать ровно 20% времени стадии.",
+    icon: "💦",
+    previousQuestId: "maria-buy-watering-can",
+    objective: { type: "care-use", careType: "water", amount: 1 },
+    reward: { coins: 250, trust: 25 },
+  },
+  {
+    id: "maria-kisloplod-seed",
+    title: "Кислая поставка",
+    label: "Новая культура",
+    description: "После урока Зорик открыл семена Кислоплода. Купи хотя бы одно семя.",
+    icon: "🟢",
+    previousQuestId: "maria-first-watering",
+    objective: { type: "own-seed", itemId: "greenTomato", amount: 1 },
+    reward: { coins: 200, trust: 15 },
+  },
+  {
+    id: "maria-kisloplod-harvest",
+    title: "Кислый урожай",
     label: "Особое дело",
-    description: "Вырасти Табакко и передай один лист Марии Ивановне. Покупатель уже ждёт.",
+    description: "Вырасти Кислоплод и передай Марии Ивановне один спелый плод.",
     icon: "◉",
-    previousQuestId: "maria-dark-seed",
-    objective: { type: "deliver", itemId: "tabakko", amount: 1 },
-    reward: { coins: 700, trust: 35 },
+    previousQuestId: "maria-kisloplod-seed",
+    objective: { type: "deliver", itemId: "greenTomato", amount: 1 },
+    reward: { coins: 600, trust: 35 },
   },
   {
-    id: "maria-club-status",
-    title: "Свой среди своих",
-    label: "Клубная проверка",
-    description: "Заработай 50 репутации клуба и докажи, что район начал тебя принимать.",
+    id: "maria-koka-seed",
+    title: "Третья культура",
+    label: "Закрытая поставка",
+    description: "Теперь Зорик готов продать семена Кока Новы. Купи одно семя для проверки.",
+    icon: "🍃",
+    previousQuestId: "maria-kisloplod-harvest",
+    objective: { type: "own-seed", itemId: "kokaNova", amount: 1 },
+    reward: { coins: 250, trust: 15 },
+  },
+  {
+    id: "maria-koka-harvest",
+    title: "Проверка Кока Новы",
+    label: "Финал первой главы",
+    description: "Вырасти Кока Нову и принеси Марии Ивановне один зрелый урожай.",
     icon: "★",
-    previousQuestId: "maria-strange-harvest",
-    objective: { type: "club-reputation", amount: 50 },
-    reward: { coins: 1000, trust: 50 },
+    previousQuestId: "maria-koka-seed",
+    objective: { type: "deliver", itemId: "kokaNova", amount: 1 },
+    reward: { coins: 900, trust: 35 },
   },
   {
-    id: "maria-quality-harvest",
-    title: "Не просто урожай",
+    id: "maria-quality-tabakko",
+    title: "Не просто лист",
     label: "Мастерство выращивания",
-    description: "Получи Кислоплод качеством не ниже хорошего.",
+    description: "Получи Табакко качеством не ниже хорошего.",
     icon: "◆",
-    previousQuestId: "maria-club-status",
-    objective: { type: "quality-rank", itemId: "greenTomato", rank: 1, amount: 1 },
+    previousQuestId: "maria-koka-harvest",
+    objective: { type: "quality-rank", itemId: "tabakko", rank: 1, amount: 1 },
     reward: { coins: 500, trust: 20 },
   },
   {
     id: "maria-nutrition-care",
     title: "Рука садовода",
     label: "Испытание Марии Ивановны",
-    description: "Используй питательный раствор во время роста.",
+    description: "Купи и используй питательный раствор во время роста.",
     icon: "🌿",
-    previousQuestId: "maria-quality-harvest",
+    previousQuestId: "maria-quality-tabakko",
     objective: { type: "care-use", careType: "nutrition", amount: 1 },
-    reward: { coins: 450, trust: 20 },
-  },
-  {
-    id: "maria-rare-discovery",
-    title: "Знак редкости",
-    label: "Финал главы",
-    description: "Открой редкое качество любой культуры.",
-    icon: "✹",
-    previousQuestId: "maria-nutrition-care",
-    objective: { type: "rare-discovery", amount: 1 },
-    reward: { coins: 1200, trust: 40 },
+    reward: { coins: 700, trust: 60 },
   },
 ];
 
-function getQuestProgress(quest, inventory, seedInventory, clubReputation, questState, plantCatalog) {
+function getQuestProgress(quest, inventory, seedInventory, careInventory, clubReputation, questState, plantCatalog) {
   const objective = quest.objective;
   if (objective.type === "deliver") return inventory?.[objective.itemId] || 0;
   if (objective.type === "club-sale") return questState?.clubSales?.[objective.itemId] || 0;
   if (objective.type === "own-seed") return seedInventory?.[objective.itemId] || 0;
+  if (objective.type === "own-tool") return careInventory?.[objective.itemId] || 0;
   if (objective.type === "club-reputation") return clubReputation || 0;
   if (objective.type === "quality-rank") {
     return (plantCatalog?.[objective.itemId]?.bestQualityRank ?? -1) >= objective.rank ? 1 : 0;
@@ -107,6 +118,7 @@ export default function MariaHouseScreen({
   onBack,
   inventory,
   seedInventory,
+  careInventory = {},
   clubReputation = 0,
   onDeliverItems,
   onRewardClaimed,
@@ -142,7 +154,7 @@ export default function MariaHouseScreen({
     selectedQuest?.previousQuestId && !completedQuestIds.includes(selectedQuest.previousQuestId),
   );
   const currentProgress = selectedQuest
-    ? getQuestProgress(selectedQuest, inventory, seedInventory, clubReputation, questState, plantCatalog)
+    ? getQuestProgress(selectedQuest, inventory, seedInventory, careInventory, clubReputation, questState, plantCatalog)
     : 0;
   const target = selectedQuest?.objective?.amount || 1;
   const canComplete = Boolean(selectedQuest && !isLocked && currentProgress >= target);

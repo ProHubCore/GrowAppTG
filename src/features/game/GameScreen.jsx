@@ -57,7 +57,7 @@ const INITIAL_COINS = 100000;
 
 const STAGE_WIDTH = 390;
 const STAGE_HEIGHT = 844;
-const INVENTORY_SLOT_LIMIT = 12;
+const INVENTORY_SLOT_LIMIT = 20;
 
 const STORAGE_KEYS = [
   "growapp-pot-states",
@@ -73,6 +73,8 @@ const STORAGE_KEYS = [
   "growapp-care-inventory",
   "growapp-plant-catalog",
   "growapp-quality-inventory",
+  "growapp-backpack-layout-v2",
+  "growapp-backpack-quick-v2",
 ];
 
 function createPotState(index) {
@@ -84,6 +86,7 @@ function createPotState(index) {
     timeLeft: DEFAULT_GROW_TIME,
     nextGrowthAt: null,
     careApplied: [],
+    wateredStages: [],
     potTypeId: "soil",
   };
 }
@@ -101,6 +104,7 @@ function createEmptyPotState(unlocked) {
     timeLeft: DEFAULT_GROW_TIME,
     nextGrowthAt: null,
     careApplied: [],
+    wateredStages: [],
     potTypeId: "soil",
   };
 }
@@ -139,7 +143,7 @@ function GameScreen() {
 
   const [careInventory, setCareInventory] = usePersistentState(
     "growapp-care-inventory",
-    { nutrition: 0, mariaMix: 0 },
+    { wateringCan: 0, nutrition: 0, mariaMix: 0 },
     { migrate: migrateCareInventory },
   );
 
@@ -289,18 +293,16 @@ function GameScreen() {
       if (unlockedLevels.length > 0) {
         const clubUnlocks = {
           2: [
-            "Расширенная витрина Зорика",
-            "Кока Нова",
-            "Дон Хуана",
+            "Повышенный спрос клуба",
+            "Более выгодные продажи",
           ],
           3: [
-            "Второе место под ёмкость",
-            "Ксеноблум",
+            "Второе место под ведро",
             "Новые клубные цены",
           ],
           4: [
-            "Псилокуб Цебенсис у Зорика",
             "Высшие клубные заказы",
+            "Редкие бонусы за качество",
           ],
           5: [
             "Статус легенды района",
@@ -412,7 +414,7 @@ function GameScreen() {
 
     if (tutorialStep === "plant-seed") {
       const tutorialSeed =
-        seeds.find((seed) => seed.id === "greenTomato") || null;
+        seeds.find((seed) => seed.id === "tabakko") || null;
 
       setSelectedSeed(tutorialSeed);
       setIsSeedModalOpen(true);
@@ -669,7 +671,7 @@ function GameScreen() {
       return;
     }
 
-    if (tutorialStep === "choose-seed" && seed?.id !== "greenTomato") {
+    if (tutorialStep === "choose-seed" && seed?.id !== "tabakko") {
       return;
     }
 
@@ -677,7 +679,7 @@ function GameScreen() {
 
     if (
       tutorialStep === "choose-seed" &&
-      seed?.id === "greenTomato"
+      seed?.id === "tabakko"
     ) {
       setTutorialStep("plant-seed");
     }
@@ -737,6 +739,7 @@ function GameScreen() {
       timeLeft: growTime,
       nextGrowthAt: Date.now() + growTime * 1000,
       careApplied: [],
+      wateredStages: [],
     });
 
     closeSeedModal();
@@ -757,27 +760,54 @@ function GameScreen() {
         ? [currentPotState.careApplied]
         : [];
 
-    if (appliedCare.includes(careType)) {
-      return;
-    }
+    const wateredStages = Array.isArray(currentPotState.wateredStages)
+      ? currentPotState.wateredStages
+          .map(Number)
+          .filter((stage) => stage === 1 || stage === 2)
+      : [];
 
-    if (careType !== "water" && (careInventory[careType] || 0) <= 0) {
-      return;
-    }
+    if (careType === "water") {
+      if ((careInventory.wateringCan || 0) <= 0) {
+        return;
+      }
 
-    const updates = { careApplied: [...appliedCare, careType] };
+      if (wateredStages.includes(growStep)) {
+        return;
+      }
 
-    if (careType === "water" && currentPotState.nextGrowthAt) {
+      if (!currentPotState.nextGrowthAt) {
+        return;
+      }
+
       const now = Date.now();
-      const remaining = Math.max(0, currentPotState.nextGrowthAt - now);
-      const nextGrowthAt = now + Math.max(1000, Math.round(remaining * 0.8));
-      updates.nextGrowthAt = nextGrowthAt;
-      updates.timeLeft = Math.max(1, Math.ceil((nextGrowthAt - now) / 1000));
-    }
+      const stageDurationMs = Math.max(
+        1000,
+        (Number(currentPotState.growTime) || DEFAULT_GROW_TIME) * 1000,
+      );
+      const reductionMs = Math.round(stageDurationMs * 0.2);
+      const nextGrowthAt = Math.max(
+        now,
+        Number(currentPotState.nextGrowthAt) - reductionMs,
+      );
 
-    updateCurrentPotState(updates);
+      updateCurrentPotState({
+        wateredStages: [...wateredStages, growStep],
+        nextGrowthAt,
+        timeLeft: Math.max(0, Math.ceil((nextGrowthAt - now) / 1000)),
+      });
+    } else {
+      if (appliedCare.includes(careType)) {
+        return;
+      }
 
-    if (careType !== "water") {
+      if ((careInventory[careType] || 0) <= 0) {
+        return;
+      }
+
+      updateCurrentPotState({
+        careApplied: [...appliedCare, careType],
+      });
+
       setCareInventory((previous) => ({
         ...previous,
         [careType]: Math.max(0, (previous[careType] || 0) - 1),
@@ -822,9 +852,9 @@ function GameScreen() {
     const reward = getHarvestYield(currentPotState.careApplied || [], quality.id);
 
     const seedData = seeds.find((seed) => seed.id === plantedSeedId);
-    const harvestItemId = seedData?.harvestItemId || plantedSeedId || "greenTomato";
+    const harvestItemId = seedData?.harvestItemId || plantedSeedId || "tabakko";
     const itemName = seedData?.name || "Урожай";
-    const itemIcon = seedData?.icon || (seedData?.seedType === "mushroom" ? "🍄" : "🌱");
+    const itemIcon = seedData?.icon || "🌱";
     const previousRecord = plantCatalog[harvestItemId] || {};
     const firstDiscovery = !(previousRecord.qualities?.[quality.id] > 0);
     const existingQualityStack = getQualityAmount(qualityInventory, harvestItemId, quality.id) > 0;
@@ -978,7 +1008,9 @@ function GameScreen() {
       };
     }
 
-    const requestedAmount = Math.floor(Number(amount));
+    const requestedAmount = item.type === "tool"
+      ? 1
+      : Math.floor(Number(amount));
 
     if (
       !Number.isFinite(requestedAmount) ||
@@ -987,6 +1019,13 @@ function GameScreen() {
       return {
         success: false,
         message: "Выбери количество товара.",
+      };
+    }
+
+    if (item.type === "tool" && (careInventory[item.id] || 0) > 0) {
+      return {
+        success: false,
+        message: "Этот инструмент уже куплен.",
       };
     }
 
@@ -1024,7 +1063,12 @@ function GameScreen() {
       ),
     }));
 
-    if (item.type === "care") {
+    if (item.type === "tool") {
+      setCareInventory((previousInventory) => ({
+        ...previousInventory,
+        [item.id]: 1,
+      }));
+    } else if (item.type === "care") {
       setCareInventory((previousInventory) => ({
         ...previousInventory,
         [item.id]: (previousInventory[item.id] || 0) + requestedAmount,
@@ -1038,7 +1082,9 @@ function GameScreen() {
 
     return {
       success: true,
-      message: `Куплено: ${item.name} — ${requestedAmount} шт.`,
+      message: item.type === "tool"
+        ? `Куплено: ${item.name}. Инструмент останется у тебя навсегда.`
+        : `Куплено: ${item.name} — ${requestedAmount} шт.`,
     };
   };
 
@@ -1105,7 +1151,7 @@ function GameScreen() {
     setInventory(createEmptyCropInventory());
 
     setSeedInventory(createEmptySeedInventory());
-    setCareInventory({ nutrition: 0, mariaMix: 0 });
+    setCareInventory({ wateringCan: 0, nutrition: 0, mariaMix: 0 });
 
     setShopStock(createShopStock());
     setShopRefreshAt(Date.now() + SHOP_REFRESH_MS);
@@ -1223,11 +1269,10 @@ function GameScreen() {
                   onRemoveClick={openRemoveModal}
                   onUnlock={handleLockedSlotClick}
                   onOpenCare={() => setIsCareModalOpen(true)}
-                  onChangePotType={openPotTypeChange}
-                  potTypeName={currentPotType.shortName}
-                  potTypeIcon={currentPotType.icon}
                   careApplied={currentPotState.careApplied}
-                  canCare={!isTutorialActive && growStep > 0}
+                  wateredStages={currentPotState.wateredStages}
+                  hasWateringCan={(careInventory.wateringCan || 0) > 0}
+                  canCare={!isTutorialActive && growStep > 0 && growStep < 3}
                   onPreviousPot={showPreviousPot}
                   onNextPot={showNextPot}
                   navigationDisabled={isTutorialActive}
@@ -1291,6 +1336,8 @@ function GameScreen() {
             <InventoryModal
               isOpen={isInventoryOpen}
               qualityInventory={qualityInventory}
+              seedInventory={seedInventory}
+              careInventory={careInventory}
               onClose={() => setIsInventoryOpen(false)}
               onDeleteQualityItem={deleteQualityItem}
             />
@@ -1300,6 +1347,8 @@ function GameScreen() {
               trust={mariaQuestState.trust || 0}
               careInventory={careInventory}
               appliedCare={currentPotState.careApplied}
+              wateredStages={currentPotState.wateredStages}
+              currentStage={growStep}
               canApplyCare={growStep > 0 && growStep < 3}
               onChoose={applyPlantCare}
               onRemovePlant={() => {
@@ -1327,8 +1376,8 @@ function GameScreen() {
             <PotTypeModal
               isOpen={isPotTypeModalOpen}
               trust={mariaQuestState.trust || 0}
-              title={potTypeMode === "purchase" ? "Купить место и выбрать ёмкость" : "Сменить пустую ёмкость"}
-              description={potTypeMode === "purchase" ? "Стоимость места одинакова. Выбери доступный тип." : "Растения в слоте нет, поэтому ёмкость можно заменить бесплатно."}
+              title={potTypeMode === "purchase" ? "Купить место и установить ведро" : "Гидропонное ведро"}
+              description={potTypeMode === "purchase" ? "На верхней плантации используются только растительные гидропонные вёдра." : "Грибные ёмкости появятся позже вместе с отдельным подвалом."}
               price={potTypeMode === "purchase" ? pendingSlot?.unlockPrice ?? null : null}
               coins={coins}
               onChoose={potTypeMode === "purchase" ? choosePendingSlotType : chooseCurrentPotType}
@@ -1393,6 +1442,7 @@ function GameScreen() {
           <MariaHouseScreen
             inventory={inventory}
             seedInventory={seedInventory}
+            careInventory={careInventory}
             clubReputation={clubReputation}
             questState={mariaQuestState}
             plantCatalog={plantCatalog}

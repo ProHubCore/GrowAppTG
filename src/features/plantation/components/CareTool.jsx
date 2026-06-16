@@ -1,13 +1,23 @@
-function CareTool({ disabled, onClick, appliedCount = 0 }) {
+function CareTool({
+  disabled,
+  onClick,
+  appliedCount = 0,
+  wateredCount = 0,
+  hasWateringCan = false,
+}) {
   return (
     <button
       className={`care-tool ${disabled ? "disabled" : ""}`}
       onClick={onClick}
       disabled={disabled}
-      aria-label="Уход или удаление растения"
+      aria-label="Лейка, уход или удаление растения"
     >
-      <span className="care-tool-icon">🧴</span>
-      {appliedCount > 0 && <span className="care-tool-count">{appliedCount}/3</span>}
+      <span className="care-tool-icon">{hasWateringCan ? "💧" : "🧴"}</span>
+      {(appliedCount > 0 || wateredCount > 0) && (
+        <span className="care-tool-count">
+          {wateredCount > 0 ? `${wateredCount}/2` : appliedCount}
+        </span>
+      )}
     </button>
   );
 }

@@ -17,6 +17,21 @@ const cropItems = CROPS.filter((crop) => crop.shop).map((crop) => ({
   seedType: crop.type,
 }));
 
+const toolItems = [
+  {
+    id: "wateringCan",
+    type: "tool",
+    name: "Старая лейка",
+    icon: "💧",
+    description: "Постоянный инструмент. Один раз на каждой стадии срезает ровно 20% полной длительности стадии.",
+    pricePerSeed: 120,
+    minStock: 1,
+    maxStock: 1,
+    requiredClubLevel: 1,
+    requiredTrust: 25,
+  },
+];
+
 const careItems = [
   {
     id: "nutrition",
@@ -24,11 +39,11 @@ const careItems = [
     name: "Питательный раствор",
     icon: "🌿",
     description: "Расходник на один цикл. Повышает качество и гарантирует дополнительный плод.",
-    pricePerSeed: 28,
+    pricePerSeed: 36,
     minStock: 2,
     maxStock: 6,
     requiredClubLevel: 1,
-    requiredTrust: 60,
+    requiredTrust: 160,
   },
   {
     id: "mariaMix",
@@ -44,7 +59,7 @@ const careItems = [
   },
 ];
 
-export const shopItems = [...cropItems, ...careItems];
+export const shopItems = [...cropItems, ...toolItems, ...careItems];
 
 export function createShopStock() {
   return Object.fromEntries(

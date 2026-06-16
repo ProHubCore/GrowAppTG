@@ -7,3 +7,5 @@
 
 .shop-strip-shell{position:relative;display:flex;align-items:center;gap:6px}.shop-strip-shell .shop-strip{flex:1;min-width:0;overscroll-behavior-x:contain;touch-action:pan-x;scroll-behavior:smooth}.shop-strip-arrow{position:relative;z-index:4;flex:0 0 30px;width:30px;height:62px;padding:0;border:1px solid rgba(255,218,153,.2);border-radius:999px;background:linear-gradient(180deg,rgba(62,37,60,.96),rgba(26,18,33,.96));color:#ffd995;font-size:28px;line-height:1;box-shadow:0 8px 18px rgba(0,0,0,.3),inset 0 1px rgba(255,255,255,.05)}.shop-strip-arrow:active:not(:disabled){transform:scale(.92)}.shop-strip-arrow:disabled{opacity:.24}
 @media(max-width:360px){.shop-strip-arrow{flex-basis:27px;width:27px}.shop-strip-shell{gap:4px}}
+
+.shop-buy-row.tool-only{grid-template-columns:1fr}
