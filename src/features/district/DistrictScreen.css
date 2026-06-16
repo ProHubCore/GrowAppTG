@@ -1,1 +1,192 @@
-.district-screen{position:absolute;inset:0;overflow:hidden;background:url("/assets/backgrounds/district.png") center/100% 100% no-repeat}.district-building-button{position:absolute;z-index:10;margin:0;padding:0;border:0;background:transparent;cursor:pointer;-webkit-tap-highlight-color:transparent;filter:drop-shadow(0 14px 15px rgba(0,0,0,.3));transition:transform .17s ease,filter .17s ease}.district-building-button img{display:block;width:100%;height:auto;pointer-events:none;user-select:none}.district-building-button:active{transform:translateY(3px) scale(.98);filter:drop-shadow(0 8px 10px rgba(0,0,0,.34))}.district-club-button{left:-18px;top:267px;width:180px}.district-shop-button{left:-28px;top:448px;width:183px}.district-maria-house-button{right:-8px;top:292px;width:205px}.district-maria-house-glow{position:absolute;z-index:-1;inset:16% 8% 3%;border-radius:50%;background:radial-gradient(circle,rgba(87,255,116,.25),rgba(171,82,255,.12) 42%,transparent 72%);filter:blur(11px);animation:districtMariaGlow 2.4s ease-in-out infinite}.district-maria-house-notice{position:absolute;z-index:4;top:8px;right:17px;display:grid;width:28px;height:28px;place-items:center;border:2px solid rgba(255,255,255,.54);border-radius:50%;background:#9a3db9;color:#fff6d5;font-size:15px;font-weight:1000;box-shadow:0 0 16px rgba(200,89,255,.72);animation:districtMariaNotice 1.8s ease-in-out infinite}@keyframes districtMariaGlow{0%,100%{opacity:.72;transform:scale(.97)}50%{opacity:1;transform:scale(1.04)}}@keyframes districtMariaNotice{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-4px) scale(1.07)}}
+.district-screen {
+  /* =========================
+     НАСТРОЙКИ ДОМОВ
+     ========================= */
+
+  /* Клуб */
+  --club-left: 210px;
+  --club-top: 290px;
+  --club-width: 100px;
+
+  /* Магазин Зорика */
+  --shop-left: 200px;
+  --shop-top: 530px;
+  --shop-width: 183px;
+
+  /* Дом Марии Ивановны */
+  --maria-right: 220px;
+  --maria-top: 370px;
+  --maria-width: 200px;
+
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+
+  background:
+    url("/assets/backgrounds/district.png")
+    center / 100% 100%
+    no-repeat;
+}
+
+
+/* =========================
+   ОБЩИЙ СТИЛЬ ДОМОВ
+   ========================= */
+
+.district-building-button {
+  position: absolute;
+  z-index: 10;
+
+  margin: 0;
+  padding: 0;
+
+  border: 0;
+  background: transparent;
+
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+
+  filter: drop-shadow(
+    0 14px 15px rgba(0, 0, 0, 0.3)
+  );
+
+  transition:
+    transform 0.17s ease,
+    filter 0.17s ease;
+}
+
+.district-building-button img {
+  display: block;
+
+  width: 100%;
+  height: auto;
+
+  pointer-events: none;
+  user-select: none;
+}
+
+.district-building-button:active {
+  transform: translateY(3px) scale(0.98);
+
+  filter: drop-shadow(
+    0 8px 10px rgba(0, 0, 0, 0.34)
+  );
+}
+
+
+/* =========================
+   КЛУБ
+   ========================= */
+
+.district-club-button {
+  left: var(--club-left);
+  top: var(--club-top);
+  width: var(--club-width);
+}
+
+
+/* =========================
+   МАГАЗИН ЗОРИКА
+   ========================= */
+
+.district-shop-button {
+  left: var(--shop-left);
+  top: var(--shop-top);
+  width: var(--shop-width);
+}
+
+
+/* =========================
+   ДОМ МАРИИ ИВАНОВНЫ
+   ========================= */
+
+.district-maria-house-button {
+  right: var(--maria-right);
+  top: var(--maria-top);
+  width: var(--maria-width);
+}
+
+.district-maria-house-glow {
+  position: absolute;
+  z-index: -1;
+
+  inset: 16% 8% 3%;
+
+  border-radius: 50%;
+
+  background: radial-gradient(
+    circle,
+    rgba(87, 255, 116, 0.25),
+    rgba(171, 82, 255, 0.12) 42%,
+    transparent 72%
+  );
+
+  filter: blur(11px);
+
+  animation:
+    districtMariaGlow
+    2.4s
+    ease-in-out
+    infinite;
+}
+
+.district-maria-house-notice {
+  position: absolute;
+  z-index: 4;
+
+  top: 8px;
+  right: 17px;
+
+  display: grid;
+  place-items: center;
+
+  width: 28px;
+  height: 28px;
+
+  border: 2px solid rgba(255, 255, 255, 0.54);
+  border-radius: 50%;
+
+  background: #9a3db9;
+  color: #fff6d5;
+
+  font-size: 15px;
+  font-weight: 1000;
+
+  box-shadow:
+    0 0 16px rgba(200, 89, 255, 0.72);
+
+  animation:
+    districtMariaNotice
+    1.8s
+    ease-in-out
+    infinite;
+}
+
+
+/* =========================
+   АНИМАЦИИ
+   ========================= */
+
+@keyframes districtMariaGlow {
+  0%,
+  100% {
+    opacity: 0.72;
+    transform: scale(0.97);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+@keyframes districtMariaNotice {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+
+  50% {
+    transform: translateY(-4px) scale(1.07);
+  }
+}
