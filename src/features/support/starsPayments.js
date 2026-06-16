@@ -16,9 +16,6 @@ export function isStarsPaymentConfigured() {
   return Boolean(invoiceEndpoint);
 }
 
-export function isStarsDemoMode() {
-  return import.meta.env.DEV || !getTelegramPlayer().isTelegram;
-}
 
 export async function createStarsInvoice(amount) {
   if (!invoiceEndpoint) {

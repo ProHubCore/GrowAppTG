@@ -1,8 +1,8 @@
-const DEV_USER = {
-  id: "dev-player",
+const BROWSER_USER = {
+  id: "browser-player",
   first_name: "Садовод",
   last_name: "",
-  username: "growapp_test",
+  username: "",
   language_code: "ru",
   is_premium: false,
   photo_url: null,
@@ -18,7 +18,7 @@ function getTelegramWebApp() {
 
 function normalizeTelegramUser(user) {
   if (!user) {
-    return DEV_USER;
+    return BROWSER_USER;
   }
 
   return {
@@ -39,14 +39,13 @@ export function initializeTelegram() {
   if (!webApp) {
     return {
       isTelegram: false,
-      isDevelopment: true,
       webApp: null,
-      user: DEV_USER,
+      user: BROWSER_USER,
       initData: "",
       initDataUnsafe: {},
       startParam: "",
       platform: "browser",
-      version: "development",
+      version: "browser",
       colorScheme: "dark",
     };
   }
@@ -71,7 +70,6 @@ export function initializeTelegram() {
 
   return {
     isTelegram: true,
-    isDevelopment: false,
     webApp,
     user: telegramUser,
     initData: webApp.initData || "",

@@ -40,8 +40,6 @@ function PlantArea({
   removeDisabled = false,
   collectDisabled = false,
   unlockDisabled = false,
-  isDev = false,
-  onDevClear,
 }) {
   const touchStartX = useRef(null);
   const touchStartY = useRef(null);
@@ -186,12 +184,6 @@ function PlantArea({
               )}
             </div>
 
-
-            {isDev && (
-              <div className="pot-dev-controls" onTouchStart={stopSwipeStart} onTouchEnd={stopSwipeStart}>
-                <button type="button" onClick={onDevClear}>DEV · очистить</button>
-              </div>
-            )}
 
             {growStep > 0 && growStep < 3 && (
               (Array.isArray(careApplied) && careApplied.length > 0) ||

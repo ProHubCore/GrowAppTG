@@ -553,7 +553,7 @@ function PlayerProfile() {
                 <strong>
                   {telegramPlayer.isTelegram
                     ? "Telegram"
-                    : "Тестовый режим"}
+                    : "В браузере"}
                 </strong>
               </div>
             </div>

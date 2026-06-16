@@ -2,7 +2,6 @@ import { useMemo, useState } from "react";
 
 import {
   createStarsInvoice,
-  isStarsDemoMode,
   isStarsPaymentConfigured,
   openStarsInvoice,
 } from "./starsPayments";
@@ -45,7 +44,6 @@ export default function SupportScreen({ onGoBack }) {
   const [status, setStatus] = useState("idle");
   const [message, setMessage] = useState("");
 
-  const demoMode = isStarsDemoMode();
   const configured = isStarsPaymentConfigured();
   const supportTitle = useMemo(
     () => getSupportTitle(supportTotal),
@@ -69,16 +67,6 @@ export default function SupportScreen({ onGoBack }) {
     setStatus("loading");
     setMessage("");
 
-    if (demoMode && !configured) {
-      window.setTimeout(() => {
-        saveSuccessfulSupport(normalizedAmount);
-        setStatus("success");
-        setMessage(
-          `Тест успешно пройден: ${normalizedAmount} ⭐. Реальные Stars не списывались.`,
-        );
-      }, 450);
-      return;
-    }
 
     if (!configured) {
       setStatus("error");
@@ -200,14 +188,14 @@ export default function SupportScreen({ onGoBack }) {
         <button
           type="button"
           className="support-pay"
-          disabled={status === "loading"}
+          disabled={status === "loading" || !configured}
           onClick={handleSupport}
         >
           {status === "loading"
             ? "Открываем Telegram…"
-            : demoMode && !configured
-              ? `DEV · проверить ${amount} ⭐`
-              : `Поддержать на ${amount} ⭐`}
+            : configured
+              ? `Поддержать на ${amount} ⭐`
+              : "Оплата временно недоступна"}
         </button>
 
         {message && (
@@ -219,12 +207,6 @@ export default function SupportScreen({ onGoBack }) {
           </div>
         )}
 
-        {demoMode && !configured && (
-          <p className="support-card__note">
-            Сейчас включён безопасный тест: кнопка показывает весь сценарий,
-            но реальные Stars не списывает.
-          </p>
-        )}
       </section>
 
       <section className="support-card support-card--roadmap">

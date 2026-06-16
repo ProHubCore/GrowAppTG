@@ -6,6 +6,7 @@ function BottomMenu({
   onGoPlantation,
   onGoDistrict,
   onGoSupport,
+  readyPlants = 0,
 }) {
   const tutorialActive = tutorialStep !== "completed";
   const districtAllowed = tutorialStep === "go-district";
@@ -21,6 +22,11 @@ function BottomMenu({
       >
         🪴
         <span>Плантация</span>
+        {readyPlants > 0 && (
+          <b className="bottom-menu-badge" aria-label={`Готово растений: ${readyPlants}`}>
+            {readyPlants}
+          </b>
+        )}
       </button>
 
       <button

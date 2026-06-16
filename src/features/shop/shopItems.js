@@ -1,6 +1,6 @@
 import { CROPS } from "../plantation/data/crops";
 
-export const SHOP_REFRESH_MS = 60_000;
+export const SHOP_REFRESH_MS = 30 * 60_000;
 
 const cropItems = CROPS.filter((crop) => crop.shop).map((crop) => ({
   id: crop.id,

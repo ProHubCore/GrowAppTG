@@ -1,9 +1,17 @@
 import "./GrowTimer.css";
 
-const DEFAULT_GROW_TIME = 5;
+const DEFAULT_GROW_TIME = 90;
 
 function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
+}
+
+function formatTime(seconds) {
+  const safe = Math.max(0, Math.ceil(Number(seconds) || 0));
+  if (safe < 60) return `${safe} сек.`;
+  const minutes = Math.floor(safe / 60);
+  const rest = safe % 60;
+  return `${String(minutes).padStart(2, "0")}:${String(rest).padStart(2, "0")}`;
 }
 
 function GrowTimer({
@@ -58,7 +66,7 @@ function GrowTimer({
         </span>
 
         <span className="grow-hint-time">
-          {safeTimeLeft} сек.
+          {formatTime(safeTimeLeft)}
         </span>
       </div>
 

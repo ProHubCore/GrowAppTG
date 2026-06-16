@@ -1,10 +1,11 @@
 import { useMemo, useRef, useState } from "react";
 
 import { ASSETS } from "../../core/assets/assetCatalog";
+import { triggerTelegramNotification } from "../../core/telegram";
 import { MARIA_TRUST_LEVELS, getMariaTrustInfo } from "./mariaProgression";
 import "./MariaHouseScreen.css";
 
-const QUESTS = [
+export const MARIA_QUESTS = [
   {
     id: "maria-tabakko-delivery",
     title: "Первая связка",
@@ -137,14 +138,13 @@ export default function MariaHouseScreen({
   const [message, setMessage] = useState("На доске — дела района. Подойди, ученик, разберёмся по порядку.");
   const [rewardPopup, setRewardPopup] = useState(null);
   const touchStartY = useRef(null);
-  const isDev = import.meta.env.DEV;
 
   const activeQuests = useMemo(
-    () => QUESTS.filter((quest) => !completedQuestIds.includes(quest.id)),
+    () => MARIA_QUESTS.filter((quest) => !completedQuestIds.includes(quest.id)),
     [completedQuestIds],
   );
   const archivedQuests = useMemo(
-    () => QUESTS.filter((quest) => completedQuestIds.includes(quest.id)),
+    () => MARIA_QUESTS.filter((quest) => completedQuestIds.includes(quest.id)),
     [completedQuestIds],
   );
   const cards = section === "archive" ? archivedQuests : activeQuests;
@@ -197,6 +197,7 @@ export default function MariaHouseScreen({
     });
 
     const nextInfo = getMariaTrustInfo(nextTrust);
+    triggerTelegramNotification("success");
     setRewardPopup({
       coins: selectedQuest.reward.coins,
       trust: selectedQuest.reward.trust,
@@ -217,12 +218,6 @@ export default function MariaHouseScreen({
     setCardIndex(0);
   };
 
-  const resetMaria = () => updateQuestState({
-    completedQuestIds: [],
-    trust: 0,
-    clubSales: {},
-    careUses: { water: 0, nutrition: 0, mariaMix: 0 },
-  });
 
   return (
     <main
@@ -351,13 +346,6 @@ export default function MariaHouseScreen({
                 </div>
               )}
 
-              {isDev && (
-                <div className="maria-devbar">
-                  <button type="button" onClick={() => updateQuestState({ trust: trust + 25 })}>DEV · +25 доверия</button>
-                  <button type="button" onClick={() => finishQuest({ force: true })}>DEV · закрыть дело</button>
-                  <button type="button" onClick={resetMaria}>DEV · сбросить</button>
-                </div>
-              )}
             </section>
           ) : (
             <section className="maria-panel maria-path-panel">
@@ -385,12 +373,6 @@ export default function MariaHouseScreen({
                 })}
               </div>
 
-              {isDev && (
-                <div className="maria-devbar">
-                  <button type="button" onClick={() => updateQuestState({ trust: trust + 25 })}>DEV · +25 доверия</button>
-                  <button type="button" onClick={resetMaria}>DEV · сбросить</button>
-                </div>
-              )}
             </section>
           )}
         </div>

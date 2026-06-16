@@ -13,15 +13,9 @@ export const plantationSlots = [
   },
   {
     id: 3,
-    unlockPrice: null,
-    requiredClubLevel: null,
-    released: false,
-  },
-  {
-    id: 4,
-    unlockPrice: null,
-    requiredClubLevel: null,
-    released: false,
+    unlockPrice: 500,
+    requiredClubLevel: 5,
+    released: true,
   },
 ];
 

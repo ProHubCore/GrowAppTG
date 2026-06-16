@@ -1,7 +1,7 @@
 import { ASSETS } from "../../core/assets/assetCatalog";
 import "./DistrictScreen.css";
 
-function DistrictScreen({ onOpenClub, onOpenShop, onOpenMariaHouse }) {
+function DistrictScreen({ onOpenClub, onOpenShop, onOpenMariaHouse, showMariaNotice = true }) {
   return (
     <div className="district-screen">
       <button className="district-building-button district-club-button" onClick={onOpenClub} aria-label="Клуб">
@@ -13,9 +13,9 @@ function DistrictScreen({ onOpenClub, onOpenShop, onOpenMariaHouse }) {
       </button>
 
       <button className="district-building-button district-maria-house-button" onClick={onOpenMariaHouse} aria-label="Дом Марии Ивановны">
-        <span className="district-maria-house-glow" />
+        {showMariaNotice && <span className="district-maria-house-glow" />}
         <img src={ASSETS.buildings.mariaIvanovnaHouse} alt="Дом Марии Ивановны" draggable="false" />
-        <span className="district-maria-house-notice">!</span>
+        {showMariaNotice && <span className="district-maria-house-notice">!</span>}
       </button>
     </div>
   );

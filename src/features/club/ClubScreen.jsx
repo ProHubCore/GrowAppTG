@@ -1,9 +1,11 @@
 import { ASSETS } from "../../core/assets/assetCatalog";
+import { triggerTelegramNotification } from "../../core/telegram";
 import { useMemo, useRef, useState } from "react";
 import "./ClubScreen.css";
 import { HARVEST_QUALITIES } from "../plantation/data/harvestQuality";
 import { CROPS } from "../plantation/data/crops";
 import { QUALITY_PRICE_MULTIPLIERS, getQualityAmount, removeQualityItems } from "../plantation/data/qualityInventory";
+import { getClubLevelInfo } from "./clubProgression";
 
 const REPUTATION_STORAGE_KEY = "growapp-club-reputation";
 
@@ -21,26 +23,11 @@ const PRODUCTS = Object.fromEntries(
   ]),
 );
 
-const LEVELS = [
-  { level: 1, required: 0, title: "Новый поставщик" },
-  { level: 2, required: 50, title: "Свой человек" },
-  { level: 3, required: 150, title: "Надёжный поставщик" },
-  { level: 4, required: 300, title: "Звезда клуба" },
-  { level: 5, required: 600, title: "Легенда района" },
-];
 
 function readRep() {
   try { return Math.max(0, Math.floor(Number(localStorage.getItem(REPUTATION_STORAGE_KEY)) || 0)); } catch { return 0; }
 }
 
-function getLevelInfo(rep) {
-  let current = LEVELS[0];
-  for (const level of LEVELS) if (rep >= level.required) current = level;
-  const index = LEVELS.findIndex((level) => level.level === current.level);
-  const next = LEVELS[index + 1] || null;
-  const percent = next ? Math.min(100, ((rep - current.required) / (next.required - current.required)) * 100) : 100;
-  return { current, next, percent };
-}
 
 function ProductArt({ product }) {
   if (product.image) return <img src={product.image} alt={product.name} draggable="false" />;
@@ -53,7 +40,9 @@ export default function ClubScreen({ inventory, setInventory, qualityInventory =
   const [selectedKey, setSelectedKey] = useState(null);
   const [amount, setAmount] = useState(1);
   const [notice, setNotice] = useState("Сегодня клуб берёт свежий товар. Чем выше качество — тем выше цена и уважение.");
-  const levelInfo = useMemo(() => getLevelInfo(reputation), [reputation]);
+  const levelInfo = useMemo(() => getClubLevelInfo(reputation), [reputation]);
+  const clubPriceBonus = Math.max(0, (levelInfo.currentLevel.level - 1) * 5);
+  const clubPriceMultiplier = 1 + clubPriceBonus / 100;
 
   const stacks = useMemo(() => Object.values(PRODUCTS).flatMap((product) =>
     HARVEST_QUALITIES.map((quality) => ({
@@ -61,9 +50,9 @@ export default function ClubScreen({ inventory, setInventory, qualityInventory =
       product,
       quality,
       amount: getQualityAmount(qualityInventory, product.id, quality.id),
-      price: Math.max(1, Math.round(product.basePrice * (QUALITY_PRICE_MULTIPLIERS[quality.id] || 1))),
+      price: Math.max(1, Math.round(product.basePrice * (QUALITY_PRICE_MULTIPLIERS[quality.id] || 1) * clubPriceMultiplier)),
     }))
-  ).filter((stack) => stack.amount > 0), [qualityInventory]);
+  ).filter((stack) => stack.amount > 0), [qualityInventory, clubPriceMultiplier]);
 
   const selected = stacks.find((stack) => stack.key === selectedKey) || stacks[0] || null;
   const safeAmount = selected ? Math.min(Math.max(1, amount), selected.amount) : 0;
@@ -105,6 +94,7 @@ export default function ClubScreen({ inventory, setInventory, qualityInventory =
     const gainedRep = safeAmount * repPerItem;
     saveRep(reputation + gainedRep);
     onSaleCompleted?.({ itemId: selected.product.id, amount: safeAmount, coins: total, reputation: gainedRep, qualityId: selected.quality.id });
+    triggerTelegramNotification("success");
     setNotice(`Типусиан забрал ${safeAmount} шт. Ты получил ${total} монет и ${gainedRep} репутации клуба.`);
     setSelectedKey(null);
     setAmount(1);
@@ -122,16 +112,16 @@ export default function ClubScreen({ inventory, setInventory, qualityInventory =
             <span>КЛУБНЫЙ СБЫТ</span>
             <h1>Свежий спрос</h1>
           </div>
-          <div className="club-level-badge">LVL {levelInfo.current.level}</div>
+          <div className="club-level-badge">LVL {levelInfo.currentLevel.level}</div>
         </header>
 
         <div className="club-rep-compact">
           <div className="club-rep-copy">
             <strong>Репутация клуба</strong>
-            <small>{levelInfo.current.title} · {reputation} REP</small>
+            <small>{levelInfo.currentLevel.title} · {reputation} REP · цены +{clubPriceBonus}%</small>
           </div>
-          <div className="club-rep-track"><div style={{ width: `${levelInfo.percent}%` }} /></div>
-          <span>{levelInfo.next ? `${levelInfo.next.required - reputation} до уровня` : "MAX"}</span>
+          <div className="club-rep-track"><div style={{ width: `${levelInfo.progressPercent}%` }} /></div>
+          <span>{levelInfo.nextLevel ? `${levelInfo.nextLevel.required - reputation} до уровня` : "MAX"}</span>
         </div>
 
         <div className="club-lore-note">
@@ -179,7 +169,6 @@ export default function ClubScreen({ inventory, setInventory, qualityInventory =
 
         {!selected && stacks.length > 0 && <div className="club-notice">{notice}</div>}
 
-        {import.meta.env.DEV && <button type="button" className="club-dev-rep" onClick={() => saveRep(reputation + 25)}>DEV · +25 REP клуба</button>}
       </section>
     </div>
   );

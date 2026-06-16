@@ -1,4 +1,5 @@
 import {
+  CROP_BY_ID,
   CROP_IDS,
   createEmptyCropInventory,
   createEmptySeedInventory,
@@ -112,7 +113,7 @@ export function migratePotStates(value) {
         ...pot,
         growStep: 0,
         selectedSeedId: null,
-        timeLeft: Math.max(1, Number(pot?.growTime) || 5),
+        timeLeft: Math.max(1, Number(pot?.growTime) || 90),
         nextGrowthAt: null,
         careApplied: [],
         wateredStages: [],
@@ -120,9 +121,14 @@ export function migratePotStates(value) {
       };
     }
 
+    const savedGrowTime = Math.max(1, Number(pot?.growTime) || 0);
+    const productionGrowTime = CROP_BY_ID[validSeedId]?.growTime || savedGrowTime || 90;
+    const growTime = savedGrowTime <= 10 ? productionGrowTime : savedGrowTime;
+
     return {
       ...pot,
       selectedSeedId: validSeedId,
+      growTime,
       careApplied,
       wateredStages,
       potTypeId: "soil",

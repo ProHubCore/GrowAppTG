@@ -584,8 +584,7 @@
   margin-top: 9px;
 }
 
-.maria-card-navigation button,
-.maria-devbar button {
+.maria-card-navigation button {
   min-height: 34px;
   border: 1px solid rgba(255, 224, 174, 0.12);
   border-radius: 11px;
@@ -655,20 +654,6 @@
   font-size: 9px;
 }
 
-.maria-devbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 10px;
-  padding-top: 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.maria-devbar button {
-  flex: 1;
-  min-width: 92px;
-  color: #ffdeb0;
-}
 
 
 /* =========================================================

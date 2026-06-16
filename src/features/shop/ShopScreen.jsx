@@ -76,7 +76,6 @@ export default function ShopScreen({
   mariaTrust = 0,
   refreshAt,
   onBuy,
-  onDevRefresh,
 }) {
   const [department, setDepartment] = useState("seed");
   const [selectedId, setSelectedId] = useState(null);
@@ -318,11 +317,6 @@ export default function ShopScreen({
           НА ГРОУ-СТРИТ
         </button>
 
-        {import.meta.env.DEV && (
-          <button type="button" className="shop-dev-refresh" onClick={onDevRefresh}>
-            DEV · новая поставка
-          </button>
-        )}
       </section>
 
       {selected && (

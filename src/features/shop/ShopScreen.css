@@ -599,19 +599,6 @@
   background:linear-gradient(180deg,rgba(99,56,36,.98),rgba(57,31,27,.98));
 }
 
-.shop-dev-refresh{
-  position:absolute;
-  left:8px;
-  top:-31px;
-  height:25px;
-  padding:0 9px;
-  border:1px dashed rgba(255,255,255,.24);
-  border-radius:8px;
-  background:rgba(20,12,17,.7);
-  color:rgba(255,255,255,.6);
-  font-size:7px;
-  font-weight:900;
-}
 
 .shop-product-modal-layer{
   position:absolute;

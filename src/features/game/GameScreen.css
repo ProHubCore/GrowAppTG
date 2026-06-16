@@ -304,11 +304,6 @@ html[data-telegram-app="true"] .game-screen {
   right: var(--hud-right);
 }
 
-.test-reset-button,
-.game-reset-button {
-  top: var(--hud-top) !important;
-  left: var(--hud-left) !important;
-}
 
 .backpack-tool {
   right: calc(var(--visible-right, 0px) + 28px) !important;
