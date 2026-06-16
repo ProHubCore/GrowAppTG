@@ -4,7 +4,6 @@ import {
   createEmptyCropInventory,
   createEmptySeedInventory,
 } from "../../features/plantation/data/crops";
-import { MARIA_QUESTS } from "../../features/maria-ivanovna/mariaQuests";
 
 export const LEGACY_CROP_ID_MAP = {
   lumenweed: "tabakko",
@@ -114,7 +113,7 @@ export function migratePotStates(value) {
         ...pot,
         growStep: 0,
         selectedSeedId: null,
-        timeLeft: Math.max(1, Number(pot?.growTime) || CROP_BY_ID.tabakko?.growTime || 150),
+        timeLeft: Math.max(1, Number(pot?.growTime) || 90),
         nextGrowthAt: null,
         careApplied: [],
         wateredStages: [],
@@ -123,7 +122,7 @@ export function migratePotStates(value) {
     }
 
     const savedGrowTime = Math.max(1, Number(pot?.growTime) || 0);
-    const productionGrowTime = CROP_BY_ID[validSeedId]?.growTime || savedGrowTime || CROP_BY_ID.tabakko?.growTime || 150;
+    const productionGrowTime = CROP_BY_ID[validSeedId]?.growTime || savedGrowTime || 90;
     const growTime = savedGrowTime <= 10 ? productionGrowTime : savedGrowTime;
 
     return {
@@ -192,24 +191,24 @@ export function migratePlantCatalog(value) {
   return next;
 }
 
-const MARIA_QUEST_ID_MAP = {
-  "maria-kisloplod-harvest": "maria-kisloplod-delivery",
-  "maria-koka-harvest": "maria-koka-delivery",
-  "maria-quality-tabakko": "maria-tabakko-good",
+const MARIA_QUEST_TRUST = {
+  "maria-tabakko-delivery": 25,
+  "maria-buy-watering-can": 10,
+  "maria-first-watering": 25,
+  "maria-kisloplod-seed": 15,
+  "maria-kisloplod-harvest": 35,
+  "maria-koka-seed": 15,
+  "maria-koka-harvest": 35,
+  "maria-quality-tabakko": 20,
+  "maria-nutrition-care": 60,
 };
-
-const MARIA_QUEST_TRUST = Object.fromEntries(
-  MARIA_QUESTS.map((quest) => [quest.id, quest.reward.trust]),
-);
 
 export function migrateMariaQuestState(value) {
   const source = value && typeof value === "object" ? value : {};
   const completedQuestIds = Array.isArray(source.completedQuestIds)
     ? [
         ...new Set(
-          source.completedQuestIds
-            .map((id) => MARIA_QUEST_ID_MAP[id] || id)
-            .filter((id) => Object.hasOwn(MARIA_QUEST_TRUST, id)),
+          source.completedQuestIds.filter((id) => Object.hasOwn(MARIA_QUEST_TRUST, id)),
         ),
       ]
     : [];

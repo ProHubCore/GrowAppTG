@@ -1,1 +1,770 @@
-.maria-house-screen{position:absolute;inset:0;overflow:hidden;color:#f7ead1;font-family:Inter,"Segoe UI",system-ui,sans-serif;background:#160f14 var(--maria-house-background) center/cover no-repeat}.maria-house-screen button{font:inherit;-webkit-tap-highlight-color:transparent}.maria-house-screen:before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(180deg,rgba(10,6,10,.34),transparent 26%,transparent 65%,rgba(9,6,9,.86))}.maria-house-heading{position:absolute;z-index:18;left:18px;top:max(72px,calc(env(safe-area-inset-top) + 52px));display:flex;flex-direction:column;padding:10px 14px;border-left:3px solid #c89958;background:linear-gradient(90deg,rgba(22,13,18,.84),transparent)}.maria-house-heading span{color:#d7b780;font-size:8px;font-weight:950;letter-spacing:.16em}.maria-house-heading strong{margin-top:2px;font-family:Georgia,serif;font-size:23px;line-height:1}.maria-house-room{position:absolute;inset:0;z-index:8}.maria-house-object{position:absolute;padding:0;border:0;background:transparent;color:#fff;cursor:pointer}.maria-house-object img{display:block;width:100%;pointer-events:none;filter:drop-shadow(0 13px 13px rgba(0,0,0,.38));transition:transform .18s ease,filter .18s ease}.maria-house-object:active img{transform:translateY(2px) scale(.985)}.maria-house-object>span{position:absolute;left:50%;bottom:-5px;transform:translateX(-50%);padding:7px 11px;border:1px solid rgba(230,196,139,.23);border-radius:999px;background:rgba(23,14,18,.86);box-shadow:0 7px 16px rgba(0,0,0,.3);white-space:nowrap;color:#f7e5c5;font-size:9px;font-weight:950}.maria-house-object>b{position:absolute;right:4px;top:2px;display:grid;place-items:center;min-width:28px;height:28px;padding:0 6px;border:2px solid #3b251d;border-radius:999px;background:#e5b45e;color:#27170e;font-size:9px;font-weight:1000;box-shadow:0 0 18px rgba(229,180,94,.38)}.maria-house-board{left:14px;top:224px;width:142px}.maria-house-radio{right:18px;top:383px;width:112px}.maria-house-character{left:50%;bottom:130px;width:272px;transform:translateX(-50%)}.maria-house-character img{animation:mariaIdle 5.8s ease-in-out infinite;transform-origin:50% 85%}.maria-house-brief{position:absolute;z-index:20;left:16px;right:16px;bottom:72px;display:grid;grid-template-columns:1fr 112px;gap:8px;padding:12px;border:1px solid rgba(222,187,130,.16);border-radius:19px;background:linear-gradient(160deg,rgba(30,18,24,.94),rgba(14,10,14,.94));box-shadow:0 18px 35px rgba(0,0,0,.42),inset 0 1px rgba(255,255,255,.04)}.maria-house-brief__chapter span{color:#d2a969;font-size:7px;font-weight:1000;letter-spacing:.14em}.maria-house-brief__chapter strong{display:block;margin-top:2px;font-family:Georgia,serif;font-size:15px}.maria-house-brief__chapter p{margin:3px 0 0;color:rgba(247,234,209,.56);font-size:8px;line-height:1.3}.maria-house-brief__trust{padding:7px 8px;border-radius:12px;background:rgba(255,255,255,.035)}.maria-house-brief__trust span{font-size:8px;font-weight:900}.maria-house-brief__trust>div{height:5px;margin:7px 0 5px;overflow:hidden;border-radius:999px;background:rgba(255,255,255,.08)}.maria-house-brief__trust i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#d4a85f,#7bc6a3)}.maria-house-brief__trust b{color:#d7bb86;font-size:8px}.maria-house-brief__message{grid-column:1/-1;margin:0;padding-top:7px;border-top:1px solid rgba(255,255,255,.06);color:rgba(250,237,217,.72);font-family:Georgia,serif;font-size:9px;line-height:1.35}.maria-grow-street-button{position:absolute;z-index:40;left:24px;right:24px;bottom:calc(var(--visible-bottom,0px) + 12px + env(safe-area-inset-bottom));height:48px;border:1px solid rgba(233,199,139,.28);border-radius:15px;background:linear-gradient(180deg,#5d3527,#382019);box-shadow:0 8px 18px rgba(0,0,0,.34),inset 0 1px rgba(255,255,255,.1);color:#ffe8bd;font-size:15px;font-weight:1000;letter-spacing:.08em}.maria-panel-overlay{position:absolute;inset:0;z-index:100;display:grid;place-items:center;padding:max(70px,calc(env(safe-area-inset-top) + 48px)) 14px max(22px,env(safe-area-inset-bottom));background:rgba(9,6,9,.72);backdrop-filter:blur(6px)}.maria-panel{width:100%;max-height:100%;overflow:auto;padding:14px;border:1px solid rgba(224,190,132,.24);border-radius:24px;background:linear-gradient(160deg,#2c1b20,#171015 72%);box-shadow:0 28px 70px rgba(0,0,0,.58),inset 0 1px rgba(255,255,255,.05)}.maria-panel>header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px}.maria-panel>header span{color:#d0a460;font-size:8px;font-weight:1000;letter-spacing:.16em}.maria-panel>header h2{margin:2px 0 0;font-family:Georgia,serif;font-size:22px}.maria-panel>header button{width:34px;height:34px;border:1px solid rgba(255,255,255,.1);border-radius:11px;background:rgba(255,255,255,.04);color:#f5dfbe;font-size:20px}.maria-board-tabs{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:12px;padding:4px;border-radius:14px;background:rgba(0,0,0,.2)}.maria-board-tabs button{height:34px;border:0;border-radius:10px;background:transparent;color:rgba(249,231,205,.48);font-size:10px;font-weight:900}.maria-board-tabs button.active{background:#6b4030;color:#fff0cf}.maria-case-strip{display:flex;gap:7px;margin:10px -2px 0;padding:2px 2px 7px;overflow-x:auto;scrollbar-width:none}.maria-case-strip::-webkit-scrollbar{display:none}.maria-case-strip__item{display:grid;grid-template-columns:31px 1fr;gap:7px;align-items:center;min-width:145px;padding:8px;border:1px solid rgba(255,255,255,.07);border-radius:13px;background:rgba(255,255,255,.035);color:#f4e4ca;text-align:left}.maria-case-strip__item>span{display:grid;place-items:center;width:31px;height:31px;border-radius:10px;background:rgba(204,160,92,.12)}.maria-case-strip__item small{display:block;color:#b88f59;font-size:6px;font-weight:950}.maria-case-strip__item strong{display:block;margin-top:2px;font-size:9px;line-height:1.15}.maria-case-strip__item.selected{border-color:rgba(223,180,105,.48);background:rgba(204,150,77,.1)}.maria-case-strip__item.locked{opacity:.4}.maria-case-strip__item.completed{opacity:.62}.maria-case-file{position:relative;margin-top:8px;padding:16px;border:1px solid rgba(100,66,42,.3);border-radius:18px;background:linear-gradient(170deg,#ead8b7,#cbae80);color:#2c1b13;box-shadow:0 13px 26px rgba(0,0,0,.32)}.maria-case-file:before{content:"";position:absolute;inset:5px;border:1px dashed rgba(77,48,31,.2);border-radius:14px;pointer-events:none}.maria-case-file__pin{position:absolute;right:14px;top:12px;display:grid;place-items:center;width:38px;height:38px;border-radius:50%;background:#5b3326;color:#f5d99f;box-shadow:0 5px 0 #342019;font-size:18px}.maria-case-file__chapter{position:relative;color:#7d5638;font-size:7px;font-weight:1000;letter-spacing:.12em}.maria-case-file h3{position:relative;margin:7px 48px 5px 0;font-family:Georgia,serif;font-size:20px}.maria-case-file p{position:relative;margin:0;color:#5b402d;font-size:10px;line-height:1.45}.maria-case-progress{position:relative;margin-top:13px;padding:9px;border-radius:12px;background:rgba(72,44,27,.09)}.maria-case-progress>div:first-child{display:flex;justify-content:space-between;font-size:8px;font-weight:900}.maria-case-progress__track{height:6px;margin-top:7px;overflow:hidden;border-radius:999px;background:rgba(60,34,22,.18)}.maria-case-progress__track i{display:block;height:100%;border-radius:inherit;background:linear-gradient(90deg,#755132,#2f8e6d)}.maria-case-reward{position:relative;display:flex;align-items:center;gap:10px;margin-top:9px;padding:8px 9px;border-radius:11px;background:rgba(72,44,27,.09)}.maria-case-reward span{margin-right:auto;color:#7b563a;font-size:7px;font-weight:1000}.maria-case-reward strong{font-size:9px}.maria-case-action{position:relative;width:100%;height:41px;margin-top:10px;border:0;border-radius:12px;background:linear-gradient(180deg,#4d9c76,#276349);color:#f7f0d7;font-size:10px;font-weight:1000;box-shadow:0 5px 0 #1a4332}.maria-case-action:disabled{background:#8f826b;box-shadow:0 4px 0 #665b4b;color:rgba(255,255,255,.62)}.maria-case-file.locked{filter:grayscale(.45);opacity:.72}.maria-bulletin-card{margin-top:16px;padding:19px;border:1px solid rgba(233,193,123,.15);border-radius:18px;background:radial-gradient(circle at 100% 0,rgba(200,141,70,.16),transparent 45%),rgba(255,255,255,.035)}.maria-bulletin-card span{color:#d6a960;font-size:8px;font-weight:1000;letter-spacing:.13em}.maria-bulletin-card h3{margin:9px 0 7px;font-family:Georgia,serif;font-size:21px}.maria-bulletin-card p{margin:0;color:rgba(248,231,205,.68);font-size:11px;line-height:1.55}.maria-bulletin-next{width:100%;height:42px;margin-top:10px;border:1px solid rgba(232,193,128,.18);border-radius:13px;background:#513126;color:#ffe7bd;font-size:10px;font-weight:950}.maria-trust-quote{padding:12px;border-left:3px solid #c79a5a;background:rgba(255,255,255,.035);color:rgba(248,231,205,.7);font-family:Georgia,serif;font-size:11px;line-height:1.45}.maria-level-list{display:grid;gap:7px}.maria-level-list article{display:grid;grid-template-columns:38px 1fr auto;gap:9px;align-items:center;padding:9px;border:1px solid rgba(255,255,255,.06);border-radius:13px;background:rgba(255,255,255,.025);opacity:.42}.maria-level-list article.unlocked{opacity:1;border-color:rgba(209,167,98,.18)}.maria-level-list article>div{display:grid;place-items:center;width:38px;height:38px;border-radius:11px;background:rgba(203,159,89,.1)}.maria-level-list span strong,.maria-level-list span small{display:block}.maria-level-list span strong{font-size:10px}.maria-level-list span small{margin-top:2px;color:rgba(247,230,203,.5);font-size:8px}.maria-level-list article>b{color:#d9b46f;font-size:10px}.maria-reward-popup{position:absolute;z-index:150;left:50%;top:46%;display:flex;flex-direction:column;align-items:center;min-width:210px;padding:17px;border:1px solid rgba(235,193,119,.3);border-radius:18px;transform:translate(-50%,-50%);background:#27171d;box-shadow:0 25px 60px rgba(0,0,0,.58);animation:mariaReward .35s ease-out}.maria-reward-popup strong{font-size:12px;letter-spacing:.12em}.maria-reward-popup span{margin-top:6px;color:#e4bf78;font-size:13px;font-weight:950}.maria-reward-popup em{margin-top:5px;color:#91d9b4;font-size:9px}.maria-empty-panel{padding:30px;text-align:center;color:rgba(255,255,255,.5)}@keyframes mariaIdle{0%,100%{transform:rotate(-.25deg) translateY(0)}50%{transform:rotate(.25deg) translateY(-1px)}}@keyframes mariaReward{from{opacity:0;transform:translate(-50%,-45%) scale(.9)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}@media(max-height:720px){.maria-house-heading{top:62px}.maria-house-board{top:190px;width:130px}.maria-house-radio{top:340px}.maria-house-character{width:235px;bottom:120px}.maria-house-brief{bottom:65px;padding:9px}.maria-house-brief__message{display:none}}
+/* =========================================================
+   ДОМ МАРИИ ИВАНОВНЫ
+   Главный файл оформления экрана
+   ========================================================= */
+
+.maria-house-screen {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  color: #f8ead0;
+  font-family: Inter, "Segoe UI", system-ui, sans-serif;
+  background:
+    #161015 var(--maria-house-background) center / cover no-repeat;
+}
+
+.maria-house-screen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(9, 6, 12, 0.18),
+      transparent 38%,
+      rgba(10, 6, 9, 0.58) 100%
+    ),
+    radial-gradient(
+      circle at 58% 46%,
+      transparent 0 32%,
+      rgba(8, 5, 9, 0.34) 100%
+    );
+}
+
+.maria-house-screen button {
+  font: inherit;
+  -webkit-tap-highlight-color: transparent;
+}
+
+
+/* =========================================================
+   ВЕРХНЯЯ ПАНЕЛЬ
+   ========================================================= */
+
+.maria-house-topbar {
+  position: absolute;
+  z-index: 20;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding:
+    max(20px, env(safe-area-inset-top))
+    15px
+    10px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(12, 8, 13, 0.84),
+      rgba(12, 8, 13, 0)
+    );
+}
+
+.maria-house-topbar > div {
+  text-align: right;
+}
+
+.maria-house-topbar span {
+  display: block;
+  color: rgba(255, 229, 190, 0.56);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+.maria-house-topbar strong {
+  display: block;
+  color: #ffeac4;
+  font-family: Georgia, serif;
+  font-size: 20px;
+  text-shadow: 0 2px 9px #000;
+}
+
+.maria-house-back {
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid rgba(255, 228, 184, 0.18);
+  border-radius: 999px;
+  background: rgba(22, 14, 21, 0.78);
+  color: #ffe8c2;
+  font-size: 12px;
+  font-weight: 900;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.26);
+  cursor: pointer;
+}
+
+
+/* =========================================================
+   КОМНАТА И ИНТЕРАКТИВНЫЕ ОБЪЕКТЫ
+   ========================================================= */
+
+.maria-house-room {
+  position: absolute;
+  z-index: 5;
+  inset: 78px 0 144px;
+}
+
+.maria-house-object {
+  position: absolute;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  cursor: pointer;
+  filter: drop-shadow(0 14px 18px rgba(0, 0, 0, 0.42));
+  transition:
+    transform 0.18s ease,
+    filter 0.18s ease;
+}
+
+.maria-house-object:active {
+  transform: scale(0.97);
+}
+
+.maria-house-object img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  pointer-events: none;
+  user-select: none;
+}
+
+.maria-house-object > span {
+  position: absolute;
+  left: 50%;
+  bottom: -7px;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  padding: 5px 9px;
+  border: 1px solid rgba(255, 226, 172, 0.22);
+  border-radius: 999px;
+  background: rgba(20, 12, 18, 0.78);
+  color: #ffe7b7;
+  font-size: 10px;
+  font-weight: 1000;
+  letter-spacing: 0.02em;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
+}
+
+
+/* =========================================================
+   ДОСКА
+   Меняй эти параметры:
+   left   — вправо/влево
+   top    — вниз/вверх
+   width  — ширина
+   height — высота
+   ========================================================= */
+
+.maria-house-board {
+  left: -80px;
+  top: 120px;
+  width: 325px;
+  height: 408px;
+}
+
+.maria-house-board b {
+  position: absolute;
+  right: 12px;
+  top: 15px;
+  display: grid;
+  width: 27px;
+  height: 27px;
+  place-items: center;
+  border: 2px solid #ffe68a;
+  border-radius: 50%;
+  background: #8d2039;
+  color: #fff9ca;
+  font-size: 12px;
+  box-shadow: 0 0 18px rgba(255, 84, 130, 0.65);
+}
+
+
+/* =========================================================
+   РАДИО
+   Меняй эти параметры:
+   left   — вправо/влево
+   bottom — вверх/вниз
+   width  — ширина
+   height — высота
+   ========================================================= */
+
+.maria-house-radio {
+  left: 10px;
+  bottom: 60px;
+  width: 158px;
+  height: 168px;
+}
+
+
+/* =========================================================
+   МАРИЯ ИВАНОВНА
+   Меняй эти параметры:
+   right  — влево/вправо
+   bottom — вверх/вниз
+   width  — ширина
+   height — высота
+   ========================================================= */
+
+.maria-house-character {
+  right: -30px;
+  bottom: -70px;
+  width: 310px;
+  height: 430px;
+  overflow: visible;
+  filter: none;
+  isolation: isolate;
+}
+
+.maria-house-character > span {
+  bottom: 22px;
+  left: 57%;
+}
+
+
+/* Тень под креслом */
+
+.maria-house-character::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  left: 18%;
+  right: 2%;
+  bottom: 5px;
+  height: 32px;
+  border-radius: 50%;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      ellipse at center,
+      rgba(0, 0, 0, 0.66) 0%,
+      rgba(0, 0, 0, 0.4) 42%,
+      rgba(0, 0, 0, 0) 76%
+    );
+  filter: blur(5px);
+  opacity: 0.86;
+}
+
+
+/* Покачивание Марии Ивановны в кресле */
+
+.maria-house-character img {
+  position: relative;
+  z-index: 1;
+  transform-origin: 58% 92%;
+  animation: mariaChairRock 3.8s ease-in-out infinite;
+  filter: drop-shadow(0 13px 10px rgba(0, 0, 0, 0.34));
+  will-change: transform;
+}
+
+@keyframes mariaChairRock {
+  0%,
+  100% {
+    transform: translateX(-4px) rotate(-2deg);
+  }
+
+  50% {
+    transform: translateX(4px) rotate(2deg);
+  }
+}
+
+
+/* =========================================================
+   НИЖНИЙ СТАТУС И ДИАЛОГ
+   ========================================================= */
+
+.maria-house-status {
+  position: absolute;
+  z-index: 12;
+  left: 12px;
+  right: 12px;
+  bottom: max(12px, env(safe-area-inset-bottom));
+  display: grid;
+  gap: 8px;
+}
+
+.maria-trust-card,
+.maria-dialogue {
+  border: 1px solid rgba(255, 226, 177, 0.16);
+  border-radius: 16px;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(38, 23, 31, 0.92),
+      rgba(18, 12, 18, 0.9)
+    );
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.38);
+  backdrop-filter: blur(10px);
+}
+
+.maria-trust-card {
+  padding: 9px 11px;
+}
+
+.maria-trust-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: rgba(255, 235, 201, 0.64);
+  font-size: 9px;
+}
+
+.maria-trust-line span {
+  font-weight: 900;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.maria-trust-line strong {
+  color: #ffe7b3;
+  font-size: 10px;
+}
+
+.maria-trust-track {
+  height: 6px;
+  margin-top: 6px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.maria-trust-track > div {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #9e4dff, #f0bc58);
+  box-shadow: 0 0 12px rgba(192, 116, 255, 0.7);
+}
+
+.maria-dialogue {
+  padding: 10px 12px;
+}
+
+.maria-dialogue strong {
+  display: block;
+  color: #dca3ff;
+  font-family: Georgia, serif;
+  font-size: 13px;
+}
+
+.maria-dialogue p {
+  margin: 3px 0 0;
+  color: #f4e8d5;
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+
+/* =========================================================
+   ПАНЕЛИ
+   ========================================================= */
+
+.maria-panel-overlay {
+  position: absolute;
+  z-index: 60;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding: 12px;
+  background: rgba(8, 5, 10, 0.64);
+  backdrop-filter: blur(7px);
+}
+
+.maria-panel {
+  width: 100%;
+  max-height: 88%;
+  overflow: auto;
+  padding: 17px;
+  border: 1px solid rgba(255, 222, 170, 0.2);
+  border-radius: 24px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(47, 29, 39, 0.98),
+      rgba(20, 13, 20, 0.98)
+    );
+  box-shadow:
+    0 24px 70px rgba(0, 0, 0, 0.6),
+    inset 0 1px rgba(255, 255, 255, 0.05);
+}
+
+.maria-panel > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.maria-panel > header span {
+  display: block;
+  color: rgba(255, 228, 184, 0.5);
+  font-size: 9px;
+  font-weight: 1000;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.maria-panel h2 {
+  margin: 2px 0 0;
+  color: #ffe6b6;
+  font-family: Georgia, serif;
+  font-size: 22px;
+}
+
+.maria-panel > header button {
+  width: 36px;
+  height: 36px;
+  border: 1px solid rgba(255, 225, 178, 0.15);
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.05);
+  color: #ffe7c2;
+  font-size: 23px;
+  cursor: pointer;
+}
+
+.maria-panel-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 7px;
+  margin-bottom: 12px;
+}
+
+.maria-panel-tabs button {
+  min-height: 36px;
+  border: 1px solid rgba(255, 224, 174, 0.12);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  color: rgba(255, 235, 204, 0.65);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.maria-panel-tabs button.active {
+  border-color: rgba(220, 151, 255, 0.45);
+  background: rgba(141, 67, 184, 0.24);
+  color: #f4d7ff;
+}
+
+
+/* =========================================================
+   КАРТОЧКА ЗАДАНИЯ
+   ========================================================= */
+
+.maria-quest-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 340px;
+  padding: 14px;
+  border: 1px solid rgba(255, 222, 168, 0.15);
+  border-radius: 19px;
+  background:
+    radial-gradient(
+      circle at 50% 5%,
+      rgba(188, 104, 255, 0.14),
+      transparent 34%
+    ),
+    rgba(9, 7, 11, 0.32);
+  text-align: center;
+}
+
+.maria-quest-card.locked {
+  filter: saturate(0.55);
+}
+
+.maria-quest-topline {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  color: rgba(255, 228, 190, 0.55);
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.maria-quest-icon {
+  display: grid;
+  width: 66px;
+  height: 66px;
+  margin: 15px 0 7px;
+  place-items: center;
+  border: 1px solid rgba(232, 187, 255, 0.25);
+  border-radius: 22px;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(118, 52, 154, 0.45),
+      rgba(36, 22, 45, 0.6)
+    );
+  font-size: 31px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.maria-quest-card h3 {
+  margin: 3px 0;
+  color: #ffe8bf;
+  font-family: Georgia, serif;
+  font-size: 21px;
+}
+
+.maria-quest-card p {
+  min-height: 46px;
+  margin: 5px 0 13px;
+  color: rgba(250, 236, 215, 0.72);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.maria-quest-progress {
+  display: flex;
+  width: 100%;
+  justify-content: space-between;
+  color: #ead8c0;
+  font-size: 10px;
+}
+
+.maria-quest-track {
+  width: 100%;
+  height: 8px;
+  margin: 6px 0 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.maria-quest-track > div {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #8d47ce, #e1b44c);
+}
+
+.maria-quest-reward {
+  color: #ffe1a4;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.maria-quest-complete {
+  width: 100%;
+  min-height: 43px;
+  margin-top: auto;
+  border: 0;
+  border-radius: 13px;
+  background: linear-gradient(135deg, #944bcc, #c77af1);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 1000;
+  box-shadow: 0 10px 24px rgba(126, 51, 169, 0.35);
+  cursor: pointer;
+}
+
+.maria-quest-complete:disabled {
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.35);
+  box-shadow: none;
+}
+
+
+/* =========================================================
+   НАВИГАЦИЯ И ВСПОМОГАТЕЛЬНЫЕ КНОПКИ
+   ========================================================= */
+
+.maria-card-navigation {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 9px;
+}
+
+.maria-card-navigation button {
+  min-height: 34px;
+  border: 1px solid rgba(255, 224, 174, 0.12);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.05);
+  color: #f6dfbd;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.maria-empty-panel {
+  display: grid;
+  min-height: 260px;
+  place-items: center;
+  color: rgba(255, 235, 204, 0.55);
+  font-size: 13px;
+}
+
+.maria-level-list {
+  display: grid;
+  gap: 8px;
+}
+
+.maria-level-list article {
+  display: grid;
+  grid-template-columns: 42px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.035);
+  opacity: 0.48;
+}
+
+.maria-level-list article.unlocked {
+  border-color: rgba(209, 154, 255, 0.24);
+  background: rgba(133, 69, 165, 0.12);
+  opacity: 1;
+}
+
+.maria-level-icon {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.07);
+  font-size: 21px;
+}
+
+.maria-level-list strong {
+  display: block;
+  color: #f9e6c9;
+  font-size: 11px;
+}
+
+.maria-level-list small {
+  display: block;
+  margin-top: 3px;
+  color: rgba(255, 235, 204, 0.55);
+  font-size: 9px;
+  line-height: 1.25;
+}
+
+.maria-level-list article > b {
+  color: #e3bdff;
+  font-size: 9px;
+}
+
+
+
+/* =========================================================
+   ОКНО НАГРАДЫ
+   ========================================================= */
+
+.maria-reward-popup {
+  position: absolute;
+  z-index: 90;
+  left: 50%;
+  top: 45%;
+  display: flex;
+  flex-direction: column;
+  min-width: 225px;
+  padding: 17px;
+  transform: translate(-50%, -50%);
+  border: 1px solid rgba(255, 229, 176, 0.28);
+  border-radius: 20px;
+  background:
+    linear-gradient(
+      145deg,
+      rgba(64, 34, 54, 0.98),
+      rgba(24, 15, 24, 0.98)
+    );
+  box-shadow: 0 25px 70px rgba(0, 0, 0, 0.65);
+  text-align: center;
+  animation: mariaRewardIn 0.24s ease both;
+}
+
+.maria-reward-popup strong {
+  color: #ffe4ac;
+  font-family: Georgia, serif;
+  font-size: 20px;
+}
+
+.maria-reward-popup span {
+  margin-top: 6px;
+  color: #f1d8ff;
+  font-weight: 900;
+}
+
+.maria-reward-popup em {
+  margin-top: 5px;
+  color: #d9a5ff;
+  font-size: 11px;
+  font-style: normal;
+}
+
+@keyframes mariaRewardIn {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -44%) scale(0.9);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+
+/* =========================================================
+   НЕВЫСОКИЕ ЭКРАНЫ
+   Эти настройки перебивают основные размеры на маленьких телефонах
+   ========================================================= */
+
+@media (max-height: 720px) {
+  .maria-house-room {
+    inset: 68px 0 126px;
+  }
+
+  .maria-house-board {
+    width: 157px;
+    height: 235px;
+  }
+
+  .maria-house-character {
+    width: 265px;
+    height: 368px;
+  }
+
+  .maria-house-radio {
+    width: 108px;
+    height: 108px;
+  }
+
+  .maria-house-status {
+    gap: 5px;
+  }
+
+  .maria-dialogue {
+    padding: 8px 10px;
+  }
+
+  .maria-dialogue p {
+    font-size: 10px;
+  }
+
+  .maria-trust-card {
+    padding: 7px 9px;
+  }
+}
+
+
+/* =========================================================
+   ОТКЛЮЧЕНИЕ АНИМАЦИИ ДЛЯ ПОЛЬЗОВАТЕЛЕЙ,
+   У КОТОРЫХ В СИСТЕМЕ ВКЛЮЧЕНО УМЕНЬШЕНИЕ ДВИЖЕНИЯ
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+  .maria-house-character img {
+    animation: none;
+  }
+}

@@ -16,11 +16,13 @@ export function isStarsPaymentConfigured() {
   return Boolean(invoiceEndpoint);
 }
 
-
-export async function createStarsInvoice(amount) {
+export async function createStarsInvoice(input) {
   if (!invoiceEndpoint) {
     throw new Error("STARS_ENDPOINT_MISSING");
   }
+
+  const stars = Math.max(1, Math.floor(Number(input?.stars ?? input) || 1));
+  const premiumCoins = Math.max(0, Math.floor(Number(input?.premiumCoins) || 0));
 
   const response = await fetch(invoiceEndpoint, {
     method: "POST",
@@ -29,9 +31,10 @@ export async function createStarsInvoice(amount) {
       "X-Telegram-Init-Data": getTelegramInitData(),
     },
     body: JSON.stringify({
-      amount,
-      productId: "growapp-supporter",
-      payload: `growapp-support-${amount}-${Date.now()}`,
+      amount: stars,
+      productId: "growapp-premium-coins",
+      premiumCoins,
+      payload: `growapp-premium-${stars}-${premiumCoins}-${Date.now()}`,
     }),
   });
 

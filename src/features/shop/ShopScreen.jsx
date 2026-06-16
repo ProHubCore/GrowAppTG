@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import "./ShopScreen.css";
 import { getClubLevel } from "../club/clubProgression";
+import ActionModal from "../../shared/components/ActionModal/ActionModal";
 
 const DEPARTMENTS = [
   { id: "seed", label: "Семена", icon: "🌱" },
@@ -75,12 +76,16 @@ export default function ShopScreen({
   clubReputation = 0,
   mariaTrust = 0,
   refreshAt,
+  premiumCoins = 0,
+  premiumRefreshPrice = 5,
+  onPremiumRefresh,
   onBuy,
 }) {
   const [department, setDepartment] = useState("seed");
   const [selectedId, setSelectedId] = useState(null);
   const [amount, setAmount] = useState(1);
   const [toast, setToast] = useState("");
+  const [isPremiumRefreshOpen, setIsPremiumRefreshOpen] = useState(false);
   const [seenItemIds, setSeenItemIds] = useState(() => new Set(readSeenItems(refreshAt)));
   const clubLevel = getClubLevel(clubReputation);
 
@@ -212,6 +217,17 @@ export default function ShopScreen({
     closeItem();
   };
 
+  const refreshWithPremium = () => {
+    const result = onPremiumRefresh?.();
+    if (!result?.success) {
+      setToast(result?.message || "Не удалось обновить поставку");
+      return;
+    }
+
+    setIsPremiumRefreshOpen(false);
+    setToast(result.message || "Новая поставка уже на прилавке");
+  };
+
   return (
     <div className="shop-screen">
       <div className="shop-top-safe" aria-hidden="true" />
@@ -227,14 +243,20 @@ export default function ShopScreen({
             <h1>Лавка Зорика</h1>
           </div>
 
-          <div className={`shop-delivery${hasUnseenItems ? " has-new" : ""}`} aria-label={`Обновление через ${formatTimer(secondsLeft)}`}>
+          <button
+            type="button"
+            className={`shop-delivery${hasUnseenItems ? " has-new" : ""}`}
+            aria-label={`Обновление через ${formatTimer(secondsLeft)}. Обновить сейчас за ${premiumRefreshPrice} G-монет.`}
+            onClick={() => setIsPremiumRefreshOpen(true)}
+          >
             <span className="shop-delivery-icon" aria-hidden="true">↻</span>
             <div className="shop-delivery-copy">
               <small>ОБНОВЛЕНИЕ</small>
               <strong>{formatTimer(secondsLeft)}</strong>
+              <em>СЕЙЧАС ◆ {premiumRefreshPrice}</em>
             </div>
             {hasUnseenItems && <span className="shop-delivery-new">ЕСТЬ НОВОЕ</span>}
-          </div>
+          </button>
         </header>
 
         <nav className="shop-departments" aria-label="Разделы магазина">
@@ -383,6 +405,22 @@ export default function ShopScreen({
           </article>
         </div>
       )}
+
+      <ActionModal
+        isOpen={isPremiumRefreshOpen}
+        title="Новая поставка сейчас?"
+        description="Зорик мгновенно заменит остатки и выставит новый случайный набор товаров. Текущая поставка исчезнет."
+        price={premiumRefreshPrice}
+        coins={premiumCoins}
+        currencyLabel="G"
+        currencyIcon="◆"
+        modalIcon="↻"
+        confirmText="Обновить лавку"
+        cancelText="Подождать"
+        confirmDisabled={premiumCoins < premiumRefreshPrice}
+        onConfirm={refreshWithPremium}
+        onCancel={() => setIsPremiumRefreshOpen(false)}
+      />
 
       {toast && <div className="shop-toast" role="status">{toast}</div>}
     </div>

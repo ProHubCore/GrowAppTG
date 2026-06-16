@@ -10,6 +10,9 @@ function ActionModal({
   cancelText = "Отмена",
   confirmDisabled = false,
   danger = false,
+  modalIcon = null,
+  currencyLabel = "монет",
+  currencyIcon = null,
   onConfirm,
   onCancel,
 }) {
@@ -40,7 +43,7 @@ function ActionModal({
         </button>
 
         <div className="action-modal-icon">
-          {danger ? "!" : price === null ? "…" : "🪣"}
+          {modalIcon || (danger ? "!" : price === null ? "…" : "🪣")}
         </div>
 
         <h2 id="action-modal-title">{title}</h2>
@@ -50,19 +53,19 @@ function ActionModal({
           <div className="action-modal-price-block">
             <div>
               <span>Стоимость</span>
-              <strong>{price} монет</strong>
+              <strong>{currencyIcon ? `${currencyIcon} ` : ""}{price} {currencyLabel}</strong>
             </div>
 
             <div>
               <span>На руках</span>
-              <strong>{coins} монет</strong>
+              <strong>{currencyIcon ? `${currencyIcon} ` : ""}{coins} {currencyLabel}</strong>
             </div>
           </div>
         )}
 
         {price !== null && coins < price && (
           <div className="action-modal-warning">
-            Недостаточно монет для покупки.
+            Недостаточно валюты для действия.
           </div>
         )}
 

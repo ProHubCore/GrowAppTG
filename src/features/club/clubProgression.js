@@ -14,25 +14,25 @@ export const CLUB_LEVELS = [
   {
     level: 2,
     title: "Свой человек",
-    required: 60,
+    required: 30,
     reward: "+5% к клубным ценам",
   },
   {
     level: 3,
     title: "Надёжный поставщик",
-    required: 180,
+    required: 80,
     reward: "Второе место и +10% к клубным ценам",
   },
   {
     level: 4,
     title: "Звезда клуба",
-    required: 420,
+    required: 180,
     reward: "+15% к клубным ценам",
   },
   {
     level: 5,
     title: "Легенда района",
-    required: 850,
+    required: 350,
     reward: "Третье место и +20% к клубным ценам",
   },
 ];

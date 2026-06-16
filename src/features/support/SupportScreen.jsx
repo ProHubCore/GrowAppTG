@@ -5,87 +5,80 @@ import {
   isStarsPaymentConfigured,
   openStarsInvoice,
 } from "./starsPayments";
+import {
+  PREMIUM_CURRENCY,
+  starsToPremiumCoins,
+} from "../../core/economy/premiumCurrency";
 
 import "./SupportScreen.css";
 
 const PRESETS = [25, 50, 100, 250];
 const MIN_STARS = 1;
 const MAX_STARS = 2500;
-const SUPPORT_TOTAL_KEY = "growapp-support-stars-total";
+const PURCHASED_STARS_KEY = "growapp-premium-stars-total";
 
 function clampAmount(value) {
   const numeric = Math.round(Number(value) || MIN_STARS);
   return Math.min(MAX_STARS, Math.max(MIN_STARS, numeric));
 }
 
-function readSupportTotal() {
+function readPurchasedStars() {
   try {
-    return Math.max(
-      0,
-      Number(localStorage.getItem(SUPPORT_TOTAL_KEY)) || 0,
-    );
+    return Math.max(0, Number(localStorage.getItem(PURCHASED_STARS_KEY)) || 0);
   } catch {
     return 0;
   }
 }
 
-function getSupportTitle(total) {
-  if (total >= 1000) return "Легенда района";
-  if (total >= 500) return "Покровитель Марии Ивановны";
-  if (total >= 250) return "Друг проекта";
-  if (total >= 100) return "Свой человек";
-  if (total > 0) return "Первый сторонник";
-  return "Новый житель";
-}
-
-export default function SupportScreen() {
-  const [amount, setAmount] = useState(50);
-  const [supportTotal, setSupportTotal] = useState(readSupportTotal);
+export default function SupportScreen({
+  premiumCoins = 0,
+  onPremiumCoinsAdded,
+  onGoBack,
+}) {
+  const [amount, setAmount] = useState(100);
+  const [purchasedStars, setPurchasedStars] = useState(readPurchasedStars);
   const [status, setStatus] = useState("idle");
   const [message, setMessage] = useState("");
 
   const configured = isStarsPaymentConfigured();
-  const supportTitle = useMemo(
-    () => getSupportTitle(supportTotal),
-    [supportTotal],
-  );
+  const coinAmount = useMemo(() => starsToPremiumCoins(amount), [amount]);
 
-  const saveSuccessfulSupport = (paidAmount) => {
-    const nextTotal = supportTotal + paidAmount;
-    setSupportTotal(nextTotal);
+  const saveSuccessfulPurchase = (paidStars, receivedCoins) => {
+    const nextTotal = purchasedStars + paidStars;
+    setPurchasedStars(nextTotal);
+    onPremiumCoinsAdded?.(receivedCoins);
 
     try {
-      localStorage.setItem(SUPPORT_TOTAL_KEY, String(nextTotal));
+      localStorage.setItem(PURCHASED_STARS_KEY, String(nextTotal));
     } catch {
-      // В приватном режиме локальное сохранение может быть недоступно.
+      // Игра продолжает работать без локального хранилища.
     }
   };
 
-  const handleSupport = async () => {
+  const handlePurchase = async () => {
     const normalizedAmount = clampAmount(amount);
+    const normalizedCoins = starsToPremiumCoins(normalizedAmount);
     setAmount(normalizedAmount);
     setStatus("loading");
     setMessage("");
 
-
     if (!configured) {
       setStatus("error");
-      setMessage(
-        "Интерфейс готов, но сервер создания Telegram-счёта ещё не подключён.",
-      );
+      setMessage("Сервер создания Telegram-счёта пока не подключён.");
       return;
     }
 
     try {
-      const invoiceUrl = await createStarsInvoice(normalizedAmount);
+      const invoiceUrl = await createStarsInvoice({
+        stars: normalizedAmount,
+        premiumCoins: normalizedCoins,
+      });
       const paymentStatus = await openStarsInvoice(invoiceUrl);
 
       if (paymentStatus === "paid") {
-        saveSuccessfulSupport(normalizedAmount);
+        saveSuccessfulPurchase(normalizedAmount, normalizedCoins);
         setStatus("success");
-        setMessage(
-          `Спасибо! Поддержка на ${normalizedAmount} ⭐ принята.`,
-        );
+        setMessage(`Начислено ${normalizedCoins} G-монет.`);
         return;
       }
 
@@ -106,39 +99,41 @@ export default function SupportScreen() {
     } catch (error) {
       console.error("Не удалось открыть Stars invoice:", error);
       setStatus("error");
-      setMessage(
-        "Не удалось открыть оплату. Проверь подключение серверного invoice endpoint.",
-      );
+      setMessage("Не удалось открыть оплату. Проверь invoice endpoint.");
     }
   };
 
   return (
     <main className="support-screen">
       <header className="support-screen__header">
-        <div className="support-screen__eyebrow">GrowApp · Telegram Stars</div>
-        <h1>Поддержать разработку</h1>
+        <button type="button" className="support-screen__back" onClick={onGoBack}>
+          ← Район
+        </button>
+
+        <div className="support-screen__eyebrow">Grow Street · Telegram Stars</div>
+        <h1>Банк G-монет</h1>
         <p>
-          Помоги району расти. Поддержка не даёт преимущества в игре —
-          только статус раннего участника и нашу огромную благодарность.
+          G-монеты ускоряют ожидание: ими можно моментально вырастить растение
+          или вызвать новую поставку в лавку Зорика.
         </p>
       </header>
 
       <section className="support-card support-card--identity">
-        <div className="support-card__badge">⭐</div>
+        <div className="support-card__badge">◆</div>
         <div>
-          <span className="support-card__label">Твой статус</span>
-          <strong>{supportTitle}</strong>
-          <small>Поддержано: {supportTotal} Stars</small>
+          <span className="support-card__label">Твой баланс</span>
+          <strong>{Math.max(0, Math.floor(Number(premiumCoins) || 0))} G</strong>
+          <small>1 ⭐ = {PREMIUM_CURRENCY.coinsPerStar} G · куплено за всё время: {purchasedStars} ⭐</small>
         </div>
       </section>
 
       <section className="support-card">
         <div className="support-card__topline">
           <div>
-            <span className="support-card__label">Выбери сумму</span>
-            <strong>{amount} ⭐</strong>
+            <span className="support-card__label">Получишь</span>
+            <strong>{coinAmount} G</strong>
           </div>
-          <span className="support-card__limit">1–2500</span>
+          <span className="support-card__limit">за {amount} ⭐</span>
         </div>
 
         <div className="support-presets">
@@ -149,21 +144,20 @@ export default function SupportScreen() {
               className={amount === preset ? "active" : ""}
               onClick={() => setAmount(preset)}
             >
-              {preset} ⭐
+              {starsToPremiumCoins(preset)} G
+              <small>{preset} ⭐</small>
             </button>
           ))}
         </div>
 
         <label className="support-custom">
-          <span>Своя сумма</span>
+          <span>Своя сумма в Stars</span>
           <input
             type="number"
             min={MIN_STARS}
             max={MAX_STARS}
             value={amount}
-            onChange={(event) =>
-              setAmount(clampAmount(event.target.value))
-            }
+            onChange={(event) => setAmount(clampAmount(event.target.value))}
           />
         </label>
 
@@ -181,33 +175,29 @@ export default function SupportScreen() {
           type="button"
           className="support-pay"
           disabled={status === "loading" || !configured}
-          onClick={handleSupport}
+          onClick={handlePurchase}
         >
           {status === "loading"
             ? "Открываем Telegram…"
             : configured
-              ? `Поддержать на ${amount} ⭐`
+              ? `Купить ${coinAmount} G за ${amount} ⭐`
               : "Оплата временно недоступна"}
         </button>
 
         {message && (
-          <div
-            className={`support-message support-message--${status}`}
-            role="status"
-          >
+          <div className={`support-message support-message--${status}`} role="status">
             {message}
           </div>
         )}
-
       </section>
 
       <section className="support-card support-card--roadmap">
-        <span className="support-card__label">На что идёт поддержка</span>
+        <span className="support-card__label">На что тратить</span>
         <div className="support-roadmap">
-          <span>🎨 Новый арт</span>
-          <span>🔊 Звуки и музыка</span>
-          <span>🌱 Новые растения</span>
-          <span>☁️ Серверные сохранения</span>
+          <span>⚡ Моментальный урожай</span>
+          <span>↻ Новая поставка</span>
+          <span>🔒 Новые ускорения позже</span>
+          <span>◆ Баланс не пропадает</span>
         </div>
       </section>
     </main>

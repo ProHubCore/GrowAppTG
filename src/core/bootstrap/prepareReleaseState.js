@@ -2,12 +2,14 @@ const RELEASE_STATE_STORAGE_KEY = "growapp-release-state-version";
 const MANUAL_RESET_REQUEST_KEY = "growapp-manual-reset-request";
 
 // Меняй значение только тогда, когда всем игрокам действительно нужен новый старт.
-const RELEASE_STATE_VERSION = "public-launch-grow-street-v3";
+const RELEASE_STATE_VERSION = "public-launch-onboarding-v2";
 
 const PRESERVED_GAME_KEYS = new Set([
   RELEASE_STATE_STORAGE_KEY,
   "growapp-support-stars-total",
   "growapp-supporter",
+  "growapp-premium-coins",
+  "growapp-premium-stars-total",
 ]);
 
 function shouldPreserveKey(key) {

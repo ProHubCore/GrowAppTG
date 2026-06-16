@@ -1,5 +1,4 @@
 import { ASSETS } from "../../../core/assets/assetCatalog.js";
-import { GAME_ECONOMY } from "../../economy/gameEconomy.js";
 
 const stage = (image, name, width, bottom, left = 50) => ({
   image,
@@ -19,8 +18,8 @@ export const CROPS = [
     icon: "🌿",
     type: "plant",
     infiniteSeeds: true,
-    growTime: GAME_ECONOMY.crops.tabakko.growTime,
-    basePrice: GAME_ECONOMY.crops.tabakko.basePrice,
+    growTime: 90,
+    basePrice: 8,
     description: "Первое растение ученика: выносливый ароматный табачный лист.",
     lore: "Простой дымный лист, с которого начинается торговля в старом районе.",
     catalogNote: "Базовая культура района с густым ароматом и стабильным спросом.",
@@ -36,13 +35,13 @@ export const CROPS = [
     name: "Кислоплод",
     icon: "🟢",
     type: "plant",
-    growTime: GAME_ECONOMY.crops.greenTomato.growTime,
-    basePrice: GAME_ECONOMY.crops.greenTomato.basePrice,
+    growTime: 240,
+    basePrice: 14,
     description: "Кислый бодрящий плод с цепкими инопланетными побегами.",
     lore: "Яркий кислый плод для коктейлей, ночных смен и шумных заказов клуба.",
     catalogNote: "Кислый бодрящий плод района с живучими зелёными побегами.",
     shop: {
-      price: GAME_ECONOMY.crops.greenTomato.seedPrice,
+      price: 24,
       minStock: 2,
       maxStock: 6,
       requiredClubLevel: 1,
@@ -60,13 +59,13 @@ export const CROPS = [
     name: "Кока Нова",
     icon: "🍃",
     type: "plant",
-    growTime: GAME_ECONOMY.crops.kokaNova.growTime,
-    basePrice: GAME_ECONOMY.crops.kokaNova.basePrice,
+    growTime: 480,
+    basePrice: 22,
     description: "Редкий бодрящий куст с плотными красноватыми листьями.",
     lore: "Ценится за чистый импульс и устойчивый эффект во время длинных вечеринок.",
     catalogNote: "Инопланетный родственник коки с яркими верхними листьями.",
     shop: {
-      price: GAME_ECONOMY.crops.kokaNova.seedPrice,
+      price: 42,
       minStock: 1,
       maxStock: 4,
       requiredClubLevel: 1,

@@ -67,8 +67,8 @@ const STEPS = {
     name: "Мария Ивановна",
     text:
       "Урожай в кармане. Теперь глянем район — там клуб, магазин и люди, с которыми ещё познакомишься.",
-    hint: "Нажми «Grow Street»",
-    target: ".location-dock__main--street",
+    hint: "Перейди в «Район»",
+    target: ".bottom-menu-button:last-child",
     characterMode: "compact",
   },
   "district-finish": {
@@ -100,8 +100,8 @@ const STEPS = {
     name: "Мария Ивановна",
     text:
       "Ты уже вырастил нужные три листа Табакко. Закрывай первое дело и забирай награду.",
-    hint: "Нажми «Закрыть дело»",
-    target: ".maria-case-action",
+    hint: "Нажми «Забрать награду»",
+    target: ".maria-quest-complete",
     characterMode: "compact",
   },
   "onboarding-finish": {

@@ -905,3 +905,25 @@
   .shop-product-modal,
   .shop-toast{animation:none!important;transition:none!important}
 }
+
+.shop-delivery {
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.shop-delivery:active {
+  transform: translateY(1px) scale(0.99);
+}
+
+.shop-delivery-copy em {
+  display: block;
+  margin-top: 3px;
+  color: #d8caff;
+  font-size: 7px;
+  font-style: normal;
+  font-weight: 1000;
+  letter-spacing: 0.08em;
+}

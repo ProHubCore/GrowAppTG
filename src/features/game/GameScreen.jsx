@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 
 import PlantArea from "../plantation/components/PlantArea";
 import BottomMenu from "../../shared/components/BottomMenu/BottomMenu";
+import PremiumWallet from "../../shared/components/PremiumWallet/PremiumWallet";
 import SeedModal from "../plantation/components/SeedModal";
 import RemovePlantModal from "../plantation/components/RemovePlantModal";
 import BackpackTool from "../inventory/components/BackpackTool";
@@ -25,7 +26,12 @@ import usePotGrowth from "../plantation/hooks/usePotGrowth";
 import useClubReputation from "../club/useClubReputation";
 import { triggerTelegramHaptic, triggerTelegramNotification } from "../../core/telegram";
 import { requestGameProgressReset } from "../../core/bootstrap/prepareReleaseState";
-import { GAME_ECONOMY } from "../economy/gameEconomy";
+import {
+  PREMIUM_CURRENCY,
+  PREMIUM_PRICES,
+  getInstantGrowCost,
+  normalizePremiumBalance,
+} from "../../core/economy/premiumCurrency";
 
 import { pots } from "../plantation/data/pots";
 import {
@@ -54,9 +60,9 @@ import {
 
 import "./GameScreen.css";
 
-const DEFAULT_GROW_TIME = GAME_ECONOMY.crops.tabakko.growTime;
+const DEFAULT_GROW_TIME = 90;
 const TUTORIAL_GROW_TIME = 8;
-const INITIAL_COINS = GAME_ECONOMY.startingCoins;
+const INITIAL_COINS = 40;
 
 const STAGE_WIDTH = 390;
 const STAGE_HEIGHT = 844;
@@ -155,6 +161,12 @@ function GameScreen() {
     { migrate: migrateReleaseCoins },
   );
 
+  const [premiumCoins, setPremiumCoins] = usePersistentState(
+    PREMIUM_CURRENCY.storageKey,
+    PREMIUM_CURRENCY.initialTestBalance,
+    { migrate: normalizePremiumBalance },
+  );
+
   const [mariaQuestState, setMariaQuestState] = usePersistentState(
     "growapp-maria-ivanovna-quests",
     {
@@ -234,6 +246,7 @@ function GameScreen() {
     useState(false);
   const [isResetProgressModalOpen, setIsResetProgressModalOpen] =
     useState(false);
+  const [instantGrowRequest, setInstantGrowRequest] = useState(null);
 
 
   useEffect(() => {
@@ -259,7 +272,7 @@ function GameScreen() {
           ...unlockedLevels.map((level) => ({
             id: `maria-${level.level}-${Date.now()}`,
             source: "maria",
-            sourceLabel: "Доверие Марии Ивановны",
+            sourceLabel: "Путь ученика · Мария Ивановна",
             level: `${level.level} · ${level.title}`,
             icon: level.icon,
             title: level.unlockTitle || level.reward,
@@ -565,6 +578,15 @@ function GameScreen() {
   const currentPlant =
     growStep > 0 && currentPlantStages
       ? currentPlantStages[growStep - 1] || null
+      : null;
+
+  const instantGrowCost =
+    growStep > 0 && growStep < 3
+      ? getInstantGrowCost({
+          growStep,
+          timeLeft,
+          growTime: currentPotState.growTime,
+        })
       : null;
 
   useEffect(() => {
@@ -1003,6 +1025,72 @@ function GameScreen() {
     }, 1100);
   };
 
+  const requestInstantGrow = () => {
+    if (isTutorialActive || growStep <= 0 || growStep >= 3 || !instantGrowCost) {
+      return;
+    }
+
+    setInstantGrowRequest({
+      potIndex: currentPotIndex,
+      cost: instantGrowCost,
+      cropName: seeds.find((seed) => seed.id === plantedSeedId)?.name || "растение",
+    });
+  };
+
+  const confirmInstantGrow = () => {
+    const request = instantGrowRequest;
+    if (!request) return;
+
+    const targetState = potStatesRef.current?.[request.potIndex];
+    if (!targetState || targetState.growStep <= 0 || targetState.growStep >= 3) {
+      setInstantGrowRequest(null);
+      return;
+    }
+
+    const currentCost = getInstantGrowCost({
+      growStep: targetState.growStep,
+      timeLeft: targetState.timeLeft,
+      growTime: targetState.growTime,
+    });
+    const cost = Math.max(
+      1,
+      Math.min(Math.floor(Number(request.cost) || currentCost), currentCost),
+    );
+
+    if (premiumCoins < cost) return;
+
+    setPremiumCoins((value) => Math.max(0, value - cost));
+    setPotStates((states) =>
+      states.map((state, index) =>
+        index === request.potIndex && state?.growStep > 0 && state.growStep < 3
+          ? {
+              ...state,
+              growStep: 3,
+              timeLeft: 0,
+              nextGrowthAt: null,
+            }
+          : state,
+      ),
+    );
+
+    triggerTelegramNotification("success");
+    setInstantGrowRequest(null);
+  };
+
+  const refreshShopWithPremium = () => {
+    const cost = PREMIUM_PRICES.shopRefresh;
+    if (premiumCoins < cost) {
+      return { success: false, message: "Не хватает G-монет." };
+    }
+
+    setPremiumCoins((value) => Math.max(0, value - cost));
+    setShopStock(createShopStock());
+    setShopRefreshAt(Date.now() + SHOP_REFRESH_MS);
+    triggerTelegramHaptic("medium");
+
+    return { success: true, message: "Зорик уже выставил новую поставку." };
+  };
+
   const openRemoveModal = () => {
     if (isTutorialActive) {
       return;
@@ -1230,9 +1318,6 @@ function GameScreen() {
     }));
   };
 
-  const activeMariaQuest = MARIA_QUESTS.find(
-    (quest) => !(mariaQuestState.completedQuestIds || []).includes(quest.id),
-  );
 
   return (
     <div className={`game-screen game-screen--${activeScreen}`}>
@@ -1250,6 +1335,16 @@ function GameScreen() {
             "--visible-height": `${visibleHeight}px`,
           }}
         >
+        {!isTutorialActive && activeScreen !== "support" && (
+          <PremiumWallet
+            balance={premiumCoins}
+            disabled={isTutorialActive}
+            onClick={() => {
+              if (!isTutorialActive) setActiveScreen("support");
+            }}
+          />
+        )}
+
         {activeScreen === "plantation" && (
           <>
             <div className="background" />
@@ -1279,6 +1374,16 @@ function GameScreen() {
                 }
               }}
             />
+
+            <button
+              type="button"
+              className="plant-catalog-tool"
+              onClick={() => setIsCatalogOpen(true)}
+              disabled={isTutorialActive}
+              aria-label="Открыть каталог растений"
+            >
+              📖
+            </button>
 
             <FlyingLoot lootItems={flyingLootItems} />
 
@@ -1322,6 +1427,10 @@ function GameScreen() {
                   removeDisabled={isTutorialActive}
                   collectDisabled={!tutorialAllows("collect")}
                   unlockDisabled={!tutorialAllows("unlock-pot")}
+                  instantGrowCost={instantGrowCost}
+                  premiumBalance={premiumCoins}
+                  onInstantGrow={requestInstantGrow}
+                  instantGrowDisabled={isTutorialActive}
                 />
               </div>
             </div>
@@ -1468,6 +1577,24 @@ function GameScreen() {
             />
 
             <ActionModal
+              isOpen={Boolean(instantGrowRequest)}
+              title="Вырастить моментально?"
+              description={instantGrowRequest
+                ? `${instantGrowRequest.cropName} сразу перейдёт в состояние готового урожая. Полив и применённые смеси сохранятся.`
+                : ""}
+              price={instantGrowRequest?.cost ?? null}
+              coins={premiumCoins}
+              currencyLabel="G"
+              currencyIcon={PREMIUM_CURRENCY.icon}
+              modalIcon="⚡"
+              confirmText="Вырастить сейчас"
+              cancelText="Пусть растёт"
+              confirmDisabled={!instantGrowRequest || premiumCoins < (instantGrowRequest?.cost || 0)}
+              onConfirm={confirmInstantGrow}
+              onCancel={() => setInstantGrowRequest(null)}
+            />
+
+            <ActionModal
               isOpen={isResetProgressModalOpen}
               title="Начать игру заново?"
               description="Будут удалены монеты, растения, предметы, задания, репутация и обучение. Покупки поддержки сохранятся. Отменить действие после подтверждения нельзя."
@@ -1508,7 +1635,6 @@ function GameScreen() {
             onOpenShop={openShop}
             onOpenMariaHouse={openMariaHouse}
             showMariaNotice={(mariaQuestState.completedQuestIds || []).length < MARIA_QUESTS.length}
-            missionTitle={activeMariaQuest ? `Текущее дело: ${activeMariaQuest.title}` : "Первая глава закрыта"}
           />
         )}
 
@@ -1554,6 +1680,9 @@ function GameScreen() {
             clubReputation={clubReputation}
             mariaTrust={mariaQuestState.trust || 0}
             refreshAt={shopRefreshAt}
+            premiumCoins={premiumCoins}
+            premiumRefreshPrice={PREMIUM_PRICES.shopRefresh}
+            onPremiumRefresh={refreshShopWithPremium}
             onBuy={buyShopItem}
           />
         )}
@@ -1573,7 +1702,13 @@ function GameScreen() {
 
 
         {activeScreen === "support" && (
-          <SupportScreen onGoBack={() => setActiveScreen("district")} />
+          <SupportScreen
+            premiumCoins={premiumCoins}
+            onPremiumCoinsAdded={(amount) =>
+              setPremiumCoins((value) => value + Math.max(0, Math.floor(Number(amount) || 0)))
+            }
+            onGoBack={() => setActiveScreen("district")}
+          />
         )}
 
         {activeScreen !== "shop" &&

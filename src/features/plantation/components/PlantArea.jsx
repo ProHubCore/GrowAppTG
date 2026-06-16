@@ -40,6 +40,10 @@ function PlantArea({
   removeDisabled = false,
   collectDisabled = false,
   unlockDisabled = false,
+  instantGrowCost = null,
+  premiumBalance = 0,
+  onInstantGrow,
+  instantGrowDisabled = false,
 }) {
   const touchStartX = useRef(null);
   const touchStartY = useRef(null);
@@ -170,6 +174,10 @@ function PlantArea({
               growStep={growStep}
               timeLeft={timeLeft}
               growTime={growTime}
+              instantGrowCost={instantGrowCost}
+              premiumBalance={premiumBalance}
+              onInstantGrow={onInstantGrow}
+              instantGrowDisabled={instantGrowDisabled}
             />
 
             <div className="plant-area">
