@@ -24,6 +24,7 @@ import useResponsiveStage from "../../core/hooks/useResponsiveStage";
 import usePotGrowth from "../plantation/hooks/usePotGrowth";
 import useClubReputation from "../club/useClubReputation";
 import { triggerTelegramHaptic, triggerTelegramNotification } from "../../core/telegram";
+import { requestGameProgressReset } from "../../core/bootstrap/prepareReleaseState";
 
 import { pots } from "../plantation/data/pots";
 import {
@@ -229,6 +230,8 @@ function GameScreen() {
     useState(null);
 
   const [isUnavailableModalOpen, setIsUnavailableModalOpen] =
+    useState(false);
+  const [isResetProgressModalOpen, setIsResetProgressModalOpen] =
     useState(false);
 
 
@@ -1251,6 +1254,18 @@ function GameScreen() {
               {coins}
             </div>
 
+            <button
+              type="button"
+              className="progress-reset-button"
+              onClick={() => {
+                triggerTelegramHaptic("medium");
+                setIsResetProgressModalOpen(true);
+              }}
+              aria-label="Сбросить прогресс и начать игру заново"
+            >
+              <span className="progress-reset-button__icon" aria-hidden="true">↻</span>
+              <span>Сброс</span>
+            </button>
 
             <BackpackTool
               disabled={isTutorialActive}
@@ -1459,6 +1474,20 @@ function GameScreen() {
             />
 
             <ActionModal
+              isOpen={isResetProgressModalOpen}
+              title="Начать игру заново?"
+              description="Будут удалены монеты, растения, предметы, задания, репутация и обучение. Покупки поддержки сохранятся. Отменить действие после подтверждения нельзя."
+              confirmText="Сбросить прогресс"
+              cancelText="Оставить как есть"
+              danger
+              onConfirm={() => {
+                triggerTelegramNotification("warning");
+                requestGameProgressReset();
+              }}
+              onCancel={() => setIsResetProgressModalOpen(false)}
+            />
+
+            <ActionModal
               isOpen={isUnavailableModalOpen}
               title="Пока что недоступно"
               description={
@@ -1593,7 +1622,8 @@ function GameScreen() {
           onClose={() => setUnlockQueue((queue) => queue.slice(1))}
         />
 
-        <TutorialOverlay
+        {!isResetProgressModalOpen && (
+          <TutorialOverlay
           step={tutorialStep}
           stageScale={stageScale}
           activeScreen={activeScreen}
@@ -1623,6 +1653,7 @@ function GameScreen() {
             }
           }}
         />
+        )}
         </div>
       </div>
     </div>

@@ -364,3 +364,46 @@ html[data-telegram-app="true"] .game-screen {
     background-position: center center;
   }
 }
+
+/* Кнопка ручного перезапуска прогресса. Она остаётся частью интерфейса,
+   но не конкурирует с основными игровыми инструментами. */
+.progress-reset-button {
+  position: absolute;
+  top: var(--hud-top);
+  left: var(--hud-left);
+  z-index: 58;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 82px;
+  min-height: 38px;
+  padding: 7px 12px;
+  border: 1px solid rgba(255, 201, 151, 0.3);
+  border-radius: 14px;
+  background:
+    linear-gradient(180deg, rgba(75, 46, 31, 0.92), rgba(43, 27, 20, 0.94));
+  color: #ffe7c2;
+  font-size: 13px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.42);
+  box-shadow:
+    0 7px 16px rgba(0, 0, 0, 0.26),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(5px);
+  -webkit-backdrop-filter: blur(5px);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 140ms ease, filter 140ms ease;
+}
+
+.progress-reset-button__icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.progress-reset-button:active {
+  transform: translateY(2px) scale(0.97);
+  filter: brightness(0.92);
+}
