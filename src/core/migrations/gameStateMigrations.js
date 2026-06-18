@@ -4,6 +4,7 @@ import {
   createEmptyCropInventory,
   createEmptySeedInventory,
 } from "../../features/plantation/data/crops";
+import { MARIA_QUESTS } from "../../features/maria-ivanovna/mariaQuests";
 
 export const LEGACY_CROP_ID_MAP = {
   lumenweed: "tabakko",
@@ -68,6 +69,8 @@ export function migrateShopStock(value) {
 export function migratePotStates(value) {
   if (!Array.isArray(value)) return value;
 
+  const now = Date.now();
+
   return value.map((pot) => {
     const mappedSeedId = pot?.selectedSeedId
       ? mapCropId(pot.selectedSeedId)
@@ -98,8 +101,6 @@ export function migratePotStates(value) {
 
     const growStep = Math.max(0, Math.floor(Number(pot?.growStep) || 0));
 
-    // В старой версии вода применялась один раз за весь цикл.
-    // Считаем текущую стадию уже политой, чтобы старое сохранение не дало двойной бонус.
     if (
       legacyCareApplied.includes("water") &&
       wateredStages.length === 0 &&
@@ -113,25 +114,88 @@ export function migratePotStates(value) {
         ...pot,
         growStep: 0,
         selectedSeedId: null,
-        timeLeft: Math.max(1, Number(pot?.growTime) || 90),
+        timeLeft: 0,
         nextGrowthAt: null,
+        harvestAt: null,
         careApplied: [],
         wateredStages: [],
         potTypeId: "soil",
+        growthTimingVersion: 2,
       };
     }
 
     const savedGrowTime = Math.max(1, Number(pot?.growTime) || 0);
-    const productionGrowTime = CROP_BY_ID[validSeedId]?.growTime || savedGrowTime || 90;
-    const growTime = savedGrowTime <= 10 ? productionGrowTime : savedGrowTime;
+    const productionGrowTime = CROP_BY_ID[validSeedId]?.growTime || 90;
+    const growTime = savedGrowTime || productionGrowTime;
+    const totalDurationMs = growTime * 1000;
+    const phaseDurationMs = Math.max(1000, totalDurationMs / 2);
+
+    let nextGrowthAt = Number(pot?.nextGrowthAt);
+    nextGrowthAt = Number.isFinite(nextGrowthAt) && nextGrowthAt > 0
+      ? nextGrowthAt
+      : null;
+
+    let harvestAt = Number(pot?.harvestAt);
+    harvestAt = Number.isFinite(harvestAt) && harvestAt > 0
+      ? harvestAt
+      : null;
+
+    const isGrowing = growStep === 1 || growStep === 2;
+    const isLegacyTwoPhaseTimer =
+      isGrowing && Number(pot?.growthTimingVersion) !== 2;
+
+    if (isLegacyTwoPhaseTimer) {
+      const legacyRemainingMs = harvestAt
+        ? Math.max(0, harvestAt - now)
+        : Math.max(0, Number(pot?.timeLeft) || 0) * 1000 ||
+          growTime * (3 - growStep) * 1000;
+      const remainingMs = Math.max(1000, legacyRemainingMs / 2);
+      const legacyUntilNextPhaseMs = nextGrowthAt
+        ? Math.max(0, nextGrowthAt - now)
+        : growStep === 1
+          ? legacyRemainingMs / 2
+          : legacyRemainingMs;
+
+      harvestAt = now + remainingMs;
+      nextGrowthAt = growStep === 1
+        ? Math.min(harvestAt, now + Math.max(1000, legacyUntilNextPhaseMs / 2))
+        : harvestAt;
+    } else if (isGrowing) {
+      if (!harvestAt && nextGrowthAt) {
+        harvestAt = growStep === 1
+          ? nextGrowthAt + phaseDurationMs
+          : nextGrowthAt;
+      }
+
+      if (!harvestAt) {
+        harvestAt = now + (growStep === 1 ? totalDurationMs : phaseDurationMs);
+      }
+
+      if (!nextGrowthAt) {
+        nextGrowthAt = growStep === 1
+          ? Math.min(harvestAt, now + phaseDurationMs)
+          : harvestAt;
+      }
+    } else {
+      nextGrowthAt = null;
+      harvestAt = null;
+    }
+
+    const timeLeft = harvestAt
+      ? Math.max(0, Math.ceil((harvestAt - now) / 1000))
+      : 0;
 
     return {
       ...pot,
       selectedSeedId: validSeedId,
       growTime,
+      timeLeft,
+      nextGrowthAt,
+      harvestAt,
       careApplied,
       wateredStages,
       potTypeId: "soil",
+      growthTimingVersion: 2,
     };
   });
 }
@@ -191,17 +255,12 @@ export function migratePlantCatalog(value) {
   return next;
 }
 
-const MARIA_QUEST_TRUST = {
-  "maria-tabakko-delivery": 25,
-  "maria-buy-watering-can": 10,
-  "maria-first-watering": 25,
-  "maria-kisloplod-seed": 15,
-  "maria-kisloplod-harvest": 35,
-  "maria-koka-seed": 15,
-  "maria-koka-harvest": 35,
-  "maria-quality-tabakko": 20,
-  "maria-nutrition-care": 60,
-};
+const MARIA_QUEST_TRUST = Object.fromEntries(
+  MARIA_QUESTS.map((quest) => [
+    quest.id,
+    Math.max(0, Number(quest.reward?.trust) || 0),
+  ]),
+);
 
 export function migrateMariaQuestState(value) {
   const source = value && typeof value === "object" ? value : {};
@@ -213,12 +272,14 @@ export function migrateMariaQuestState(value) {
       ]
     : [];
 
-  const trust = completedQuestIds.reduce(
+  const completedTrust = completedQuestIds.reduce(
     (total, questId) => total + MARIA_QUEST_TRUST[questId],
     0,
   );
+  const savedTrust = safeNumber(source.trust);
+  const trust = Math.max(savedTrust, completedTrust);
 
-  const hasCurrentProgress = completedQuestIds.length > 0;
+  const hasCurrentProgress = completedQuestIds.length > 0 || trust > 0;
 
   return {
     ...source,

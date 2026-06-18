@@ -5,9 +5,8 @@ import "./ClubScreen.css";
 import { HARVEST_QUALITIES } from "../plantation/data/harvestQuality";
 import { CROPS } from "../plantation/data/crops";
 import { QUALITY_PRICE_MULTIPLIERS, getQualityAmount, removeQualityItems } from "../plantation/data/qualityInventory";
-import { getClubLevelInfo } from "./clubProgression";
+import { getClubLevelInfo, readClubReputation, writeClubReputation } from "./clubProgression";
 
-const REPUTATION_STORAGE_KEY = "growapp-club-reputation";
 
 const PRODUCTS = Object.fromEntries(
   CROPS.map((crop) => [
@@ -24,19 +23,15 @@ const PRODUCTS = Object.fromEntries(
 );
 
 
-function readRep() {
-  try { return Math.max(0, Math.floor(Number(localStorage.getItem(REPUTATION_STORAGE_KEY)) || 0)); } catch { return 0; }
-}
-
 
 function ProductArt({ product }) {
   if (product.image) return <img src={product.image} alt={product.name} draggable="false" />;
   return <span>{product.icon}</span>;
 }
 
-export default function ClubScreen({ inventory, setInventory, qualityInventory = {}, setQualityInventory, coins, setCoins, onSaleCompleted, onGoBack }) {
+export default function ClubScreen({ setInventory, qualityInventory = {}, setQualityInventory, coins, setCoins, onSaleCompleted, onGoBack }) {
   const stripRef = useRef(null);
-  const [reputation, setReputation] = useState(readRep);
+  const [reputation, setReputation] = useState(readClubReputation);
   const [selectedKey, setSelectedKey] = useState(null);
   const [amount, setAmount] = useState(1);
   const [notice, setNotice] = useState("Сегодня клуб берёт свежий товар. Чем выше качество — тем выше цена и уважение.");
@@ -74,10 +69,8 @@ export default function ClubScreen({ inventory, setInventory, qualityInventory =
   };
 
   const saveRep = (value) => {
-    const next = Math.max(0, Math.floor(value));
+    const next = writeClubReputation(value);
     setReputation(next);
-    try { localStorage.setItem(REPUTATION_STORAGE_KEY, String(next)); } catch {}
-    window.dispatchEvent(new CustomEvent("growapp-club-reputation-change", { detail: { reputation: next } }));
   };
 
   const choose = (stack) => {

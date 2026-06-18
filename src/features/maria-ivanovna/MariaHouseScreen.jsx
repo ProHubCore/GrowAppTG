@@ -3,116 +3,45 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ASSETS } from "../../core/assets/assetCatalog";
 import { triggerTelegramNotification } from "../../core/telegram";
 import { MARIA_TRUST_LEVELS, getMariaTrustInfo } from "./mariaProgression";
+import { CROP_IDS } from "../plantation/data/crops";
+import { MARIA_CHAPTERS, MARIA_QUESTS } from "./mariaQuests";
 import "./MariaHouseScreen.css";
-
-export const MARIA_QUESTS = [
-  {
-    id: "maria-tabakko-delivery",
-    title: "Первая связка",
-    label: "Дело Марии Ивановны",
-    description: "Начнём с простого. Вырасти и принеси Марии Ивановне три листа Табакко.",
-    icon: "🌿",
-    previousQuestId: null,
-    objective: { type: "deliver", itemId: "tabakko", amount: 3 },
-    reward: { coins: 300, trust: 25 },
-  },
-  {
-    id: "maria-buy-watering-can",
-    title: "Инструмент садовода",
-    label: "Дело магазина",
-    description: "Мария Ивановна договорилась с Зориком. Купи у него старую лейку — она останется у тебя навсегда.",
-    icon: "💧",
-    previousQuestId: "maria-tabakko-delivery",
-    objective: { type: "own-tool", itemId: "wateringCan", amount: 1 },
-    reward: { coins: 150, trust: 10 },
-  },
-  {
-    id: "maria-first-watering",
-    title: "Полив по уму",
-    label: "Урок Марии Ивановны",
-    description: "Посади Табакко и полей любую стадию роста. Лейка должна срезать ровно 20% времени стадии.",
-    icon: "💦",
-    previousQuestId: "maria-buy-watering-can",
-    objective: { type: "care-use", careType: "water", amount: 1 },
-    reward: { coins: 250, trust: 25 },
-  },
-  {
-    id: "maria-kisloplod-seed",
-    title: "Кислая поставка",
-    label: "Новая культура",
-    description: "После урока Зорик открыл семена Кислоплода. Купи хотя бы одно семя.",
-    icon: "🟢",
-    previousQuestId: "maria-first-watering",
-    objective: { type: "own-seed", itemId: "greenTomato", amount: 1 },
-    reward: { coins: 200, trust: 15 },
-  },
-  {
-    id: "maria-kisloplod-harvest",
-    title: "Кислый урожай",
-    label: "Особое дело",
-    description: "Вырасти Кислоплод и передай Марии Ивановне один спелый плод.",
-    icon: "◉",
-    previousQuestId: "maria-kisloplod-seed",
-    objective: { type: "deliver", itemId: "greenTomato", amount: 1 },
-    reward: { coins: 600, trust: 35 },
-  },
-  {
-    id: "maria-koka-seed",
-    title: "Третья культура",
-    label: "Закрытая поставка",
-    description: "Теперь Зорик готов продать семена Кока Новы. Купи одно семя для проверки.",
-    icon: "🍃",
-    previousQuestId: "maria-kisloplod-harvest",
-    objective: { type: "own-seed", itemId: "kokaNova", amount: 1 },
-    reward: { coins: 250, trust: 15 },
-  },
-  {
-    id: "maria-koka-harvest",
-    title: "Проверка Кока Новы",
-    label: "Финал первой главы",
-    description: "Вырасти Кока Нову и принеси Марии Ивановне один зрелый урожай.",
-    icon: "★",
-    previousQuestId: "maria-koka-seed",
-    objective: { type: "deliver", itemId: "kokaNova", amount: 1 },
-    reward: { coins: 900, trust: 35 },
-  },
-  {
-    id: "maria-quality-tabakko",
-    title: "Не просто лист",
-    label: "Мастерство выращивания",
-    description: "Получи Табакко качеством не ниже хорошего.",
-    icon: "◆",
-    previousQuestId: "maria-koka-harvest",
-    objective: { type: "quality-rank", itemId: "tabakko", rank: 1, amount: 1 },
-    reward: { coins: 500, trust: 20 },
-  },
-  {
-    id: "maria-nutrition-care",
-    title: "Рука садовода",
-    label: "Испытание Марии Ивановны",
-    description: "Купи и используй питательный раствор во время роста.",
-    icon: "🌿",
-    previousQuestId: "maria-quality-tabakko",
-    objective: { type: "care-use", careType: "nutrition", amount: 1 },
-    reward: { coins: 700, trust: 60 },
-  },
-];
 
 function getQuestProgress(quest, inventory, seedInventory, careInventory, clubReputation, questState, plantCatalog) {
   const objective = quest.objective;
+
   if (objective.type === "deliver") return inventory?.[objective.itemId] || 0;
+  if (objective.type === "deliver-set") {
+    return Object.entries(objective.items || {}).reduce(
+      (total, [itemId, amount]) => total + Math.min(inventory?.[itemId] || 0, amount),
+      0,
+    );
+  }
   if (objective.type === "club-sale") return questState?.clubSales?.[objective.itemId] || 0;
+  if (objective.type === "club-sale-each") {
+    return Math.min(...CROP_IDS.map((itemId) => questState?.clubSales?.[itemId] || 0));
+  }
   if (objective.type === "own-seed") return seedInventory?.[objective.itemId] || 0;
   if (objective.type === "own-tool") return careInventory?.[objective.itemId] || 0;
   if (objective.type === "club-reputation") return clubReputation || 0;
   if (objective.type === "quality-rank") {
     return (plantCatalog?.[objective.itemId]?.bestQualityRank ?? -1) >= objective.rank ? 1 : 0;
   }
+  if (objective.type === "quality-any") {
+    return Object.values(plantCatalog || {}).some(
+      (record) => (record?.bestQualityRank ?? -1) >= objective.rank,
+    ) ? 1 : 0;
+  }
   if (objective.type === "care-use") return questState?.careUses?.[objective.careType] || 0;
   if (objective.type === "rare-discovery") {
     return Object.values(plantCatalog || {}).some((record) => (record?.qualities?.rare || 0) > 0) ? 1 : 0;
   }
   return 0;
+}
+
+function getQuestLabel(quest) {
+  const chapter = MARIA_CHAPTERS.find((item) => item.id === quest?.chapter);
+  return chapter ? `Глава ${chapter.id} · ${chapter.title}` : "Дело Марии Ивановны";
 }
 
 export default function MariaHouseScreen({
@@ -133,28 +62,24 @@ export default function MariaHouseScreen({
   const canOpenBoard = !isTutorialActive || tutorialStep === "open-maria-board";
   const canClaimTutorialQuest = !isTutorialActive || tutorialStep === "claim-first-quest";
 
-  const completedQuestIds = Array.isArray(questState?.completedQuestIds)
-    ? questState.completedQuestIds
-    : [];
+  const completedQuestIds = useMemo(
+    () => Array.isArray(questState?.completedQuestIds)
+      ? questState.completedQuestIds
+      : [],
+    [questState],
+  );
   const trust = Math.max(0, Number(questState?.trust) || 0);
   const trustInfo = getMariaTrustInfo(trust);
-  const [panel, setPanel] = useState(null);
+  const [panel, setPanel] = useState(() =>
+    tutorialStep === "claim-first-quest" || tutorialStep === "onboarding-finish"
+      ? "quests"
+      : null,
+  );
   const [section, setSection] = useState("active");
   const [cardIndex, setCardIndex] = useState(0);
   const [message, setMessage] = useState("На доске — дела района. Подойди, ученик, разберёмся по порядку.");
   const [rewardPopup, setRewardPopup] = useState(null);
   const touchStartY = useRef(null);
-
-  useEffect(() => {
-    if (
-      tutorialStep === "claim-first-quest" ||
-      tutorialStep === "onboarding-finish"
-    ) {
-      setPanel("quests");
-      setSection("active");
-      setCardIndex(0);
-    }
-  }, [tutorialStep]);
 
   useEffect(() => {
     if (
@@ -213,6 +138,14 @@ export default function MariaHouseScreen({
       }
     }
 
+    if (!force && selectedQuest.objective.type === "deliver-set") {
+      const delivered = onDeliverItems?.({ items: selectedQuest.objective.items });
+      if (delivered === false) {
+        setMessage("Проверь инвентарь: для полной поставки не хватает урожая.");
+        return;
+      }
+    }
+
     const nextCompleted = [...completedQuestIds, selectedQuest.id];
     const nextTrust = trust + selectedQuest.reward.trust;
     updateQuestState({ completedQuestIds: nextCompleted, trust: nextTrust });
@@ -224,12 +157,18 @@ export default function MariaHouseScreen({
 
     const nextInfo = getMariaTrustInfo(nextTrust);
     triggerTelegramNotification("success");
+    const isChapterFinale = selectedQuest.id === "maria-final-delivery";
     setRewardPopup({
       coins: selectedQuest.reward.coins,
       trust: selectedQuest.reward.trust,
       levelUp: nextInfo.current.level > trustInfo.current.level ? nextInfo.current : null,
+      finale: isChapterFinale,
     });
-    setMessage("Дело закрыто. Награда твоя, записка отправлена в архив.");
+    setMessage(
+      isChapterFinale
+        ? "Первая глава закрыта. Ключ от старого лифта теперь твой — подвал дождётся следующей истории."
+        : "Дело закрыто. Награда твоя, записка отправлена в архив.",
+    );
     setCardIndex(0);
 
     if (
@@ -392,7 +331,7 @@ export default function MariaHouseScreen({
                   }}
                 >
                   <div className="maria-quest-topline">
-                    <span>{selectedQuest.label}</span>
+                    <span>{getQuestLabel(selectedQuest)}</span>
                     <b>{safeIndex + 1}/{cards.length}</b>
                   </div>
                   <div className="maria-quest-icon">{isLocked ? "🔒" : selectedQuest.icon}</div>
@@ -420,7 +359,16 @@ export default function MariaHouseScreen({
                   )}
                 </div>
               ) : (
-                <div className="maria-empty-panel">{section === "archive" ? "Архив пока пуст." : "Все текущие дела закрыты."}</div>
+                <div className="maria-empty-panel">
+                  {section === "archive"
+                    ? "Архив пока пуст."
+                    : (
+                      <>
+                        <strong>Первая глава завершена 🔑</strong>
+                        <span>Все 40 дел закрыты. Ключ от старого лифта получен.</span>
+                      </>
+                    )}
+                </div>
               )}
 
               {cards.length > 1 && !isTutorialActive && (
@@ -467,6 +415,7 @@ export default function MariaHouseScreen({
           <strong>Дело закрыто</strong>
           <span>🪙 +{rewardPopup.coins} · 🤝 +{rewardPopup.trust}</span>
           {rewardPopup.levelUp && <em>Новый уровень: {rewardPopup.levelUp.title}</em>}
+          {rewardPopup.finale && <em>🔑 Ключ от старого лифта получен</em>}
         </div>
       )}
     </main>

@@ -2,66 +2,165 @@
   position: fixed;
 
   top: max(
-    104px,
+    92px,
     calc(
       var(
         --tg-content-safe-area-inset-top,
-        var(
-          --tg-safe-area-inset-top,
-          0px
-        )
-      ) + 34px
+        var(--tg-safe-area-inset-top, 0px)
+      ) + 26px
     )
   );
 
   left: max(
-    18px,
+    14px,
     calc(
       var(
         --tg-content-safe-area-inset-left,
-        var(
-          --tg-safe-area-inset-left,
-          0px
-        )
-      ) + 18px
+        var(--tg-safe-area-inset-left, 0px)
+      ) + 14px
     )
   );
 
   z-index: 900;
 
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
 
-  width: 66px;
-  height: 66px;
+  width: 76px;
+  height: 91px;
 
   margin: 0;
-  padding: 0;
+  padding: 8px 7px 7px;
 
-  border: 0;
-  border-radius: 50%;
+  border: 2px solid #8b6440;
+  border-radius: 7px 7px 9px 9px;
 
-  background: transparent;
+  background:
+    linear-gradient(90deg, rgba(255, 239, 190, 0.08), transparent 17% 83%, rgba(0, 0, 0, 0.18)),
+    repeating-linear-gradient(0deg, #5f4029 0 5px, #51351f 5px 10px);
 
-  box-shadow: none;
+  box-shadow:
+    0 8px 14px rgba(0, 0, 0, 0.42),
+    0 2px 0 rgba(23, 14, 8, 0.68),
+    inset 0 0 0 2px rgba(29, 17, 10, 0.56),
+    inset 0 1px 0 rgba(255, 232, 178, 0.17);
 
   cursor: pointer;
+  transform: rotate(-1.2deg);
 
-  -webkit-tap-highlight-color:
-    transparent;
+  -webkit-tap-highlight-color: transparent;
 
   transition:
     transform 150ms ease,
-    filter 150ms ease;
+    filter 150ms ease,
+    opacity 150ms ease;
+}
+
+.player-profile-button::before,
+.player-profile-button::after {
+  content: "";
+  position: absolute;
+  top: 5px;
+
+  width: 4px;
+  height: 4px;
+
+  border: 1px solid rgba(27, 18, 11, 0.8);
+  border-radius: 50%;
+
+  background: radial-gradient(circle at 35% 30%, #d5bd87, #5b452f 75%);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
+}
+
+.player-profile-button::before {
+  left: 5px;
+}
+
+.player-profile-button::after {
+  right: 5px;
 }
 
 .player-profile-button:active {
-  transform: scale(0.92);
+  transform: rotate(-1.2deg) translateY(3px) scale(0.96);
 }
 
 .player-profile-button:hover {
   filter: brightness(1.08);
+}
+
+.player-profile-frame__hanger {
+  position: absolute;
+  top: -16px;
+  left: 50%;
+
+  width: 28px;
+  height: 18px;
+
+  border-top: 2px solid rgba(119, 101, 72, 0.92);
+  border-left: 2px solid rgba(119, 101, 72, 0.92);
+
+  transform: translateX(-50%) rotate(45deg);
+  transform-origin: center;
+
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.45));
+}
+
+.player-profile-frame__hanger::after {
+  content: "";
+  position: absolute;
+  top: -6px;
+  left: -6px;
+
+  width: 6px;
+  height: 6px;
+
+  border-radius: 50%;
+  background: #9b8158;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.65);
+}
+
+.player-profile-frame__portrait {
+  display: grid;
+  place-items: center;
+
+  width: 60px;
+  height: 60px;
+  padding: 3px;
+
+  border: 1px solid rgba(232, 216, 167, 0.34);
+  border-radius: 5px;
+
+  background: #17120e;
+
+  box-shadow:
+    inset 0 0 0 2px rgba(92, 65, 39, 0.86),
+    0 2px 5px rgba(0, 0, 0, 0.44);
+}
+
+.player-profile-frame__plate {
+  display: grid;
+  place-items: center;
+
+  min-width: 55px;
+  height: 14px;
+  margin-top: 4px;
+  padding: 0 5px;
+
+  border: 1px solid rgba(37, 28, 18, 0.72);
+  border-radius: 3px;
+
+  background: linear-gradient(180deg, #c2a66e, #80623c);
+  color: #25190f;
+
+  font-size: 7px;
+  font-weight: 1000;
+  letter-spacing: 0.12em;
+  line-height: 1;
+
+  text-shadow: 0 1px rgba(255, 236, 180, 0.28);
+  box-shadow: inset 0 1px rgba(255, 239, 190, 0.2);
 }
 
 .player-avatar {
@@ -89,19 +188,23 @@
 }
 
 .player-avatar--small {
-  width: 64px;
-  height: 64px;
+  width: 54px;
+  height: 54px;
 
-  border: 2px solid
-    rgba(216, 244, 180, 0.88);
+  border: 1px solid rgba(216, 244, 180, 0.52);
+  border-radius: 3px;
 
-  font-size: 17px;
+  font-size: 16px;
 
   box-shadow:
-    0 5px 16px
-      rgba(0, 0, 0, 0.48),
-    0 0 12px
-      rgba(143, 227, 91, 0.2);
+    0 3px 8px rgba(0, 0, 0, 0.46),
+    0 0 9px rgba(143, 227, 91, 0.12);
+}
+
+.player-profile-frame__portrait .player-avatar,
+.player-profile-frame__portrait .player-avatar img,
+.player-profile-frame__portrait .player-avatar__initials {
+  border-radius: 3px;
 }
 
 .player-avatar--large {
@@ -684,13 +787,18 @@
       )
     );
 
-    width: 60px;
-    height: 60px;
+    width: 70px;
+    height: 84px;
+  }
+
+  .player-profile-frame__portrait {
+    width: 55px;
+    height: 55px;
   }
 
   .player-avatar--small {
-    width: 58px;
-    height: 58px;
+    width: 49px;
+    height: 49px;
   }
 
   .player-profile-modal {

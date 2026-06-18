@@ -1,5 +1,13 @@
 import { useEffect } from "react";
 
+const LAST_GROWING_STAGE = 2;
+const CURRENT_GROWTH_TIMING_VERSION = 2;
+
+function getFiniteTimestamp(value) {
+  const timestamp = Number(value);
+  return Number.isFinite(timestamp) && timestamp > 0 ? timestamp : null;
+}
+
 function getUpdatedPotState(potState, now, defaultGrowTime) {
   if (!potState?.unlocked) {
     return potState;
@@ -9,84 +17,68 @@ function getUpdatedPotState(potState, now, defaultGrowTime) {
     return potState;
   }
 
+  // growTime — это полное время от посадки до готового урожая.
+  // Визуальная смена фазы происходит внутри этого единого интервала.
   const growTime = Math.max(
     1,
-    Number(potState.growTime) || defaultGrowTime
+    Number(potState.growTime) || defaultGrowTime,
   );
-
-  const stageDurationMs = growTime * 1000;
-
-  /*
-   * Поддержка старых сохранений:
-   * если растение растёт, но точного времени нет,
-   * создаём новое время окончания стадии.
-   */
-  if (!potState.nextGrowthAt) {
-    return {
-      ...potState,
-      growTime,
-      timeLeft: growTime,
-      nextGrowthAt: now + stageDurationMs,
-    };
-  }
+  const totalDurationMs = growTime * 1000;
+  const phaseDurationMs = Math.max(1000, totalDurationMs / LAST_GROWING_STAGE);
 
   let growStep = potState.growStep;
-  let nextGrowthAt = Number(potState.nextGrowthAt);
+  let nextGrowthAt = getFiniteTimestamp(potState.nextGrowthAt);
+  let harvestAt = getFiniteTimestamp(potState.harvestAt);
 
-  if (!Number.isFinite(nextGrowthAt)) {
-    nextGrowthAt = now + stageDurationMs;
+  if (!harvestAt && nextGrowthAt) {
+    harvestAt =
+      growStep === 1
+        ? nextGrowthAt + phaseDurationMs
+        : nextGrowthAt;
   }
 
-  /*
-   * Самое важное:
-   * учитываем всё время, которое прошло офлайн.
-   *
-   * Например:
-   * стадия 1 закончилась 20 секунд назад,
-   * стадия 2 тоже уже должна была закончиться —
-   * растение сразу становится готовым.
-   */
-  while (growStep < 3 && now >= nextGrowthAt) {
-    growStep += 1;
-
-    if (growStep < 3) {
-      /*
-       * Не считаем от текущего времени.
-       * Продолжаем считать от старого дедлайна,
-       * чтобы не потерять офлайн-время.
-       */
-      nextGrowthAt += stageDurationMs;
-    }
+  if (!harvestAt) {
+    const remainingFraction =
+      growStep === 1 ? 1 : 1 / LAST_GROWING_STAGE;
+    harvestAt = now + totalDurationMs * remainingFraction;
   }
 
-  if (growStep >= 3) {
-    if (
-      potState.growStep === 3 &&
-      potState.timeLeft === 0 &&
-      potState.nextGrowthAt === null
-    ) {
-      return potState;
-    }
+  if (!nextGrowthAt) {
+    nextGrowthAt =
+      growStep === 1
+        ? Math.min(harvestAt, now + phaseDurationMs)
+        : harvestAt;
+  }
 
+  if (now >= harvestAt) {
     return {
       ...potState,
       growStep: 3,
       growTime,
       timeLeft: 0,
       nextGrowthAt: null,
+      harvestAt: null,
+      growthTimingVersion: CURRENT_GROWTH_TIMING_VERSION,
     };
   }
 
-  const timeLeft = Math.max(
-    0,
-    Math.ceil((nextGrowthAt - now) / 1000)
-  );
+  // Картинка растения меняется, но общий таймер до harvestAt не сбрасывается.
+  if (growStep === 1 && now >= nextGrowthAt) {
+    growStep = 2;
+    nextGrowthAt = harvestAt;
+  } else if (growStep === 2 && nextGrowthAt !== harvestAt) {
+    nextGrowthAt = harvestAt;
+  }
+
+  const timeLeft = Math.max(0, Math.ceil((harvestAt - now) / 1000));
 
   if (
     potState.growStep === growStep &&
     potState.growTime === growTime &&
     potState.timeLeft === timeLeft &&
-    potState.nextGrowthAt === nextGrowthAt
+    potState.nextGrowthAt === nextGrowthAt &&
+    potState.harvestAt === harvestAt &&
+    potState.growthTimingVersion === CURRENT_GROWTH_TIMING_VERSION
   ) {
     return potState;
   }
@@ -97,6 +89,8 @@ function getUpdatedPotState(potState, now, defaultGrowTime) {
     growTime,
     timeLeft,
     nextGrowthAt,
+    harvestAt,
+    growthTimingVersion: CURRENT_GROWTH_TIMING_VERSION,
   };
 }
 
@@ -116,7 +110,7 @@ function usePotGrowth(setPotStates, defaultGrowTime) {
           const updatedPotState = getUpdatedPotState(
             potState,
             now,
-            defaultGrowTime
+            defaultGrowTime,
           );
 
           if (updatedPotState !== potState) {
@@ -130,18 +124,10 @@ function usePotGrowth(setPotStates, defaultGrowTime) {
       });
     };
 
-    /*
-     * Сразу пересчитываем растения при открытии игры.
-     */
     updateGrowth();
 
     const interval = window.setInterval(updateGrowth, 1000);
 
-    /*
-     * Telegram и браузер могут замораживать таймеры,
-     * когда приложение свёрнуто.
-     * Поэтому пересчитываем рост при возвращении.
-     */
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
         updateGrowth();
@@ -152,25 +138,13 @@ function usePotGrowth(setPotStates, defaultGrowTime) {
       updateGrowth();
     };
 
-    document.addEventListener(
-      "visibilitychange",
-      handleVisibilityChange
-    );
-
+    document.addEventListener("visibilitychange", handleVisibilityChange);
     window.addEventListener("focus", handleWindowFocus);
 
     return () => {
       window.clearInterval(interval);
-
-      document.removeEventListener(
-        "visibilitychange",
-        handleVisibilityChange
-      );
-
-      window.removeEventListener(
-        "focus",
-        handleWindowFocus
-      );
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("focus", handleWindowFocus);
     };
   }, [setPotStates, defaultGrowTime]);
 }

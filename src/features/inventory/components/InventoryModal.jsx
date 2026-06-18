@@ -234,8 +234,12 @@ export default function InventoryModal({
   const dragPositionRef = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
-    setLayouts((previous) => reconcileLayouts(previous, stacks));
-    setSelectedKey((previous) => (previous && stackMap[previous] ? previous : null));
+    const frameId = window.requestAnimationFrame(() => {
+      setLayouts((previous) => reconcileLayouts(previous, stacks));
+      setSelectedKey((previous) => (previous && stackMap[previous] ? previous : null));
+    });
+
+    return () => window.cancelAnimationFrame(frameId);
   }, [stacks, stackMap]);
 
   useEffect(() => {

@@ -5,52 +5,49 @@ function BottomMenu({
   tutorialStep,
   onGoPlantation,
   onGoDistrict,
-  onGoSupport,
   readyPlants = 0,
 }) {
+  if (activeScreen !== "plantation" && activeScreen !== "district") {
+    return null;
+  }
+
   const tutorialActive = tutorialStep !== "completed";
   const districtAllowed = tutorialStep === "go-district";
+  const goesToDistrict = activeScreen === "plantation";
+  const disabled = goesToDistrict
+    ? tutorialActive && !districtAllowed
+    : tutorialActive;
 
   return (
-    <div className="bottom-menu">
+    <nav className="bottom-menu" aria-label="Переход между локациями">
       <button
-        className={`bottom-menu-button ${
-          activeScreen === "plantation" ? "active" : ""
+        type="button"
+        className={`bottom-menu-button bottom-menu-button--${
+          goesToDistrict ? "district" : "plantation"
         }`}
-        disabled={tutorialActive}
-        onClick={onGoPlantation}
+        disabled={disabled}
+        onClick={goesToDistrict ? onGoDistrict : onGoPlantation}
+        aria-label={goesToDistrict ? "Перейти в район" : "Вернуться на плантацию"}
       >
-        🪴
-        <span>Плантация</span>
-        {readyPlants > 0 && (
-          <b className="bottom-menu-badge" aria-label={`Готово растений: ${readyPlants}`}>
+        <span className="bottom-menu-button__icon" aria-hidden="true">
+          <span className="bottom-menu-button__mark" />
+        </span>
+
+        <span className="bottom-menu-button__copy">
+          <small>ПЕРЕЙТИ</small>
+          <strong>{goesToDistrict ? "В район" : "На плантацию"}</strong>
+        </span>
+
+        {!goesToDistrict && readyPlants > 0 && (
+          <b
+            className="bottom-menu-badge"
+            aria-label={`Готово растений: ${readyPlants}`}
+          >
             {readyPlants}
           </b>
         )}
       </button>
-
-      <button
-        className={`bottom-menu-button ${
-          activeScreen === "district" ? "active" : ""
-        }`}
-        disabled={tutorialActive && !districtAllowed}
-        onClick={onGoDistrict}
-      >
-        🌆
-        <span>Район</span>
-      </button>
-
-      <button
-        className={`bottom-menu-button ${
-          activeScreen === "support" ? "active" : ""
-        }`}
-        disabled={tutorialActive}
-        onClick={onGoSupport}
-      >
-        ◆
-        <span>G-монеты</span>
-      </button>
-    </div>
+    </nav>
   );
 }
 

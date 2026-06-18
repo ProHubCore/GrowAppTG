@@ -87,22 +87,19 @@ export default function HarvestCareModal({
               empty ||
               alreadyUsed;
 
-            let status = "";
-            if (!canApplyCare) {
-              status = "Уход доступен только на 1-й и 2-й стадии роста";
-            } else if (alreadyUsed && isWater) {
-              status = `Стадия ${currentStage} уже полита`;
-            } else if (alreadyUsed) {
-              status = "Уже применено в этом цикле";
-            } else if (missingTool) {
-              status = "Сначала купи лейку у Зорика";
-            } else if (lockedByTrust) {
-              status = `Откроется при ${option.requiredTrust} доверия Марии Ивановны`;
-            } else if (isWater) {
-              status = `Можно полить стадию ${currentStage}`;
-            } else {
-              status = `В запасе: ${amount}`;
-            }
+            const status = !canApplyCare
+              ? "Уход доступен только на 1-й и 2-й стадии роста"
+              : alreadyUsed && isWater
+                ? `Стадия ${currentStage} уже полита`
+                : alreadyUsed
+                  ? "Уже применено в этом цикле"
+                  : missingTool
+                    ? "Сначала купи лейку у Зорика"
+                    : lockedByTrust
+                      ? `Откроется при ${option.requiredTrust} доверия Марии Ивановны`
+                      : isWater
+                        ? `Можно полить стадию ${currentStage}`
+                        : `В запасе: ${amount}`;
 
             return (
               <button

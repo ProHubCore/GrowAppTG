@@ -3,114 +3,13 @@ import {
   getTelegramPlayer,
   triggerTelegramHaptic,
 } from "../../core/telegram";
+import {
+  CLUB_REPUTATION_EVENT,
+  CLUB_REPUTATION_STORAGE_KEY,
+  getClubLevelInfo,
+  readClubReputation,
+} from "../club/clubProgression";
 import "./PlayerProfile.css";
-
-const REPUTATION_STORAGE_KEY =
-  "growapp-club-reputation";
-
-const CLUB_LEVELS = [
-  {
-    level: 1,
-    title: "Новый знакомый",
-    required: 0,
-  },
-  {
-    level: 2,
-    title: "Свой человек",
-    required: 50,
-  },
-  {
-    level: 3,
-    title: "Надёжный поставщик",
-    required: 150,
-  },
-  {
-    level: 4,
-    title: "Звезда клуба",
-    required: 300,
-  },
-  {
-    level: 5,
-    title: "Легенда района",
-    required: 600,
-  },
-];
-
-function readClubReputation() {
-  try {
-    const savedValue = Number(
-      localStorage.getItem(
-        REPUTATION_STORAGE_KEY,
-      ),
-    );
-
-    if (
-      Number.isFinite(savedValue) &&
-      savedValue >= 0
-    ) {
-      return Math.floor(savedValue);
-    }
-
-    return 0;
-  } catch {
-    return 0;
-  }
-}
-
-function getClubProgress(reputation) {
-  let currentLevel = CLUB_LEVELS[0];
-
-  for (const level of CLUB_LEVELS) {
-    if (reputation >= level.required) {
-      currentLevel = level;
-    }
-  }
-
-  const currentIndex =
-    CLUB_LEVELS.findIndex(
-      (level) =>
-        level.level === currentLevel.level,
-    );
-
-  const nextLevel =
-    CLUB_LEVELS[currentIndex + 1] || null;
-
-  if (!nextLevel) {
-    return {
-      currentLevel,
-      nextLevel: null,
-      currentProgress:
-        reputation - currentLevel.required,
-      requiredProgress: 0,
-      progressPercent: 100,
-    };
-  }
-
-  const requiredProgress =
-    nextLevel.required -
-    currentLevel.required;
-
-  const currentProgress =
-    reputation - currentLevel.required;
-
-  const progressPercent = Math.max(
-    0,
-    Math.min(
-      100,
-      (currentProgress /
-        requiredProgress) *
-        100,
-    ),
-  );
-
-  return {
-    currentLevel,
-    nextLevel,
-    currentProgress,
-    requiredProgress,
-    progressPercent,
-  };
-}
 
 function getInitials(user) {
   const firstLetter =
@@ -211,6 +110,11 @@ function PlayerProfile() {
     isPlantationScreenVisible(),
   );
 
+  const [isInterfaceBlocked, setIsInterfaceBlocked] = useState(() =>
+    document.body.dataset.gameOverlayOpen === "true" ||
+    document.body.dataset.tutorialLocked === "true",
+  );
+
   const [
     clubReputation,
     setClubReputation,
@@ -221,11 +125,16 @@ function PlayerProfile() {
       const plantationVisible =
         isPlantationScreenVisible();
 
+      const interfaceBlocked =
+        document.body.dataset.gameOverlayOpen === "true" ||
+        document.body.dataset.tutorialLocked === "true";
+
       setIsPlantationVisible(
         plantationVisible,
       );
+      setIsInterfaceBlocked(interfaceBlocked);
 
-      if (!plantationVisible) {
+      if (!plantationVisible || interfaceBlocked) {
         setIsOpen(false);
       }
     };
@@ -239,6 +148,11 @@ function PlayerProfile() {
     observer.observe(document.body, {
       childList: true,
       subtree: true,
+      attributes: true,
+      attributeFilter: [
+        "data-game-overlay-open",
+        "data-tutorial-locked",
+      ],
     });
 
     return () => {
@@ -270,7 +184,7 @@ function PlayerProfile() {
     const updateFromStorage = (event) => {
       if (
         event.key ===
-        REPUTATION_STORAGE_KEY
+        CLUB_REPUTATION_STORAGE_KEY
       ) {
         setClubReputation(
           readClubReputation(),
@@ -279,7 +193,7 @@ function PlayerProfile() {
     };
 
     window.addEventListener(
-      "growapp-club-reputation-change",
+      CLUB_REPUTATION_EVENT,
       updateReputation,
     );
 
@@ -288,24 +202,23 @@ function PlayerProfile() {
       updateFromStorage,
     );
 
-    const intervalId = window.setInterval(
-      () => {
-        const currentValue =
-          readClubReputation();
+    const refreshReputation = () => {
+      const currentValue = readClubReputation();
+      setClubReputation((previousValue) =>
+        previousValue === currentValue ? previousValue : currentValue,
+      );
+    };
 
-        setClubReputation(
-          (previousValue) =>
-            previousValue === currentValue
-              ? previousValue
-              : currentValue,
-        );
-      },
-      500,
-    );
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") refreshReputation();
+    };
+
+    window.addEventListener("focus", refreshReputation);
+    document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
       window.removeEventListener(
-        "growapp-club-reputation-change",
+        CLUB_REPUTATION_EVENT,
         updateReputation,
       );
 
@@ -314,7 +227,8 @@ function PlayerProfile() {
         updateFromStorage,
       );
 
-      window.clearInterval(intervalId);
+      window.removeEventListener("focus", refreshReputation);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
 
@@ -324,7 +238,7 @@ function PlayerProfile() {
     getDisplayName(user);
 
   const clubProgress =
-    getClubProgress(clubReputation);
+    getClubLevelInfo(clubReputation);
 
   const openProfile = () => {
     if (document.body.dataset.tutorialLocked === "true") {
@@ -340,7 +254,7 @@ function PlayerProfile() {
     setIsOpen(false);
   };
 
-  if (!isPlantationVisible) {
+  if (!isPlantationVisible || isInterfaceBlocked) {
     return null;
   }
 
@@ -353,11 +267,17 @@ function PlayerProfile() {
         onClick={openProfile}
         aria-label="Открыть профиль игрока"
       >
-        <PlayerAvatar
-          user={user}
-          size="small"
-          showStatus
-        />
+        <span className="player-profile-frame__hanger" aria-hidden="true" />
+
+        <span className="player-profile-frame__portrait">
+          <PlayerAvatar
+            user={user}
+            size="small"
+            showStatus
+          />
+        </span>
+
+        <span className="player-profile-frame__plate">УЧАСТНИК</span>
       </button>
 
       {isOpen && (
@@ -459,7 +379,7 @@ function PlayerProfile() {
 
                     <span>
                       {
-                        clubProgress.requiredProgress
+                        clubProgress.nextLevel.required - clubReputation
                       }{" "}
                       до повышения
                     </span>

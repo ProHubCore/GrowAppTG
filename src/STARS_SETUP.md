@@ -1,5 +1,7 @@
 # Telegram Stars → G-монеты
 
+Файл `.env.local` или `.env.production` должен лежать **в корне Vite-проекта рядом с `package.json`**, если `vite.config` явно не задаёт другой `envDir`. Файлы окружения внутри `src` обычно не читаются Vite.
+
 Для оплаты через Telegram Stars укажи endpoint:
 
 ```env

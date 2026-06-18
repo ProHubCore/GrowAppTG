@@ -4,7 +4,7 @@ export const PREMIUM_CURRENCY = Object.freeze({
   shortName: "G",
   icon: "◆",
   storageKey: "growapp-premium-coins",
-  initialTestBalance: 1000,
+  demoStartingBalance: 1000,
   coinsPerStar: 10,
 });
 

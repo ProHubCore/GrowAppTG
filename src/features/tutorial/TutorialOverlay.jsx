@@ -133,7 +133,6 @@ function TutorialOverlay({
 
   useEffect(() => {
     if (!shouldShow || !targetSelector) {
-      setSpotlight(null);
       return undefined;
     }
 
@@ -164,7 +163,7 @@ function TutorialOverlay({
       });
     };
 
-    updateSpotlight();
+    const initialFrame = window.requestAnimationFrame(updateSpotlight);
 
     const timer = window.setInterval(
       updateSpotlight,
@@ -174,6 +173,7 @@ function TutorialOverlay({
     window.addEventListener("resize", updateSpotlight);
 
     return () => {
+      window.cancelAnimationFrame(initialFrame);
       window.clearInterval(timer);
       window.removeEventListener(
         "resize",
@@ -187,8 +187,12 @@ function TutorialOverlay({
     targetSelector,
   ]);
 
+  const visibleSpotlight = shouldShow && targetSelector
+    ? spotlight
+    : null;
+
   const getCoachTop = () => {
-    if (!spotlight) {
+    if (!visibleSpotlight) {
       return null;
     }
 
@@ -203,15 +207,15 @@ function TutorialOverlay({
     const safeBottom = 790;
 
     const roomAbove =
-      spotlight.top - gap - blockHeight;
+      visibleSpotlight.top - gap - blockHeight;
 
     if (roomAbove >= safeTop) {
       return roomAbove;
     }
 
     const roomBelow =
-      spotlight.top +
-      spotlight.height +
+      visibleSpotlight.top +
+      visibleSpotlight.height +
       gap;
 
     return Math.min(
@@ -239,7 +243,7 @@ function TutorialOverlay({
         `tutorial-character-${characterMode}`,
         `tutorial-layout-${layoutMode}`,
         `tutorial-step-${step}`,
-        spotlight ? "tutorial-has-target" : "",
+        visibleSpotlight ? "tutorial-has-target" : "",
       ].join(" ")}
       style={{
         "--tutorial-coach-top":
@@ -249,40 +253,40 @@ function TutorialOverlay({
       }}
       aria-live="polite"
     >
-      {!spotlight && <div className="tutorial-dim-full" />}
+      {!visibleSpotlight && <div className="tutorial-dim-full" />}
 
-      {spotlight && (
+      {visibleSpotlight && (
         <>
           <div
             className="tutorial-dim-panel tutorial-dim-top"
             style={{
-              height: Math.max(0, spotlight.top),
+              height: Math.max(0, visibleSpotlight.top),
             }}
           />
 
           <div
             className="tutorial-dim-panel tutorial-dim-left"
             style={{
-              top: spotlight.top,
-              width: Math.max(0, spotlight.left),
-              height: spotlight.height,
+              top: visibleSpotlight.top,
+              width: Math.max(0, visibleSpotlight.left),
+              height: visibleSpotlight.height,
             }}
           />
 
           <div
             className="tutorial-dim-panel tutorial-dim-right"
             style={{
-              top: spotlight.top,
-              left: spotlight.left + spotlight.width,
+              top: visibleSpotlight.top,
+              left: visibleSpotlight.left + visibleSpotlight.width,
               right: 0,
-              height: spotlight.height,
+              height: visibleSpotlight.height,
             }}
           />
 
           <div
             className="tutorial-dim-panel tutorial-dim-bottom"
             style={{
-              top: spotlight.top + spotlight.height,
+              top: visibleSpotlight.top + visibleSpotlight.height,
               bottom: 0,
             }}
           />
@@ -290,10 +294,10 @@ function TutorialOverlay({
           <div
             className="tutorial-spotlight"
             style={{
-              left: spotlight.left,
-              top: spotlight.top,
-              width: spotlight.width,
-              height: spotlight.height,
+              left: visibleSpotlight.left,
+              top: visibleSpotlight.top,
+              width: visibleSpotlight.width,
+              height: visibleSpotlight.height,
             }}
           />
         </>

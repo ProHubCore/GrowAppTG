@@ -17,7 +17,6 @@ function PlantArea({
   plant,
   growStep,
   timeLeft,
-  growTime,
   unlockPrice,
   isSlotAvailable,
   lockedStatusText,
@@ -26,7 +25,6 @@ function PlantArea({
   canCollect,
   onCollect,
   onSeedClick,
-  onRemoveClick,
   onUnlock,
   onOpenCare,
   careApplied,
@@ -37,13 +35,10 @@ function PlantArea({
   onNextPot,
   navigationDisabled = false,
   seedDisabled = false,
-  removeDisabled = false,
   collectDisabled = false,
   unlockDisabled = false,
-  instantGrowCost = null,
-  premiumBalance = 0,
-  onInstantGrow,
-  instantGrowDisabled = false,
+  onOpenGrowthInfo,
+  growthInfoDisabled = false,
 }) {
   const touchStartX = useRef(null);
   const touchStartY = useRef(null);
@@ -162,7 +157,7 @@ function PlantArea({
         disabled={navigationDisabled || isChanging}
         onClick={() => changePot("previous")}
       >
-        ‹
+        <span className="plantation-arrow__chevron" aria-hidden="true" />
       </button>
 
       <div
@@ -170,18 +165,25 @@ function PlantArea({
       >
         {isUnlocked ? (
           <>
-            <GrowTimer
-              growStep={growStep}
-              timeLeft={timeLeft}
-              growTime={growTime}
-              instantGrowCost={instantGrowCost}
-              premiumBalance={premiumBalance}
-              onInstantGrow={onInstantGrow}
-              instantGrowDisabled={instantGrowDisabled}
-            />
-
             <div className="plant-area">
               <Pot pot={pot} />
+
+              {growStep > 0 && growStep < 3 && (
+                <button
+                  type="button"
+                  className="pot-growth-info-button"
+                  aria-label="Открыть информацию о растении"
+                  disabled={growthInfoDisabled || typeof onOpenGrowthInfo !== "function"}
+                  onClick={onOpenGrowthInfo}
+                />
+              )}
+
+              <GrowTimer
+                growStep={growStep}
+                timeLeft={timeLeft}
+                onOpenInfo={onOpenGrowthInfo}
+                infoDisabled={growthInfoDisabled}
+              />
 
               {plant && (
                 <Plant
@@ -282,7 +284,7 @@ function PlantArea({
         disabled={navigationDisabled || isChanging}
         onClick={() => changePot("next")}
       >
-        ›
+        <span className="plantation-arrow__chevron" aria-hidden="true" />
       </button>
     </div>
   );

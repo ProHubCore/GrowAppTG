@@ -11,7 +11,8 @@ import FlyingLoot from "../plantation/components/FlyingLoot";
 import DistrictScreen from "../district/DistrictScreen";
 import ShopScreen from "../shop/ShopScreen";
 import ClubScreen from "../club/ClubScreen";
-import MariaHouseScreen, { MARIA_QUESTS } from "../maria-ivanovna/MariaHouseScreen";
+import MariaHouseScreen from "../maria-ivanovna/MariaHouseScreen";
+import { MARIA_QUESTS } from "../maria-ivanovna/mariaQuests";
 import ActionModal from "../../shared/components/ActionModal/ActionModal";
 import UnlockCelebration from "../progression/components/UnlockCelebration";
 import SupportScreen from "../support/SupportScreen";
@@ -61,7 +62,7 @@ import {
 import "./GameScreen.css";
 
 const DEFAULT_GROW_TIME = 90;
-const TUTORIAL_GROW_TIME = 8;
+const TUTORIAL_GROW_TIME = 5;
 const INITIAL_COINS = 40;
 
 const STAGE_WIDTH = 390;
@@ -71,22 +72,24 @@ const LAST_SEEN_STORAGE_KEY = "growapp-last-seen-at";
 const OFFLINE_NOTICE_THRESHOLD_MS = 60_000;
 
 
-function createPotState(index) {
+function createPotState() {
   return {
     unlocked: false,
     growStep: 0,
     selectedSeedId: null,
     growTime: DEFAULT_GROW_TIME,
-    timeLeft: DEFAULT_GROW_TIME,
+    timeLeft: 0,
     nextGrowthAt: null,
+    harvestAt: null,
     careApplied: [],
     wateredStages: [],
     potTypeId: "soil",
+    growthTimingVersion: 2,
   };
 }
 
 function createInitialPotStates() {
-  return pots.map((_, index) => createPotState(index));
+  return pots.map(() => createPotState());
 }
 
 function createEmptyPotState(unlocked) {
@@ -95,17 +98,56 @@ function createEmptyPotState(unlocked) {
     growStep: 0,
     selectedSeedId: null,
     growTime: DEFAULT_GROW_TIME,
-    timeLeft: DEFAULT_GROW_TIME,
+    timeLeft: 0,
     nextGrowthAt: null,
+    harvestAt: null,
     careApplied: [],
     wateredStages: [],
     potTypeId: "soil",
+    growthTimingVersion: 2,
   };
 }
 
-function migrateReleaseCoins(value) {
-  const coins = Math.max(0, Math.floor(Number(value) || 0));
-  return coins >= 5_000 ? INITIAL_COINS : coins;
+function normalizeCoins(value) {
+  return Math.max(0, Math.floor(Number(value) || 0));
+}
+
+function formatGrowthTime(seconds) {
+  const safe = Math.max(0, Math.ceil(Number(seconds) || 0));
+  const minutes = Math.floor(safe / 60);
+  const rest = safe % 60;
+
+  return `${String(minutes).padStart(2, "0")}:${String(rest).padStart(2, "0")}`;
+}
+
+function readLastSeenAt() {
+  try {
+    return Math.max(
+      0,
+      Number(localStorage.getItem(LAST_SEEN_STORAGE_KEY)) || 0,
+    );
+  } catch {
+    return 0;
+  }
+}
+
+function getTutorialScreen(step) {
+  if (
+    step === "district-finish" ||
+    step === "open-maria-house"
+  ) {
+    return "district";
+  }
+
+  if (
+    step === "open-maria-board" ||
+    step === "claim-first-quest" ||
+    step === "onboarding-finish"
+  ) {
+    return "maria-house";
+  }
+
+  return "plantation";
 }
 
 function GameScreen() {
@@ -153,17 +195,17 @@ function GameScreen() {
     () => Date.now() + SHOP_REFRESH_MS,
   );
 
-  const [, setShopClock] = useState(Date.now());
+  const [shopClock, setShopClock] = useState(() => Date.now());
 
   const [coins, setCoins] = usePersistentState(
     "growapp-coins",
     INITIAL_COINS,
-    { migrate: migrateReleaseCoins },
+    { migrate: normalizeCoins },
   );
 
   const [premiumCoins, setPremiumCoins] = usePersistentState(
     PREMIUM_CURRENCY.storageKey,
-    PREMIUM_CURRENCY.initialTestBalance,
+    PREMIUM_CURRENCY.demoStartingBalance,
     { migrate: normalizePremiumBalance },
   );
 
@@ -194,22 +236,18 @@ function GameScreen() {
   );
 
   const potStatesRef = useRef(potStates);
-  potStatesRef.current = potStates;
-  const initialLastSeenRef = useRef(0);
-  if (initialLastSeenRef.current === 0) {
-    try {
-      initialLastSeenRef.current = Math.max(0, Number(localStorage.getItem(LAST_SEEN_STORAGE_KEY)) || 0);
-    } catch {
-      initialLastSeenRef.current = 0;
-    }
-  }
+  const [initialLastSeenAt] = useState(readLastSeenAt);
   const [offlineReadyCount, setOfflineReadyCount] = useState(0);
+
+  useEffect(() => {
+    potStatesRef.current = potStates;
+  }, [potStates]);
 
   const [unlockQueue, setUnlockQueue] = useState([]);
   const previousMariaTrustRef = useRef(null);
   const previousClubReputationRef = useRef(null);
 
-  const [activeScreen, setActiveScreen] = useState("plantation");
+  const [activeScreen, setActiveScreen] = useState(() => getTutorialScreen(tutorialStep));
   const {
     viewportRef,
     scale: stageScale,
@@ -223,8 +261,14 @@ function GameScreen() {
     STAGE_HEIGHT,
   );
 
-  const [isSeedModalOpen, setIsSeedModalOpen] = useState(false);
-  const [selectedSeed, setSelectedSeed] = useState(null);
+  const [isSeedModalOpen, setIsSeedModalOpen] = useState(
+    () => tutorialStep === "choose-seed" || tutorialStep === "plant-seed",
+  );
+  const [selectedSeed, setSelectedSeed] = useState(() =>
+    tutorialStep === "plant-seed"
+      ? seeds.find((seed) => seed.id === "tabakko") || null
+      : null,
+  );
 
   const [isRemoveModalOpen, setIsRemoveModalOpen] =
     useState(false);
@@ -234,7 +278,6 @@ function GameScreen() {
   const [isInventoryFullModalOpen, setIsInventoryFullModalOpen] = useState(false);
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
   const [isPotTypeModalOpen, setIsPotTypeModalOpen] = useState(false);
-  const [potTypeMode, setPotTypeMode] = useState("change");
   const [harvestResult, setHarvestResult] = useState(null);
 
   const [flyingLootItems, setFlyingLootItems] = useState([]);
@@ -348,6 +391,27 @@ function GameScreen() {
   const isTutorialActive =
     tutorialStep !== "completed";
 
+  const hasBlockingOverlay = Boolean(
+    isSeedModalOpen ||
+    isRemoveModalOpen ||
+    isInventoryOpen ||
+    isCareModalOpen ||
+    isInventoryFullModalOpen ||
+    isCatalogOpen ||
+    isPotTypeModalOpen ||
+    harvestResult ||
+    offlineReadyCount > 0 ||
+    instantGrowRequest ||
+    isResetProgressModalOpen ||
+    isUnavailableModalOpen ||
+    unlockQueue.length > 0
+  );
+
+  const showBottomMenu =
+    !hasBlockingOverlay &&
+    (activeScreen === "plantation" || activeScreen === "district") &&
+    (!isTutorialActive || tutorialStep === "go-district");
+
   const tutorialAllows = (action) => {
     if (!isTutorialActive) {
       return true;
@@ -384,8 +448,8 @@ function GameScreen() {
     };
 
     const checkTimer = window.setTimeout(() => {
-      const awayFor = Date.now() - initialLastSeenRef.current;
-      if (initialLastSeenRef.current <= 0 || awayFor < OFFLINE_NOTICE_THRESHOLD_MS) return;
+      const awayFor = Date.now() - initialLastSeenAt;
+      if (initialLastSeenAt <= 0 || awayFor < OFFLINE_NOTICE_THRESHOLD_MS) return;
 
       const readyCount = (potStatesRef.current || []).filter(
         (potState) => potState?.unlocked && potState.growStep === 3,
@@ -412,7 +476,7 @@ function GameScreen() {
       window.removeEventListener("pagehide", saveLastSeen);
       saveLastSeen();
     };
-  }, []);
+  }, [initialLastSeenAt]);
 
   useEffect(() => {
     setPotStates((previousStates) =>
@@ -420,11 +484,11 @@ function GameScreen() {
         const savedState = previousStates[index];
 
         if (!savedState) {
-          return createPotState(index);
+          return createPotState();
         }
 
         return {
-          ...createPotState(index),
+          ...createPotState(),
           ...savedState,
           unlocked: Boolean(savedState.unlocked),
         };
@@ -443,59 +507,13 @@ function GameScreen() {
   }, [isTutorialActive]);
 
   useEffect(() => {
-    if (!isTutorialActive) {
-      return;
-    }
+    document.body.dataset.gameOverlayOpen =
+      hasBlockingOverlay ? "true" : "false";
 
-    if (
-      tutorialStep === "district-finish" ||
-      tutorialStep === "open-maria-house"
-    ) {
-      setActiveScreen("district");
-      setIsSeedModalOpen(false);
-      setSelectedSeed(null);
-      return;
-    }
-
-    if (
-      tutorialStep === "open-maria-board" ||
-      tutorialStep === "claim-first-quest" ||
-      tutorialStep === "onboarding-finish"
-    ) {
-      setActiveScreen("maria-house");
-      setIsSeedModalOpen(false);
-      setSelectedSeed(null);
-      return;
-    }
-
-    setActiveScreen("plantation");
-    setCurrentPotIndex(0);
-    setIsInventoryOpen(false);
-    setIsCareModalOpen(false);
-    setIsCatalogOpen(false);
-    setHarvestResult(null);
-    setIsRemoveModalOpen(false);
-    setPendingSlotIndex(null);
-    setIsUnavailableModalOpen(false);
-
-    if (tutorialStep === "choose-seed") {
-      setSelectedSeed(null);
-      setIsSeedModalOpen(true);
-      return;
-    }
-
-    if (tutorialStep === "plant-seed") {
-      const tutorialSeed =
-        seeds.find((seed) => seed.id === "tabakko") || null;
-
-      setSelectedSeed(tutorialSeed);
-      setIsSeedModalOpen(true);
-      return;
-    }
-
-    setIsSeedModalOpen(false);
-    setSelectedSeed(null);
-  }, [isTutorialActive, tutorialStep]);
+    return () => {
+      delete document.body.dataset.gameOverlayOpen;
+    };
+  }, [hasBlockingOverlay]);
 
   useEffect(() => {
     setQualityInventory((previous) => {
@@ -614,14 +632,6 @@ function GameScreen() {
       ? null
       : plantationSlots[pendingSlotIndex];
 
-  const pendingSlotState = getPlantationSlotState(
-    pendingSlot,
-    clubLevel,
-    pendingSlotIndex === null
-      ? false
-      : Boolean(potStates[pendingSlotIndex]?.unlocked),
-  );
-
   const updateCurrentPotState = (updates) => {
     setPotStates((previousStates) =>
       previousStates.map((potState, index) =>
@@ -695,7 +705,6 @@ function GameScreen() {
     }
 
     setPendingSlotIndex(currentPotIndex);
-    setPotTypeMode("purchase");
     setIsPotTypeModalOpen(true);
   };
 
@@ -708,19 +717,6 @@ function GameScreen() {
     setCoins((value) => value - slot.unlockPrice);
     setPotStates((states) => states.map((state,index)=> index===pendingSlotIndex ? { ...createEmptyPotState(true), potTypeId } : state));
     setPendingSlotIndex(null);
-    setIsPotTypeModalOpen(false);
-  };
-
-  const openPotTypeChange = () => {
-    if (!isCurrentPotUnlocked || growStep !== 0 || isTutorialActive) return;
-    setPotTypeMode("change");
-    setIsPotTypeModalOpen(true);
-  };
-
-  const chooseCurrentPotType = (potTypeId) => {
-    const type = POT_TYPES_BY_ID[potTypeId];
-    if (!type || (mariaQuestState.trust || 0) < type.requiredTrust || growStep !== 0) return;
-    updateCurrentPotState({ potTypeId });
     setIsPotTypeModalOpen(false);
   };
 
@@ -811,6 +807,10 @@ function GameScreen() {
       tutorialStep === "plant-seed"
         ? TUTORIAL_GROW_TIME
         : selectedSeed.growTime || DEFAULT_GROW_TIME;
+    const now = Date.now();
+    const totalGrowTime = Math.max(1, Math.ceil(growTime));
+    const totalGrowDurationMs = totalGrowTime * 1000;
+    const firstPhaseDurationMs = Math.max(1000, Math.round(totalGrowDurationMs / 2));
 
     triggerTelegramHaptic("light");
 
@@ -818,9 +818,11 @@ function GameScreen() {
       unlocked: true,
       growStep: 1,
       selectedSeedId: seedId,
-      growTime,
-      timeLeft: growTime,
-      nextGrowthAt: Date.now() + growTime * 1000,
+      growTime: totalGrowTime,
+      timeLeft: totalGrowTime,
+      nextGrowthAt: Math.min(now + firstPhaseDurationMs, now + totalGrowDurationMs),
+      harvestAt: now + totalGrowDurationMs,
+      growthTimingVersion: 2,
       careApplied: [],
       wateredStages: [],
     });
@@ -863,20 +865,24 @@ function GameScreen() {
       }
 
       const now = Date.now();
-      const stageDurationMs = Math.max(
+      const totalGrowDurationMs = Math.max(
         1000,
         (Number(currentPotState.growTime) || DEFAULT_GROW_TIME) * 1000,
       );
-      const reductionMs = Math.round(stageDurationMs * 0.2);
-      const nextGrowthAt = Math.max(
-        now,
-        Number(currentPotState.nextGrowthAt) - reductionMs,
-      );
+      const phaseDurationMs = Math.max(1000, totalGrowDurationMs / 2);
+      const reductionMs = Math.round(phaseDurationMs * 0.2);
+      const currentNextGrowthAt = Number(currentPotState.nextGrowthAt);
+      const fallbackHarvestAt =
+        currentNextGrowthAt + (growStep === 1 ? phaseDurationMs : 0);
+      const currentHarvestAt = Number(currentPotState.harvestAt) || fallbackHarvestAt;
+      const nextGrowthAt = Math.max(now, currentNextGrowthAt - reductionMs);
+      const harvestAt = Math.max(nextGrowthAt, currentHarvestAt - reductionMs);
 
       updateCurrentPotState({
         wateredStages: [...wateredStages, growStep],
         nextGrowthAt,
-        timeLeft: Math.max(0, Math.ceil((nextGrowthAt - now) / 1000)),
+        harvestAt,
+        timeLeft: Math.max(0, Math.ceil((harvestAt - now) / 1000)),
       });
     } else {
       if (appliedCare.includes(careType)) {
@@ -1018,6 +1024,7 @@ function GameScreen() {
 
     if (tutorialStep === "collect") {
       setTutorialStep("go-district");
+      setActiveScreen("plantation");
     }
 
     window.setTimeout(() => {
@@ -1033,7 +1040,9 @@ function GameScreen() {
     setInstantGrowRequest({
       potIndex: currentPotIndex,
       cost: instantGrowCost,
-      cropName: seeds.find((seed) => seed.id === plantedSeedId)?.name || "растение",
+      cropName: seeds.find((seed) => seed.id === plantedSeedId)?.name || "Растение",
+      growStep,
+      timeLeft,
     });
   };
 
@@ -1068,6 +1077,7 @@ function GameScreen() {
               growStep: 3,
               timeLeft: 0,
               nextGrowthAt: null,
+              harvestAt: null,
             }
           : state,
       ),
@@ -1089,22 +1099,6 @@ function GameScreen() {
     triggerTelegramHaptic("medium");
 
     return { success: true, message: "Зорик уже выставил новую поставку." };
-  };
-
-  const openRemoveModal = () => {
-    if (isTutorialActive) {
-      return;
-    }
-
-    if (!isCurrentPotUnlocked) {
-      return;
-    }
-
-    if (growStep === 0) {
-      return;
-    }
-
-    setIsRemoveModalOpen(true);
   };
 
   const removePlant = () => {
@@ -1275,21 +1269,49 @@ function GameScreen() {
     };
   };
 
-  const deliverMariaItems = ({ itemId, amount }) => {
-    const safeAmount = Math.max(0, Math.floor(Number(amount) || 0));
+  const deliverMariaItems = ({ itemId, amount, items }) => {
+    const deliveryItems = items && typeof items === "object"
+      ? Object.entries(items)
+          .map(([deliveryItemId, deliveryAmount]) => [
+            deliveryItemId,
+            Math.max(0, Math.floor(Number(deliveryAmount) || 0)),
+          ])
+          .filter(([deliveryItemId, deliveryAmount]) => deliveryItemId && deliveryAmount > 0)
+      : [[itemId, Math.max(0, Math.floor(Number(amount) || 0))]];
 
-    if (!itemId || safeAmount <= 0) {
+    if (
+      deliveryItems.length === 0 ||
+      deliveryItems.some(([deliveryItemId, deliveryAmount]) => (
+        !deliveryItemId ||
+        deliveryAmount <= 0 ||
+        (inventory[deliveryItemId] || 0) < deliveryAmount
+      ))
+    ) {
       return false;
     }
 
-    const availableAmount = inventory[itemId] || 0;
+    setInventory((previousInventory) => {
+      const nextInventory = { ...previousInventory };
+      deliveryItems.forEach(([deliveryItemId, deliveryAmount]) => {
+        nextInventory[deliveryItemId] = Math.max(
+          0,
+          (nextInventory[deliveryItemId] || 0) - deliveryAmount,
+        );
+      });
+      return nextInventory;
+    });
 
-    if (availableAmount < safeAmount) {
-      return false;
-    }
-
-    setInventory((previousInventory) => ({ ...previousInventory, [itemId]: Math.max(0, (previousInventory[itemId] || 0) - safeAmount) }));
-    setQualityInventory((previous) => removeAnyQuality(previous, itemId, safeAmount).next);
+    setQualityInventory((previousInventory) => {
+      let nextInventory = previousInventory;
+      deliveryItems.forEach(([deliveryItemId, deliveryAmount]) => {
+        nextInventory = removeAnyQuality(
+          nextInventory,
+          deliveryItemId,
+          deliveryAmount,
+        ).next;
+      });
+      return nextInventory;
+    });
 
     return true;
   };
@@ -1394,7 +1416,6 @@ function GameScreen() {
                   plant={currentPlant}
                   growStep={growStep}
                   timeLeft={timeLeft}
-                  growTime={currentPotState.growTime}
                   unlockPrice={
                     tutorialStep === "unlock-pot" &&
                     currentPotIndex === 0
@@ -1413,7 +1434,6 @@ function GameScreen() {
                   canCollect={growStep === 3}
                   onCollect={collectPlant}
                   onSeedClick={openSeedModal}
-                  onRemoveClick={openRemoveModal}
                   onUnlock={handleLockedSlotClick}
                   onOpenCare={() => setIsCareModalOpen(true)}
                   careApplied={currentPotState.careApplied}
@@ -1424,13 +1444,10 @@ function GameScreen() {
                   onNextPot={showNextPot}
                   navigationDisabled={isTutorialActive}
                   seedDisabled={!tutorialAllows("open-seeds")}
-                  removeDisabled={isTutorialActive}
                   collectDisabled={!tutorialAllows("collect")}
                   unlockDisabled={!tutorialAllows("unlock-pot")}
-                  instantGrowCost={instantGrowCost}
-                  premiumBalance={premiumCoins}
-                  onInstantGrow={requestInstantGrow}
-                  instantGrowDisabled={isTutorialActive}
+                  onOpenGrowthInfo={requestInstantGrow}
+                  growthInfoDisabled={isTutorialActive}
                 />
               </div>
             </div>
@@ -1542,12 +1559,15 @@ function GameScreen() {
             <PotTypeModal
               isOpen={isPotTypeModalOpen}
               trust={mariaQuestState.trust || 0}
-              title={potTypeMode === "purchase" ? "Купить место и установить ведро" : "Гидропонное ведро"}
-              description={potTypeMode === "purchase" ? "На верхней плантации используются только растительные гидропонные вёдра." : "Грибные ёмкости появятся позже вместе с отдельным подвалом."}
-              price={potTypeMode === "purchase" ? pendingSlot?.unlockPrice ?? null : null}
+              title="Купить место и установить ведро"
+              description="На верхней плантации используются растительные гидропонные вёдра. Грибные ёмкости появятся позже в отдельном подвале."
+              price={pendingSlot?.unlockPrice ?? null}
               coins={coins}
-              onChoose={potTypeMode === "purchase" ? choosePendingSlotType : chooseCurrentPotType}
-              onClose={() => { setIsPotTypeModalOpen(false); if (potTypeMode === "purchase") setPendingSlotIndex(null); }}
+              onChoose={choosePendingSlotType}
+              onClose={() => {
+                setIsPotTypeModalOpen(false);
+                setPendingSlotIndex(null);
+              }}
             />
 
             <ActionModal
@@ -1578,9 +1598,9 @@ function GameScreen() {
 
             <ActionModal
               isOpen={Boolean(instantGrowRequest)}
-              title="Вырастить моментально?"
+              title={instantGrowRequest?.cropName || "Растение растёт"}
               description={instantGrowRequest
-                ? `${instantGrowRequest.cropName} сразу перейдёт в состояние готового урожая. Полив и применённые смеси сохранятся.`
+                ? `${instantGrowRequest.cropName} · до урожая ${formatGrowthTime(instantGrowRequest.timeLeft)}. Можно дождаться или завершить рост сейчас. Полив и смеси сохранятся.`
                 : ""}
               price={instantGrowRequest?.cost ?? null}
               coins={premiumCoins}
@@ -1671,6 +1691,7 @@ function GameScreen() {
 
         {activeScreen === "shop" && (
           <ShopScreen
+            key={shopRefreshAt}
             onGoBack={goBackToDistrict}
             items={shopItems}
             stock={shopStock}
@@ -1680,6 +1701,7 @@ function GameScreen() {
             clubReputation={clubReputation}
             mariaTrust={mariaQuestState.trust || 0}
             refreshAt={shopRefreshAt}
+            currentTime={shopClock}
             premiumCoins={premiumCoins}
             premiumRefreshPrice={PREMIUM_PRICES.shopRefresh}
             onPremiumRefresh={refreshShopWithPremium}
@@ -1689,7 +1711,6 @@ function GameScreen() {
 
         {activeScreen === "club" && (
           <ClubScreen
-            inventory={inventory}
             setInventory={setInventory}
             qualityInventory={qualityInventory}
             setQualityInventory={setQualityInventory}
@@ -1711,40 +1732,31 @@ function GameScreen() {
           />
         )}
 
-        {activeScreen !== "shop" &&
-          activeScreen !== "club" &&
-          activeScreen !== "maria-house" && (
-            <BottomMenu
-              activeScreen={activeScreen}
-              tutorialStep={tutorialStep}
-              onGoPlantation={() => {
-                if (isTutorialActive) {
-                  return;
-                }
+        {showBottomMenu && (
+          <BottomMenu
+            activeScreen={activeScreen}
+            tutorialStep={tutorialStep}
+            onGoPlantation={() => {
+              if (isTutorialActive) {
+                return;
+              }
 
-                setActiveScreen("plantation");
-              }}
-              onGoDistrict={() => {
-                if (!tutorialAllows("go-district")) {
-                  return;
-                }
+              setActiveScreen("plantation");
+            }}
+            onGoDistrict={() => {
+              if (!tutorialAllows("go-district")) {
+                return;
+              }
 
-                setActiveScreen("district");
+              setActiveScreen("district");
 
-                if (tutorialStep === "go-district") {
-                  setTutorialStep("district-finish");
-                }
-              }}
-              readyPlants={readyPlantCount}
-              onGoSupport={() => {
-                if (isTutorialActive) {
-                  return;
-                }
-
-                setActiveScreen("support");
-              }}
-            />
-          )}
+              if (tutorialStep === "go-district") {
+                setTutorialStep("district-finish");
+              }
+            }}
+            readyPlants={readyPlantCount}
+          />
+        )}
 
         <UnlockCelebration
           notification={unlockQueue[0] || null}
@@ -1774,12 +1786,14 @@ function GameScreen() {
             }
 
             if (tutorialStep === "district-finish") {
+              setActiveScreen("district");
               setTutorialStep("open-maria-house");
               return;
             }
 
             if (tutorialStep === "onboarding-finish") {
               setTutorialStep("completed");
+              setActiveScreen("maria-house");
             }
           }}
         />

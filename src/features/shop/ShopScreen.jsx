@@ -76,6 +76,7 @@ export default function ShopScreen({
   clubReputation = 0,
   mariaTrust = 0,
   refreshAt,
+  currentTime = 0,
   premiumCoins = 0,
   premiumRefreshPrice = 5,
   onPremiumRefresh,
@@ -110,23 +111,6 @@ export default function ShopScreen({
   );
 
   useEffect(() => {
-    if (!availableDepartments.some((entry) => entry.id === department)) {
-      setDepartment(availableDepartments[0]?.id || "seed");
-    }
-  }, [availableDepartments, department]);
-
-  useEffect(() => {
-    if (selectedId && !selected) {
-      setSelectedId(null);
-      setAmount(1);
-    }
-  }, [selected, selectedId]);
-
-  useEffect(() => {
-    setSeenItemIds(new Set(readSeenItems(refreshAt)));
-  }, [refreshAt]);
-
-  useEffect(() => {
     if (!toast) return undefined;
     const timer = window.setTimeout(() => setToast(""), 2600);
     return () => window.clearTimeout(timer);
@@ -134,7 +118,7 @@ export default function ShopScreen({
 
   const secondsLeft = Math.max(
     0,
-    Math.ceil((Number(refreshAt || 0) - Date.now()) / 1000),
+    Math.ceil((Number(refreshAt || 0) - Number(currentTime || 0)) / 1000),
   );
 
   const selectedStock = selected ? stock[selected.id] || 0 : 0;

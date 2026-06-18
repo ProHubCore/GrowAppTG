@@ -29,8 +29,6 @@ function useClubReputation() {
     window.addEventListener("focus", sync);
     document.addEventListener("visibilitychange", sync);
 
-    const intervalId = window.setInterval(sync, 250);
-
     sync();
 
     return () => {
@@ -38,7 +36,6 @@ function useClubReputation() {
       window.removeEventListener("storage", sync);
       window.removeEventListener("focus", sync);
       document.removeEventListener("visibilitychange", sync);
-      window.clearInterval(intervalId);
     };
   }, []);
 

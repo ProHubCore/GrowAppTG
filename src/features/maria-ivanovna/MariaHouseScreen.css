@@ -768,3 +768,22 @@
     animation: none;
   }
 }
+
+.maria-empty-panel strong,
+.maria-empty-panel span {
+  display: block;
+  text-align: center;
+}
+
+.maria-empty-panel strong {
+  color: #ffe4ac;
+  font-family: Georgia, serif;
+  font-size: 18px;
+}
+
+.maria-empty-panel span {
+  max-width: 230px;
+  margin-top: 8px;
+  color: rgba(255, 235, 204, 0.72);
+  line-height: 1.45;
+}

@@ -24,9 +24,9 @@ export const CROPS = [
     lore: "Простой дымный лист, с которого начинается торговля в старом районе.",
     catalogNote: "Базовая культура района с густым ароматом и стабильным спросом.",
     stages: [
-      stage(ASSETS.plants.tabakko[0], "Росток Табакко", 78, 123),
-      stage(ASSETS.plants.tabakko[1], "Молодой Табакко", 126, 112),
-      stage(ASSETS.plants.tabakko[2], "Зрелый Табакко", 180, 98),
+      stage(ASSETS.plants.tabakko[0], "Росток Табакко", 70, 100),
+      stage(ASSETS.plants.tabakko[1], "Молодой Табакко", 140, 110),
+      stage(ASSETS.plants.tabakko[2], "Зрелый Табакко", 180, 110),
     ],
   },
   {

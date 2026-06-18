@@ -119,16 +119,38 @@
   object-fit: contain;
 
   pointer-events: none;
-  transform-origin: bottom center;
+  transform-origin: 50% 96%;
+  will-change: transform, filter;
+}
 
+/*
+ * У каждой стадии свой характер движения.
+ * Короткий plantStageReveal запускается заново при смене картинки,
+ * после чего растение переходит в свою бесконечную живую анимацию.
+ */
+.plant-button-image.plant-stage-1 .plant {
   animation:
-    plantIdle 2.8s ease-in-out infinite;
+    plantStageReveal 0.62s cubic-bezier(0.18, 0.86, 0.24, 1.18) both,
+    plantSproutLife 2.65s 0.62s ease-in-out infinite;
+}
+
+.plant-button-image.plant-stage-2 .plant {
+  animation:
+    plantStageReveal 0.68s cubic-bezier(0.18, 0.86, 0.24, 1.14) both,
+    plantYoungSway 3.7s 0.68s ease-in-out infinite;
+}
+
+.plant-button-image.plant-stage-3 .plant {
+  animation:
+    plantStageReveal 0.74s cubic-bezier(0.18, 0.86, 0.24, 1.1) both,
+    plantMatureBreath 4.25s 0.74s ease-in-out infinite;
 }
 
 .plant-button-image.collectable .plant {
   animation:
-    plantReadyPulse 1.45s ease-in-out infinite,
-    plantGlow 2s ease-in-out infinite;
+    plantStageReveal 0.74s cubic-bezier(0.18, 0.86, 0.24, 1.1) both,
+    plantReadyLife 3.35s 0.74s ease-in-out infinite,
+    plantReadyGlow 2.45s 0.74s ease-in-out infinite;
 }
 
 /* Корзинка с семенами всегда остаётся на экране */
@@ -463,54 +485,27 @@
   font-weight: 800;
 }
 
-/* Стрелки */
+/* Стрелки смены места */
 
 .plantation-arrow {
   position: absolute;
   top: 50%;
   z-index: 50;
 
-  width: 42px;
-  height: 70px;
+  display: grid;
+  place-items: center;
 
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
+  width: 52px;
+  height: 66px;
   padding: 0;
 
   transform: translateY(-50%);
 
-  border:
-    1px solid
-    rgba(205, 255, 234, 0.36);
-
-  border-radius: 22px;
-
-  background:
-    linear-gradient(
-      145deg,
-      rgba(104, 255, 205, 0.15),
-      rgba(126, 106, 255, 0.13)
-    );
-
-  box-shadow:
-    0 0 16px rgba(105, 255, 204, 0.16),
-    inset 0 0 12px rgba(255, 255, 255, 0.07);
-
-  backdrop-filter: blur(7px);
-  -webkit-backdrop-filter: blur(7px);
-
-  color: rgba(240, 255, 250, 0.95);
-
-  font-family: Arial, sans-serif;
-  font-size: 46px;
-  font-weight: 200;
-  line-height: 1;
+  border: 0;
+  background: transparent;
 
   cursor: pointer;
   pointer-events: auto;
-
   appearance: none;
   -webkit-appearance: none;
   -webkit-tap-highlight-color: transparent;
@@ -518,32 +513,86 @@
   transition:
     transform 140ms ease,
     opacity 140ms ease,
-    background 140ms ease;
+    filter 140ms ease;
+}
+
+.plantation-arrow::before {
+  content: "";
+  position: absolute;
+  inset: 13px 7px;
+
+  border: 1px solid rgba(173, 241, 153, 0.32);
+  border-radius: 13px 5px 13px 5px;
+
+  background:
+    radial-gradient(circle at 50% 42%, rgba(177, 247, 145, 0.17), transparent 62%),
+    linear-gradient(145deg, rgba(37, 50, 38, 0.82), rgba(17, 22, 20, 0.74));
+
+  box-shadow:
+    0 7px 16px rgba(0, 0, 0, 0.35),
+    inset 0 1px 0 rgba(239, 255, 223, 0.08),
+    0 0 14px rgba(139, 235, 112, 0.12);
+
+  transform: rotate(45deg);
+}
+
+.plantation-arrow::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+
+  width: 5px;
+  height: 5px;
+
+  border: 1px solid rgba(22, 29, 23, 0.85);
+  border-radius: 50%;
+
+  background: radial-gradient(circle at 35% 30%, #d6cb9c, #66563e 75%);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.75);
+
+  transform: translate(-50%, -50%);
+}
+
+.plantation-arrow__chevron {
+  position: relative;
+  z-index: 2;
+
+  display: block;
+
+  width: 14px;
+  height: 14px;
+
+  border-bottom: 3px solid #d8f7aa;
+  border-left: 3px solid #d8f7aa;
+
+  filter: drop-shadow(0 0 5px rgba(174, 247, 130, 0.48));
 }
 
 .plantation-arrow-left {
-  left: 4px;
+  left: 8px;
+}
+
+.plantation-arrow-left .plantation-arrow__chevron {
+  transform: rotate(45deg) translate(2px, -2px);
 }
 
 .plantation-arrow-right {
-  right: 4px;
+  right: 8px;
+}
+
+.plantation-arrow-right .plantation-arrow__chevron {
+  transform: rotate(225deg) translate(2px, -2px);
 }
 
 .plantation-arrow:active {
-  transform:
-    translateY(-50%)
-    scale(0.91);
-
-  background:
-    linear-gradient(
-      145deg,
-      rgba(104, 255, 205, 0.25),
-      rgba(126, 106, 255, 0.21)
-    );
+  transform: translateY(-50%) scale(0.9);
+  filter: brightness(1.18);
 }
 
 .plantation-arrow:disabled {
-  opacity: 0.6;
+  opacity: 0.35;
+  filter: grayscale(0.55);
 }
 
 /* Анимация свайпа */
@@ -626,65 +675,145 @@
 
 /* Анимации растения */
 
-@keyframes plantIdle {
+@keyframes plantStageReveal {
   0% {
-    transform:
-      scaleY(1)
-      scaleX(1);
+    opacity: 0.18;
+    transform: translateY(9px) scaleX(0.82) scaleY(0.72);
+    filter: brightness(0.78) saturate(0.82) blur(0.7px);
   }
 
-  50% {
-    transform:
-      scaleY(1.018)
-      scaleX(0.992);
+  58% {
+    opacity: 1;
+    transform: translateY(-2px) scaleX(1.025) scaleY(1.045);
+    filter: brightness(1.08) saturate(1.08) blur(0);
   }
 
   100% {
-    transform:
-      scaleY(1)
-      scaleX(1);
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: brightness(1) saturate(1) blur(0);
   }
 }
 
-@keyframes plantReadyPulse {
-  0% {
-    transform: scale(1);
-  }
-
-  50% {
-    transform: scale(1.025);
-  }
-
+/* Первая стадия: маленький росток тянется вверх и чуть оживает. */
+@keyframes plantSproutLife {
+  0%,
   100% {
-    transform: scale(1);
+    transform: rotate(-0.35deg) scaleX(1) scaleY(1);
+    filter: brightness(1) saturate(1);
+  }
+
+  28% {
+    transform: rotate(0.45deg) scaleX(0.994) scaleY(1.018);
+    filter: brightness(1.035) saturate(1.035);
+  }
+
+  54% {
+    transform: rotate(-0.15deg) scaleX(1.008) scaleY(0.998);
+    filter: brightness(1.015) saturate(1.02);
+  }
+
+  78% {
+    transform: rotate(0.3deg) scaleX(0.997) scaleY(1.01);
+    filter: brightness(1.025) saturate(1.03);
   }
 }
 
-@keyframes plantGlow {
-  0% {
-    filter:
-      drop-shadow(
-        0 0 4px rgba(145, 255, 105, 0.35)
-      );
+/* Вторая стадия: более заметное органичное покачивание и дыхание. */
+@keyframes plantYoungSway {
+  0%,
+  100% {
+    transform: rotate(-0.55deg) translateX(-0.4px) scaleX(1) scaleY(1);
+    filter: brightness(1) saturate(1);
   }
 
-  50% {
-    filter:
-      drop-shadow(
-        0 0 10px rgba(145, 255, 105, 0.75)
-      )
-      drop-shadow(
-        0 0 18px rgba(255, 70, 220, 0.35)
-      );
+  24% {
+    transform: rotate(0.72deg) translateX(0.7px) scaleX(0.995) scaleY(1.014);
+    filter: brightness(1.035) saturate(1.045);
   }
 
+  51% {
+    transform: rotate(-0.2deg) translateX(-0.2px) scaleX(1.007) scaleY(1.003);
+    filter: brightness(1.015) saturate(1.025);
+  }
+
+  76% {
+    transform: rotate(0.48deg) translateX(0.45px) scaleX(0.998) scaleY(1.011);
+    filter: brightness(1.03) saturate(1.04);
+  }
+}
+
+/* Зрелое растение: тяжёлое спокойное дыхание без суеты. */
+@keyframes plantMatureBreath {
+  0%,
+  100% {
+    transform: rotate(-0.38deg) translateY(0) scaleX(1) scaleY(1);
+    filter: brightness(1) saturate(1.02);
+  }
+
+  32% {
+    transform: rotate(0.46deg) translateY(-1px) scaleX(1.006) scaleY(1.011);
+    filter: brightness(1.035) saturate(1.055);
+  }
+
+  63% {
+    transform: rotate(-0.12deg) translateY(0.3px) scaleX(0.997) scaleY(1.004);
+    filter: brightness(1.015) saturate(1.035);
+  }
+
+  84% {
+    transform: rotate(0.24deg) translateY(-0.5px) scaleX(1.003) scaleY(1.008);
+    filter: brightness(1.025) saturate(1.045);
+  }
+}
+
+/* Урожай готов: живое движение заметно, но растение не прыгает. */
+@keyframes plantReadyLife {
+  0%,
+  100% {
+    transform: rotate(-0.45deg) translateY(0) scale(1);
+  }
+
+  30% {
+    transform: rotate(0.55deg) translateY(-1.6px) scale(1.009);
+  }
+
+  58% {
+    transform: rotate(-0.16deg) translateY(-0.4px) scale(1.004);
+  }
+
+  82% {
+    transform: rotate(0.34deg) translateY(-1px) scale(1.007);
+  }
+}
+
+@keyframes plantReadyGlow {
+  0%,
   100% {
     filter:
-      drop-shadow(
-        0 0 4px rgba(145, 255, 105, 0.35)
-      );
+      brightness(1.01)
+      saturate(1.04)
+      drop-shadow(0 4px 5px rgba(0, 0, 0, 0.2))
+      drop-shadow(0 0 3px rgba(137, 255, 132, 0.2));
+  }
+
+  48% {
+    filter:
+      brightness(1.075)
+      saturate(1.12)
+      drop-shadow(0 5px 6px rgba(0, 0, 0, 0.22))
+      drop-shadow(0 0 9px rgba(137, 255, 132, 0.55))
+      drop-shadow(0 0 15px rgba(157, 92, 255, 0.18));
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .plant-button-image .plant,
+  .plant-button-image.collectable .plant {
+    animation: none;
+  }
+}
+
 
 .plant-care-button{position:absolute;left:50%;top:36px;z-index:35;display:flex;align-items:center;gap:7px;min-height:38px;padding:0 13px;border:1px solid rgba(220,255,232,.2);border-radius:999px;transform:translateX(-50%);color:#eaffef;font:inherit;font-size:11px;font-weight:950;background:radial-gradient(circle at 50% 0,rgba(124,255,178,.18),transparent 70%),rgba(28,48,37,.82);box-shadow:0 8px 18px rgba(0,0,0,.28),0 0 18px rgba(97,238,160,.12);backdrop-filter:blur(7px);animation:carePulse 1.9s ease-in-out infinite;pointer-events:auto}.plant-care-button:active{transform:translateX(-50%) scale(.95)}.plant-care-button__icon{font-size:14px}.plant-care-status{position:absolute;left:50%;top:42px;z-index:34;padding:7px 11px;border:1px solid rgba(255,235,190,.12);border-radius:999px;transform:translateX(-50%);white-space:nowrap;color:rgba(255,243,214,.8);font-size:9px;font-weight:900;background:rgba(35,28,27,.72);backdrop-filter:blur(6px)}@keyframes carePulse{0%,100%{box-shadow:0 8px 18px rgba(0,0,0,.28),0 0 12px rgba(97,238,160,.08)}50%{box-shadow:0 8px 18px rgba(0,0,0,.28),0 0 24px rgba(97,238,160,.2)}}
 
