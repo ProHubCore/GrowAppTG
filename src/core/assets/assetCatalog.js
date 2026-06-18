@@ -51,7 +51,7 @@ export const ASSETS = {
     phytoStation: "/assets/ui/care/phyto-station.png",
   },
   tools: {
-    shovel: "/assets/tools/shovel.png",
+    shovel: "/assets/tools/shovel.svg",
   },
 };
 

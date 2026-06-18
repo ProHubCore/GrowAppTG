@@ -8,7 +8,7 @@ function ShovelTool({ disabled, onClick }) {
     >
       <img
         className="shovel-tool-image"
-        src="/assets/tools/shovel-1.png"
+        src="/assets/tools/shovel.svg"
         alt="Лопатка"
       />
     </button>

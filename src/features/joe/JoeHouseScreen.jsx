@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 
 import { JOE_TRUST_LEVELS, getJoeTrustInfo } from "./joeProgression";
 

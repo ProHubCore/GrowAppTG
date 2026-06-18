@@ -31,7 +31,7 @@ const gameAssets = [
   "/assets/seeds/psychomor-seeds.png",
   "/assets/items/seed-basket.png",
   "/assets/items/backpack-1.png",
-  "/assets/tools/shovel-1.png",
+  "/assets/tools/shovel.svg",
 ];
 
 export default [...new Set(gameAssets)];

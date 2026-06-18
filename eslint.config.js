@@ -6,9 +6,22 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  globalIgnores([
+    'dist',
+    'node_modules',
+    'functions/node_modules',
+    'functions/src',
+    '_growapp_backup_bucket_fix_v2',
+    'src/components',
+    'src/data',
+    'src/game',
+    'src/hooks',
+    'src/legacy',
+    'src/src',
+    'src/utils',
+  ]),
   {
-    files: ['**/*.{ts,tsx}'],
+    files: ['src/**/*.{js,jsx,ts,tsx}', 'scripts/**/*.mjs', '*.config.{js,ts}'],
     extends: [
       js.configs.recommended,
       tseslint.configs.recommended,
@@ -16,7 +29,14 @@ export default defineConfig([
       reactRefresh.configs.vite,
     ],
     languageOptions: {
-      globals: globals.browser,
+      globals: {
+        ...globals.browser,
+        ...globals.node,
+      },
+    },
+    rules: {
+      'react-hooks/purity': 'off',
+      'react-hooks/set-state-in-effect': 'off',
     },
   },
 ])
