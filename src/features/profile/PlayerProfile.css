@@ -2,7 +2,7 @@
   position: fixed;
 
   top: max(
-    92px,
+    300px,
     calc(
       var(
         --tg-content-safe-area-inset-top,
@@ -12,7 +12,7 @@
   );
 
   left: max(
-    14px,
+    100px,
     calc(
       var(
         --tg-content-safe-area-inset-left,

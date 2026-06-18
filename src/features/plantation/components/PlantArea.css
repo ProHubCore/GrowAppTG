@@ -1,4 +1,51 @@
 .plantation-slider {
+  /* Настройки коробки с семенами */
+  --seed-basket-left: 10px;
+  --seed-basket-bottom: -40px;
+  --seed-basket-width: 140px;
+  --seed-basket-height: 150px;
+  --seed-basket-z-index: 30;
+  --seed-basket-disabled-opacity: 0.42;
+
+  /* Мягкая рассеянная тень ведра — свет идёт сверху */
+  --pot-shadow-left: 50%;
+  --pot-shadow-bottom: -36px;
+  --pot-shadow-width: 178px;
+  --pot-shadow-height: 28px;
+  --pot-shadow-opacity: 0.16;
+  --pot-shadow-fade-opacity: 0.07;
+  --pot-shadow-core-opacity: 0.08;
+  --pot-shadow-core-width: 120px;
+  --pot-shadow-core-height: 14px;
+  --pot-shadow-blur: 6px;
+  --pot-shadow-core-blur: 4px;
+
+  /* Мягкая рассеянная тень коробки семян */
+  --seed-shadow-left: 50%;
+  --seed-shadow-bottom: -2px;
+  --seed-shadow-width: 104%;
+  --seed-shadow-height: 24px;
+  --seed-shadow-opacity: 0.15;
+  --seed-shadow-fade-opacity: 0.06;
+  --seed-shadow-core-opacity: 0.07;
+  --seed-shadow-core-width: 68%;
+  --seed-shadow-core-height: 12px;
+  --seed-shadow-blur: 6px;
+  --seed-shadow-core-blur: 4px;
+
+  /* Мягкая рассеянная тень флакона */
+  --tool-shadow-left: 50%;
+  --tool-shadow-bottom: -2px;
+  --tool-shadow-width: 96%;
+  --tool-shadow-height: 24px;
+  --tool-shadow-opacity: 0.14;
+  --tool-shadow-fade-opacity: 0.055;
+  --tool-shadow-core-opacity: 0.065;
+  --tool-shadow-core-width: 62%;
+  --tool-shadow-core-height: 12px;
+  --tool-shadow-blur: 6px;
+  --tool-shadow-core-blur: 4px;
+
   position: absolute;
   inset: 0;
   z-index: 8;
@@ -26,17 +73,19 @@
   overflow: visible;
   pointer-events: none;
 
-  transform: translateX(0);
+  transform: none;
   opacity: 1;
 
-  will-change: transform, opacity;
+  /* Не держим весь слот в отдельном GPU-слое постоянно:
+     на дробном масштабе Telegram WebView это размывало PNG. */
+  will-change: auto;
 }
 
 /* Ведро и растение */
 
 .plant-area {
   position: absolute;
-  left: 50%;
+  left: calc(50% - 140px);
   bottom: 20px;
 
   width: 280px;
@@ -46,10 +95,59 @@
   align-items: flex-end;
   justify-content: center;
 
-  transform: translateX(-50%);
+  transform: none;
 
   overflow: visible;
   pointer-events: none;
+  isolation: isolate;
+}
+
+/*
+ * Рассеянная тень ведра. Источник света сверху, поэтому тень
+ * лежит ровно под предметом, без бокового смещения и плотного пятна.
+ */
+.plant-area::before,
+.plant-area::after {
+  content: "";
+  position: absolute;
+  left: var(--pot-shadow-left);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.plant-area::before {
+  bottom: var(--pot-shadow-bottom);
+  z-index: 3;
+
+  width: var(--pot-shadow-width);
+  height: var(--pot-shadow-height);
+
+  transform: translateX(-50%);
+  background: radial-gradient(
+    ellipse at center,
+    rgba(7, 6, 5, var(--pot-shadow-opacity)) 0%,
+    rgba(7, 6, 5, var(--pot-shadow-fade-opacity)) 46%,
+    rgba(7, 6, 5, 0.02) 68%,
+    transparent 86%
+  );
+  filter: blur(var(--pot-shadow-blur));
+}
+
+.plant-area::after {
+  bottom: calc(var(--pot-shadow-bottom) + 4px);
+  z-index: 4;
+
+  width: var(--pot-shadow-core-width);
+  height: var(--pot-shadow-core-height);
+
+  transform: translateX(-50%);
+  background: radial-gradient(
+    ellipse at center,
+    rgba(7, 6, 5, var(--pot-shadow-core-opacity)) 0%,
+    rgba(7, 6, 5, 0.025) 56%,
+    transparent 86%
+  );
+  filter: blur(var(--pot-shadow-core-blur));
 }
 
 .pot {
@@ -62,15 +160,17 @@
   height: auto;
 
   display: block;
-
-  transform: translateX(-50%);
+  margin-left: -100px;
+  transform: none;
 
   object-fit: contain;
+  image-rendering: auto;
+  opacity: 1 !important;
   pointer-events: none;
 
-  filter: drop-shadow(
-    0 8px 8px rgba(0, 0, 0, 0.24)
-  );
+  /* Фильтр на самом PNG создавал мягкий композитный слой. */
+  filter: none !important;
+  -webkit-filter: none !important;
 }
 
 .plant-button-image {
@@ -157,14 +257,60 @@
 
 .plantation-seed-basket {
   position: absolute;
-  left: 25px;
-  bottom: -10px;
-  z-index: 30;
+  left: var(--seed-basket-left);
+  bottom: var(--seed-basket-bottom);
+  z-index: var(--seed-basket-z-index);
 
-  width: 130px;
-  height: 140px;
+  width: var(--seed-basket-width);
+  height: var(--seed-basket-height);
 
   pointer-events: auto;
+  isolation: isolate;
+}
+
+/* Рассеянная тень коробки семян — без плотной чёрной полосы. */
+.plantation-seed-basket::before,
+.plantation-seed-basket::after {
+  content: "";
+  position: absolute;
+  left: var(--seed-shadow-left);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.plantation-seed-basket::before {
+  bottom: var(--seed-shadow-bottom);
+  z-index: 0;
+
+  width: var(--seed-shadow-width);
+  height: var(--seed-shadow-height);
+
+  transform: translateX(-50%);
+  background: radial-gradient(
+    ellipse at center,
+    rgba(7, 6, 5, var(--seed-shadow-opacity)) 0%,
+    rgba(7, 6, 5, var(--seed-shadow-fade-opacity)) 46%,
+    rgba(7, 6, 5, 0.018) 69%,
+    transparent 87%
+  );
+  filter: blur(var(--seed-shadow-blur));
+}
+
+.plantation-seed-basket::after {
+  bottom: calc(var(--seed-shadow-bottom) + 4px);
+  z-index: 1;
+
+  width: var(--seed-shadow-core-width);
+  height: var(--seed-shadow-core-height);
+
+  transform: translateX(-50%);
+  background: radial-gradient(
+    ellipse at center,
+    rgba(7, 6, 5, var(--seed-shadow-core-opacity)) 0%,
+    rgba(7, 6, 5, 0.02) 62%,
+    transparent 88%
+  );
+  filter: blur(var(--seed-shadow-core-blur));
 }
 
 .plantation-seed-basket .seed-basket {
@@ -175,8 +321,8 @@
   top: auto !important;
   bottom: 0 !important;
 
-  width: 110px !important;
-  height: 120px !important;
+  width: var(--seed-basket-width) !important;
+  height: var(--seed-basket-height) !important;
 
   display: flex;
   align-items: flex-end;
@@ -189,7 +335,9 @@
   outline: none;
 
   background: transparent;
-  opacity: 1;
+  opacity: 1 !important;
+  filter: none !important;
+  -webkit-filter: none !important;
 
   cursor: pointer;
   pointer-events: auto;
@@ -197,6 +345,7 @@
   appearance: none;
   -webkit-appearance: none;
   -webkit-tap-highlight-color: transparent;
+  z-index: 2;
 }
 
 .plantation-seed-basket
@@ -207,16 +356,17 @@
   height: 100%;
 
   object-fit: contain;
+  image-rendering: auto;
+  opacity: 1 !important;
   pointer-events: none;
 
-  filter: drop-shadow(
-    0 7px 7px rgba(0, 0, 0, 0.25)
-  );
+  /* Само изображение всегда остаётся резким. */
+  filter: none !important;
+  -webkit-filter: none !important;
 
   transition:
     transform 140ms ease,
-    opacity 140ms ease,
-    filter 140ms ease;
+    opacity 180ms ease;
 }
 
 .plantation-seed-basket
@@ -227,19 +377,18 @@
 
 .plantation-seed-basket
   .seed-basket:disabled {
+  opacity: 1 !important;
+  filter: none !important;
+  -webkit-filter: none !important;
   cursor: default;
 }
 
 .plantation-seed-basket
   .seed-basket:disabled
   .seed-basket-image {
-  opacity: 0.58;
-
-  filter:
-    grayscale(0.12)
-    drop-shadow(
-      0 5px 6px rgba(0, 0, 0, 0.2)
-    );
+  opacity: var(--seed-basket-disabled-opacity) !important;
+  filter: none !important;
+  -webkit-filter: none !important;
 }
 
 /* Флакон / инструмент удаления всегда остаётся на экране */
@@ -251,9 +400,54 @@
   z-index: 30;
 
   width: 96px;
-  height: 120px;
+  height: 150px;
 
   pointer-events: auto;
+  isolation: isolate;
+}
+
+.plantation-shovel-tool::before,
+.plantation-shovel-tool::after {
+  content: "";
+  position: absolute;
+  left: var(--tool-shadow-left);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.plantation-shovel-tool::before {
+  bottom: var(--tool-shadow-bottom);
+  z-index: 0;
+
+  width: var(--tool-shadow-width);
+  height: var(--tool-shadow-height);
+
+  transform: translateX(-50%);
+  background: radial-gradient(
+    ellipse at center,
+    rgba(7, 6, 5, var(--tool-shadow-opacity)) 0%,
+    rgba(7, 6, 5, var(--tool-shadow-fade-opacity)) 46%,
+    rgba(7, 6, 5, 0.018) 69%,
+    transparent 87%
+  );
+  filter: blur(var(--tool-shadow-blur));
+}
+
+.plantation-shovel-tool::after {
+  bottom: calc(var(--tool-shadow-bottom) + 4px);
+  z-index: 1;
+
+  width: var(--tool-shadow-core-width);
+  height: var(--tool-shadow-core-height);
+
+  transform: translateX(-50%);
+  background: radial-gradient(
+    ellipse at center,
+    rgba(7, 6, 5, var(--tool-shadow-core-opacity)) 0%,
+    rgba(7, 6, 5, 0.018) 62%,
+    transparent 88%
+  );
+  filter: blur(var(--tool-shadow-core-blur));
 }
 
 .plantation-shovel-tool .shovel-tool {
@@ -286,6 +480,7 @@
   appearance: none;
   -webkit-appearance: none;
   -webkit-tap-highlight-color: transparent;
+  z-index: 2;
 }
 
 .plantation-shovel-tool
@@ -298,9 +493,8 @@
   object-fit: contain;
   pointer-events: none;
 
-  filter: drop-shadow(
-    0 7px 7px rgba(0, 0, 0, 0.25)
-  );
+  filter: none;
+  -webkit-filter: none;
 
   transition:
     transform 140ms ease,
@@ -324,11 +518,8 @@
   .shovel-tool-image {
   opacity: 0.58;
 
-  filter:
-    grayscale(0.15)
-    drop-shadow(
-      0 5px 6px rgba(0, 0, 0, 0.2)
-    );
+  filter: grayscale(0.15);
+  -webkit-filter: grayscale(0.15);
 }
 
 /* Закрытый слот */
@@ -615,6 +806,13 @@
     240ms
     cubic-bezier(0.22, 0.8, 0.28, 1)
     forwards;
+}
+
+.plantation-slide-out-left,
+.plantation-slide-out-right,
+.plantation-slide-in-right,
+.plantation-slide-in-left {
+  will-change: transform, opacity;
 }
 
 .plantation-slide-in-left {
