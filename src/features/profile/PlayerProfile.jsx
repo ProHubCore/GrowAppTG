@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { createPortal } from "react-dom";
 import {
   getTelegramPlayer,
   triggerTelegramHaptic,
@@ -9,62 +10,110 @@ import {
   getClubLevelInfo,
   readClubReputation,
 } from "../club/clubProgression";
+import { CROPS } from "../plantation/data/crops";
 import "./PlayerProfile.css";
 
-function getInitials(user) {
-  const firstLetter =
-    user.first_name?.trim()?.[0] || "";
+const PLANT_CATALOG_STORAGE_KEY = "growapp-plant-catalog";
+const MARIA_QUESTS_STORAGE_KEY = "growapp-maria-ivanovna-quests";
+const LEGACY_QUESTS_STORAGE_KEY = "growapp-joe-quests";
 
+function getInitials(user) {
+  const firstLetter = user.first_name?.trim()?.[0] || "";
   const secondLetter =
     user.last_name?.trim()?.[0] ||
     user.username?.trim()?.[0] ||
     "";
 
-  return (
-    `${firstLetter}${secondLetter}`.toUpperCase() ||
-    "G"
-  );
+  return `${firstLetter}${secondLetter}`.toUpperCase() || "G";
 }
 
 function getDisplayName(user) {
-  const fullName = [
-    user.first_name,
-    user.last_name,
-  ]
+  const fullName = [user.first_name, user.last_name]
     .filter(Boolean)
     .join(" ")
     .trim();
 
-  return (
-    fullName ||
-    user.username ||
-    "Неизвестный садовод"
-  );
+  return fullName || user.username || "Неизвестный садовод";
 }
 
 function isPlantationScreenVisible() {
-  return Boolean(
-    document.querySelector(
-      ".game-stage > .background",
-    ),
-  );
+  return Boolean(document.querySelector(".game-stage > .background"));
 }
 
-function PlayerAvatar({
-  user,
-  size = "small",
-  showStatus = true,
-}) {
-  const [imageFailed, setImageFailed] =
-    useState(false);
+function readStoredObject(key) {
+  try {
+    const value = JSON.parse(localStorage.getItem(key) || "null");
+    return value && typeof value === "object" && !Array.isArray(value)
+      ? value
+      : {};
+  } catch {
+    return {};
+  }
+}
+
+function readProfileStats() {
+  const catalog = readStoredObject(PLANT_CATALOG_STORAGE_KEY);
+  const currentQuestState = readStoredObject(MARIA_QUESTS_STORAGE_KEY);
+  const legacyQuestState = readStoredObject(LEGACY_QUESTS_STORAGE_KEY);
+  const questState = Object.keys(currentQuestState).length
+    ? currentQuestState
+    : legacyQuestState;
+
+  let totalHarvested = 0;
+  let favoriteCropId = null;
+  let favoriteCropAmount = 0;
+
+  for (const crop of CROPS) {
+    const harvested = Math.max(
+      0,
+      Math.floor(Number(catalog?.[crop.id]?.totalHarvested) || 0),
+    );
+
+    totalHarvested += harvested;
+
+    if (harvested > favoriteCropAmount) {
+      favoriteCropAmount = harvested;
+      favoriteCropId = crop.id;
+    }
+  }
+
+  const discoveredCrops = CROPS.filter(
+    (crop) => (Number(catalog?.[crop.id]?.totalHarvested) || 0) > 0,
+  ).length;
+
+  const completedQuestIds = Array.isArray(questState.completedQuestIds)
+    ? [...new Set(questState.completedQuestIds.filter(Boolean))]
+    : [];
+
+  const favoriteCrop = CROPS.find((crop) => crop.id === favoriteCropId) || null;
+
+  return {
+    totalHarvested,
+    discoveredCrops,
+    totalCrops: CROPS.length,
+    completedQuests: completedQuestIds.length,
+    favoriteCropName: favoriteCrop?.name || null,
+  };
+}
+
+function getProfileDescription(stats) {
+  if (stats.totalHarvested <= 0) {
+    return "Новый участник старого района. Первый урожай ещё впереди, а клуб пока только присматривается.";
+  }
+
+  if (stats.discoveredCrops <= 1) {
+    return `Начинающий поставщик района. Чаще всего выращивает ${stats.favoriteCropName || "первую открытую культуру"} и готовится расширять коллекцию.`;
+  }
+
+  return `Проверенный садовод района. Любимая культура — ${stats.favoriteCropName || "редкие растения"}, а собранный урожай регулярно уходит в местный клуб.`;
+}
+
+function PlayerAvatar({ user, size = "small" }) {
+  const [imageFailed, setImageFailed] = useState(false);
 
   const photoUrl =
-    typeof user.photo_url === "string"
-      ? user.photo_url.trim()
-      : "";
-
-  const showTelegramPhoto =
-    photoUrl.length > 0 && !imageFailed;
+    typeof user.photo_url === "string" ? user.photo_url.trim() : "";
+  const showTelegramPhoto = photoUrl.length > 0 && !imageFailed;
 
   return (
     <div
@@ -77,61 +126,41 @@ function PlayerAvatar({
           alt={`Фото ${getDisplayName(user)}`}
           draggable="false"
           referrerPolicy="no-referrer"
-          onError={() => {
-            setImageFailed(true);
-          }}
+          onError={() => setImageFailed(true)}
         />
       ) : (
-        <span className="player-avatar__initials">
-          {getInitials(user)}
-        </span>
-      )}
-
-      {showStatus && (
-        <span className="player-avatar__status" />
+        <span className="player-avatar__initials">{getInitials(user)}</span>
       )}
     </div>
   );
 }
 
 function PlayerProfile() {
-  const telegramPlayer = useMemo(
-    () => getTelegramPlayer(),
-    [],
-  );
-
-  const [isOpen, setIsOpen] =
-    useState(false);
-
-  const [
-    isPlantationVisible,
-    setIsPlantationVisible,
-  ] = useState(() =>
+  const telegramPlayer = useMemo(() => getTelegramPlayer(), []);
+  const [isOpen, setIsOpen] = useState(false);
+  const [isPlantationVisible, setIsPlantationVisible] = useState(() =>
     isPlantationScreenVisible(),
   );
-
-  const [isInterfaceBlocked, setIsInterfaceBlocked] = useState(() =>
-    document.body.dataset.gameOverlayOpen === "true" ||
-    document.body.dataset.tutorialLocked === "true",
+  const [profileMountNode, setProfileMountNode] = useState(() =>
+    document.querySelector(".game-stage"),
   );
-
-  const [
-    clubReputation,
-    setClubReputation,
-  ] = useState(readClubReputation);
+  const [isInterfaceBlocked, setIsInterfaceBlocked] = useState(
+    () =>
+      document.body.dataset.gameOverlayOpen === "true" ||
+      document.body.dataset.tutorialLocked === "true",
+  );
+  const [clubReputation, setClubReputation] = useState(readClubReputation);
+  const [profileStats, setProfileStats] = useState(readProfileStats);
 
   useEffect(() => {
     const updateScreenVisibility = () => {
-      const plantationVisible =
-        isPlantationScreenVisible();
-
+      const plantationVisible = isPlantationScreenVisible();
       const interfaceBlocked =
         document.body.dataset.gameOverlayOpen === "true" ||
         document.body.dataset.tutorialLocked === "true";
 
-      setIsPlantationVisible(
-        plantationVisible,
-      );
+      setIsPlantationVisible(plantationVisible);
+      setProfileMountNode(document.querySelector(".game-stage"));
       setIsInterfaceBlocked(interfaceBlocked);
 
       if (!plantationVisible || interfaceBlocked) {
@@ -141,111 +170,76 @@ function PlayerProfile() {
 
     updateScreenVisibility();
 
-    const observer = new MutationObserver(
-      updateScreenVisibility,
-    );
-
+    const observer = new MutationObserver(updateScreenVisibility);
     observer.observe(document.body, {
       childList: true,
       subtree: true,
       attributes: true,
-      attributeFilter: [
-        "data-game-overlay-open",
-        "data-tutorial-locked",
-      ],
+      attributeFilter: ["data-game-overlay-open", "data-tutorial-locked"],
     });
 
-    return () => {
-      observer.disconnect();
-    };
+    return () => observer.disconnect();
   }, []);
 
   useEffect(() => {
     const updateReputation = (event) => {
-      const eventReputation =
-        Number(event?.detail?.reputation);
+      const eventReputation = Number(event?.detail?.reputation);
 
-      if (
-        Number.isFinite(eventReputation) &&
-        eventReputation >= 0
-      ) {
-        setClubReputation(
-          Math.floor(eventReputation),
-        );
-
+      if (Number.isFinite(eventReputation) && eventReputation >= 0) {
+        setClubReputation(Math.floor(eventReputation));
         return;
       }
 
-      setClubReputation(
-        readClubReputation(),
+      setClubReputation(readClubReputation());
+    };
+
+    const refreshProfileData = () => {
+      const currentReputation = readClubReputation();
+      setClubReputation((previousValue) =>
+        previousValue === currentReputation ? previousValue : currentReputation,
       );
+      setProfileStats(readProfileStats());
     };
 
     const updateFromStorage = (event) => {
       if (
-        event.key ===
-        CLUB_REPUTATION_STORAGE_KEY
+        event.key === CLUB_REPUTATION_STORAGE_KEY ||
+        event.key === PLANT_CATALOG_STORAGE_KEY ||
+        event.key === MARIA_QUESTS_STORAGE_KEY ||
+        event.key === LEGACY_QUESTS_STORAGE_KEY
       ) {
-        setClubReputation(
-          readClubReputation(),
-        );
+        refreshProfileData();
       }
     };
 
-    window.addEventListener(
-      CLUB_REPUTATION_EVENT,
-      updateReputation,
-    );
-
-    window.addEventListener(
-      "storage",
-      updateFromStorage,
-    );
-
-    const refreshReputation = () => {
-      const currentValue = readClubReputation();
-      setClubReputation((previousValue) =>
-        previousValue === currentValue ? previousValue : currentValue,
-      );
-    };
-
     const handleVisibilityChange = () => {
-      if (document.visibilityState === "visible") refreshReputation();
+      if (document.visibilityState === "visible") refreshProfileData();
     };
 
-    window.addEventListener("focus", refreshReputation);
+    window.addEventListener(CLUB_REPUTATION_EVENT, updateReputation);
+    window.addEventListener("storage", updateFromStorage);
+    window.addEventListener("focus", refreshProfileData);
     document.addEventListener("visibilitychange", handleVisibilityChange);
 
     return () => {
-      window.removeEventListener(
-        CLUB_REPUTATION_EVENT,
-        updateReputation,
-      );
-
-      window.removeEventListener(
-        "storage",
-        updateFromStorage,
-      );
-
-      window.removeEventListener("focus", refreshReputation);
+      window.removeEventListener(CLUB_REPUTATION_EVENT, updateReputation);
+      window.removeEventListener("storage", updateFromStorage);
+      window.removeEventListener("focus", refreshProfileData);
       document.removeEventListener("visibilitychange", handleVisibilityChange);
     };
   }, []);
 
   const user = telegramPlayer.user;
-
-  const displayName =
-    getDisplayName(user);
-
-  const clubProgress =
-    getClubLevelInfo(clubReputation);
+  const displayName = getDisplayName(user);
+  const clubProgress = getClubLevelInfo(clubReputation);
+  const profileDescription = getProfileDescription(profileStats);
 
   const openProfile = () => {
-    if (document.body.dataset.tutorialLocked === "true") {
-      return;
-    }
+    if (document.body.dataset.tutorialLocked === "true") return;
 
     triggerTelegramHaptic("light");
+    setProfileStats(readProfileStats());
+    setClubReputation(readClubReputation());
     setIsOpen(true);
   };
 
@@ -254,43 +248,37 @@ function PlayerProfile() {
     setIsOpen(false);
   };
 
-  if (!isPlantationVisible || isInterfaceBlocked) {
+  if (!isPlantationVisible || isInterfaceBlocked || !profileMountNode) {
     return null;
   }
 
+  const profileButton = (
+    <button
+      type="button"
+      className="player-profile-button"
+      disabled={document.body.dataset.tutorialLocked === "true"}
+      onClick={openProfile}
+      aria-label="Открыть профиль игрока"
+    >
+      <span className="player-profile-frame__hanger" aria-hidden="true" />
+      <span className="player-profile-frame__wood">
+        <span className="player-profile-frame__portrait">
+          <PlayerAvatar user={user} size="small" />
+        </span>
+      </span>
+    </button>
+  );
+
   return (
     <>
-      <button
-        type="button"
-        className="player-profile-button"
-        disabled={document.body.dataset.tutorialLocked === "true"}
-        onClick={openProfile}
-        aria-label="Открыть профиль игрока"
-      >
-        <span className="player-profile-frame__hanger" aria-hidden="true" />
-
-        <span className="player-profile-frame__portrait">
-          <PlayerAvatar
-            user={user}
-            size="small"
-            showStatus
-          />
-        </span>
-
-        <span className="player-profile-frame__plate">УЧАСТНИК</span>
-      </button>
+      {createPortal(profileButton, profileMountNode)}
 
       {isOpen && (
         <div
           className="player-profile-overlay"
           role="presentation"
           onMouseDown={(event) => {
-            if (
-              event.target ===
-              event.currentTarget
-            ) {
-              closeProfile();
-            }
+            if (event.target === event.currentTarget) closeProfile();
           }}
         >
           <section
@@ -299,200 +287,93 @@ function PlayerProfile() {
             aria-modal="true"
             aria-label="Профиль игрока"
           >
+            <span className="player-profile-modal__nail player-profile-modal__nail--left" aria-hidden="true" />
+            <span className="player-profile-modal__nail player-profile-modal__nail--right" aria-hidden="true" />
+
             <button
               type="button"
               className="player-profile-modal__close"
               onClick={closeProfile}
               aria-label="Закрыть"
             >
-              ×
+              <span className="player-profile-modal__close-icon" aria-hidden="true" />
             </button>
 
-            <div className="player-profile-modal__glow" />
+            <div className="player-profile-modal__inner">
+              <div className="player-profile-modal__glow" />
 
-            <header className="player-profile-modal__header">
-              <PlayerAvatar
-                user={user}
-                size="large"
-                showStatus
-              />
+              <header className="player-profile-modal__header">
+                <div className="player-profile-modal__portrait-frame">
+                  <PlayerAvatar user={user} size="large" />
+                </div>
 
-              <div className="player-profile-modal__identity">
-                <span className="player-profile-modal__eyebrow">
-                  Участник района
-                </span>
-
-                <h2>{displayName}</h2>
-
-                {user.username ? (
-                  <p>@{user.username}</p>
-                ) : (
-                  <p>
-                    Без публичного имени
-                  </p>
-                )}
-              </div>
-            </header>
-
-            <div className="player-rank-card">
-              <div className="player-rank-card__top">
-                <div>
-                  <span className="player-rank-card__label">
-                    Репутация клуба
+                <div className="player-profile-modal__identity">
+                  <span className="player-profile-modal__eyebrow">
+                    Участник района
                   </span>
+                  <h2>{displayName}</h2>
+                  {user.username ? <p>@{user.username}</p> : <p>Местный садовод</p>}
+                </div>
+              </header>
 
+              <p className="player-profile-modal__bio">{profileDescription}</p>
+
+              <div className="player-profile-stats" aria-label="Статистика игрока">
+                <article className="player-profile-stat">
+                  <span className="player-profile-stat__mark" aria-hidden="true">✦</span>
+                  <strong>{profileStats.totalHarvested}</strong>
+                  <small>урожая собрано</small>
+                </article>
+
+                <article className="player-profile-stat">
+                  <span className="player-profile-stat__mark" aria-hidden="true">◈</span>
                   <strong>
-                    {
-                      clubProgress
-                        .currentLevel
-                        .title
-                    }
+                    {profileStats.discoveredCrops}
+                    <em>/{profileStats.totalCrops}</em>
                   </strong>
+                  <small>культур открыто</small>
+                </article>
+
+                <article className="player-profile-stat">
+                  <span className="player-profile-stat__mark" aria-hidden="true">✓</span>
+                  <strong>{profileStats.completedQuests}</strong>
+                  <small>поручений закрыто</small>
+                </article>
+              </div>
+
+              <div className="player-rank-card">
+                <div className="player-rank-card__top">
+                  <div>
+                    <span className="player-rank-card__label">Репутация клуба</span>
+                    <strong>{clubProgress.currentLevel.title}</strong>
+                  </div>
+
+                  <div className="player-rank-card__level" aria-label={`Уровень клуба ${clubProgress.currentLevel.level}`}>
+                    <span>ур.</span>
+                    {clubProgress.currentLevel.level}
+                  </div>
                 </div>
 
-                <div className="player-rank-card__level">
-                  {
-                    clubProgress
-                      .currentLevel.level
-                  }
+                <div className="player-rank-card__progress">
+                  <div
+                    className="player-rank-card__progress-fill"
+                    style={{ width: `${clubProgress.progressPercent}%` }}
+                  />
                 </div>
-              </div>
 
-              <div className="player-rank-card__progress">
-                <div
-                  className="player-rank-card__progress-fill"
-                  style={{
-                    width: `${clubProgress.progressPercent}%`,
-                  }}
-                />
-              </div>
-
-              <div className="player-rank-card__experience">
-                {clubProgress.nextLevel ? (
-                  <>
-                    <span>
-                      {
-                        clubProgress.currentProgress
-                      }{" "}
-                      REP
-                    </span>
-
-                    <span>
-                      {
-                        clubProgress.nextLevel.required - clubReputation
-                      }{" "}
-                      до повышения
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <span>
-                      {clubReputation} REP
-                    </span>
-
-                    <span>
-                      Максимальный уровень
-                    </span>
-                  </>
-                )}
-              </div>
-            </div>
-
-            <div className="player-profile-stats">
-              <div className="player-profile-stat">
-                <span>
-                  Общая репутация
-                </span>
-
-                <strong>
-                  {clubReputation} REP
-                </strong>
-              </div>
-
-              <div className="player-profile-stat">
-                <span>
-                  Уровень клуба
-                </span>
-
-                <strong>
-                  LVL{" "}
-                  {
-                    clubProgress
-                      .currentLevel.level
-                  }
-                </strong>
-              </div>
-
-              <div className="player-profile-stat">
-                <span>
-                  Следующий статус
-                </span>
-
-                <strong>
-                  {clubProgress.nextLevel
-                    ? clubProgress.nextLevel
-                        .title
-                    : "Все открыто"}
-                </strong>
-              </div>
-
-              <div className="player-profile-stat">
-                <span>
-                  Telegram ID
-                </span>
-
-                <strong>{user.id}</strong>
-              </div>
-            </div>
-
-            <div className="player-profile-details">
-              <div>
-                <span>
-                  Источник входа
-                </span>
-
-                <strong>
-                  {telegramPlayer.startParam ||
-                    "прямой вход"}
-                </strong>
-              </div>
-
-              <div>
-                <span>Устройство</span>
-
-                <strong>
-                  {telegramPlayer.platform}
-                </strong>
-              </div>
-
-              <div>
-                <span>
-                  Подключение
-                </span>
-
-                <strong>
-                  {telegramPlayer.isTelegram
-                    ? "Telegram"
-                    : "В браузере"}
-                </strong>
-              </div>
-            </div>
-
-            <div className="player-profile-missions">
-              <div className="player-profile-missions__icon">
-                ◈
-              </div>
-
-              <div>
-                <strong>
-                  Репутация общая с клубом
-                </strong>
-
-                <p>
-                  Продажа урожая в клубе
-                  повышает этот уровень и
-                  сразу обновляет профиль.
-                </p>
+                <div className="player-rank-card__experience">
+                  {clubProgress.nextLevel ? (
+                    <>
+                      <span>{clubProgress.currentProgress} REP</span>
+                      <span>{clubProgress.nextLevel.required - clubReputation} до уровня</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>{clubReputation} REP</span>
+                      <span>Максимальный уровень</span>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           </section>

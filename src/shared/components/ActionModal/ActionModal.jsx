@@ -14,11 +14,16 @@ function ActionModal({
   currencyLabel = "монет",
   currencyIcon = null,
   onConfirm,
+  onInsufficientFunds = null,
+  insufficientText = "Приобрести",
   onCancel,
 }) {
   if (!isOpen) {
     return null;
   }
+
+  const insufficientFunds = price !== null && coins < price;
+  const canOpenStore = insufficientFunds && typeof onInsufficientFunds === "function";
 
   return (
     <div
@@ -63,7 +68,7 @@ function ActionModal({
           </div>
         )}
 
-        {price !== null && coins < price && (
+        {insufficientFunds && !canOpenStore && (
           <div className="action-modal-warning">
             Недостаточно валюты для действия.
           </div>
@@ -71,12 +76,13 @@ function ActionModal({
 
         <div className="action-modal-actions">
           <button
-            className={`action-modal-confirm${danger ? " danger" : ""}`}
+            className={`action-modal-confirm${danger ? " danger" : ""}${canOpenStore ? " purchase" : ""}`}
             type="button"
-            disabled={confirmDisabled}
-            onClick={onConfirm}
+            disabled={confirmDisabled && !canOpenStore}
+            onClick={canOpenStore ? onInsufficientFunds : onConfirm}
           >
-            {confirmText}
+            <span>{canOpenStore ? insufficientText : confirmText}</span>
+            {canOpenStore && <i className="action-modal-premium-coin" aria-hidden="true" />}
           </button>
 
           <button

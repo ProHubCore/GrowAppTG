@@ -19,8 +19,7 @@ export const MARIA_CHAPTERS = [
 
 export const MARIA_QUESTS = [
   quest("maria-tabakko-delivery", 1, "Первая связка", "Принеси Марии три листа Табакко. Это пропуск в район, а не подарок.", { type: "deliver", itemId: "tabakko", amount: 3 }, 180, 25, "🌿"),
-  quest("maria-buy-watering-can", 1, "Свой инструмент", "Купи у Зорика лейку. Хороший садовник не просит инструмент каждый раз.", { type: "own-tool", itemId: "wateringCan", amount: 1 }, 45, 10, "💧", "maria-tabakko-delivery"),
-  quest("maria-first-watering", 1, "Не лей бездумно", "Полей растение во время активной стадии роста.", { type: "care-use", careType: "water", amount: 1 }, 80, 25, "💦", "maria-buy-watering-can"),
+  quest("maria-first-watering", 1, "Не лей бездумно", "Нажми на облачко с каплей и полей растение во время активной стадии роста.", { type: "care-use", careType: "water", amount: 1 }, 80, 25, "💦", "maria-tabakko-delivery"),
   quest("maria-tabakko-stock", 1, "Запас на вечер", "Собери и принеси ещё четыре листа Табакко.", { type: "deliver", itemId: "tabakko", amount: 4 }, 95, 8, "▦", "maria-first-watering"),
   quest("maria-tabakko-club", 1, "Первый выход", "Продай в клубе три листа Табакко.", { type: "club-sale", itemId: "tabakko", amount: 3 }, 110, 8, "♣", "maria-tabakko-stock"),
   quest("maria-club-rep-20", 1, "Чтобы запомнили", "Подними репутацию клуба до 20.", { type: "club-reputation", amount: 20 }, 80, 6, "✶", "maria-tabakko-club"),

@@ -49,6 +49,7 @@ export const ASSETS = {
   ui: {
     backpack: "/assets/ui/inventory/backpack.png",
     seedBasket: "/assets/ui/seed-basket/seed-basket.png",
+    plantCareKit: "/assets/ui/plant-care/plant-care-kit.png",
     phytoStation: "/assets/ui/care/phyto-station.png",
   },
   tools: {
@@ -76,6 +77,7 @@ export const criticalAssets = [
   ...ASSETS.plants.tabakko,
   ASSETS.ui.backpack,
   ASSETS.ui.seedBasket,
+  ASSETS.ui.plantCareKit,
 ];
 
 // Ближайшие локации прогреваются после первого кадра. Тяжёлые стадии

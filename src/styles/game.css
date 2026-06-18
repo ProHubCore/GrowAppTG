@@ -64,7 +64,7 @@ body {
 .game-content {
   position: absolute;
   inset: 0;
-  z-index: 2;
+  z-index: 31;
 
   pointer-events: none;
 }
@@ -74,7 +74,7 @@ body {
 .game-content {
   position: absolute;
   inset: 0;
-  z-index: 2;
+  z-index: 31;
 
   pointer-events: none;
 }
@@ -283,16 +283,12 @@ body {
   transform: none;
 }
 
-/* Инвентарь на стене */
+/* Инвентарь на стене.
+   Положение и размер рюкзака настраиваются только в
+   features/game/GameScreen.css, в блоке .backpack-tool. */
 .backpack-tool {
   position: absolute;
-
-  right: 45px;
-  top: 165px;
   z-index: 12;
-
-  width: 87px;
-  height: 125px;
 
   padding: 0;
   border: none;
@@ -1045,4 +1041,15 @@ body {
     opacity: 0;
     transform: translate(145px, -265px) scale(0.3);
   }
+}
+
+html, body, #root {
+  touch-action: pan-x pan-y;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+img, .background, .game-stage {
+  -webkit-user-drag: none;
+  user-select: none;
 }

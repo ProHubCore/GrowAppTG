@@ -26,31 +26,51 @@ const QUALITY_CLASS = {
   rare: "rare",
 };
 
+const CROP_SORT_INDEX = Object.fromEntries(
+  CROPS.map((crop, index) => [crop.id, index]),
+);
+
 const CONSUMABLE_ITEMS = {
   nutrition: {
     name: "Питательный раствор",
     icon: "🌿",
-    description: "Насыщает растение минералами: повышает шанс хорошего, отличного и редкого качества и добавляет ещё одну единицу к урожаю.",
+    description:
+      "Насыщает растение минералами: повышает шанс хорошего, отличного и редкого качества и добавляет ещё одну единицу к урожаю.",
   },
   mariaMix: {
     name: "Смесь Марьи Ивановны",
     icon: "🧪",
-    description: "Фирменная смесь Марьи Ивановны. Сильно повышает шанс отличного и редкого качества. Особенно хорошо работает вместе с питательным раствором.",
+    description:
+      "Фирменная смесь Марьи Ивановны. Сильно повышает шанс отличного и редкого качества. Особенно хорошо работает вместе с питательным раствором.",
+  },
+  acidWater: {
+    name: "Кислотная вода",
+    icon: "☣",
+    description:
+      "Опасный одноразовый флакон. Полностью уничтожает текущее растение и освобождает ёмкость.",
   },
 };
 
 function createEmptyLayouts() {
   return Object.fromEntries(
-    CATEGORY_TABS.map(({ id }) => [id, Array.from({ length: SLOT_COUNT }, () => null)]),
+    CATEGORY_TABS.map(({ id }) => [
+      id,
+      Array.from({ length: SLOT_COUNT }, () => null),
+    ]),
   );
 }
 
 function readStoredLayout() {
   try {
-    const current = JSON.parse(localStorage.getItem(LAYOUT_STORAGE_KEY) || "null");
-    if (current && typeof current === "object" && !Array.isArray(current)) return current;
+    const current = JSON.parse(
+      localStorage.getItem(LAYOUT_STORAGE_KEY) || "null",
+    );
+    if (current && typeof current === "object" && !Array.isArray(current))
+      return current;
 
-    const legacy = JSON.parse(localStorage.getItem(LEGACY_LAYOUT_STORAGE_KEY) || "null");
+    const legacy = JSON.parse(
+      localStorage.getItem(LEGACY_LAYOUT_STORAGE_KEY) || "null",
+    );
     return Array.isArray(legacy) ? { legacy } : null;
   } catch {
     return null;
@@ -70,12 +90,14 @@ function reconcileCategoryOrder(previousOrder, availableKeys) {
   const used = new Set();
   const next = Array.from({ length: SLOT_COUNT }, () => null);
 
-  (Array.isArray(previousOrder) ? previousOrder : []).slice(0, SLOT_COUNT).forEach((key, index) => {
-    if (key && validKeys.has(key) && !used.has(key)) {
-      next[index] = key;
-      used.add(key);
-    }
-  });
+  (Array.isArray(previousOrder) ? previousOrder : [])
+    .slice(0, SLOT_COUNT)
+    .forEach((key, index) => {
+      if (key && validKeys.has(key) && !used.has(key)) {
+        next[index] = key;
+        used.add(key);
+      }
+    });
 
   availableKeys.forEach((key) => {
     if (used.has(key)) return;
@@ -94,7 +116,9 @@ function reconcileLayouts(previous, stacks) {
   const legacyOrder = Array.isArray(previous?.legacy) ? previous.legacy : [];
 
   CATEGORY_TABS.forEach(({ id }) => {
-    const availableKeys = stacks.filter((stack) => stack.category === id).map((stack) => stack.key);
+    const availableKeys = stacks
+      .filter((stack) => stack.category === id)
+      .map((stack) => stack.key);
     const previousOrder = Array.isArray(previous?.[id])
       ? previous[id]
       : legacyOrder.filter((key) => availableKeys.includes(key));
@@ -144,7 +168,9 @@ function buildStacks({ qualityInventory, seedInventory, careInventory }) {
   });
 
   CROPS.forEach((crop) => {
-    const count = crop.infiniteSeeds ? Infinity : Math.max(0, Number(seedInventory[crop.id]) || 0);
+    const count = crop.infiniteSeeds
+      ? Infinity
+      : Math.max(0, Number(seedInventory[crop.id]) || 0);
     if (!crop.infiniteSeeds && count <= 0) return;
 
     stacks.push({
@@ -161,6 +187,7 @@ function buildStacks({ qualityInventory, seedInventory, careInventory }) {
       description: crop.infiniteSeeds
         ? `${crop.description} Базовый запас этих семян не заканчивается.`
         : `${crop.description} Посади семена в свободное ведро.`,
+      cropSortRank: CROP_SORT_INDEX[crop.id] ?? Number.MAX_SAFE_INTEGER,
       sortRank: crop.requiredTrust || 0,
     });
   });
@@ -185,6 +212,8 @@ function buildStacks({ qualityInventory, seedInventory, careInventory }) {
         image: crop.stages.at(-1)?.image,
         description: crop.description,
         basePrice: crop.basePrice,
+        cropSortRank: CROP_SORT_INDEX[crop.id] ?? Number.MAX_SAFE_INTEGER,
+        qualitySortRank: quality.rank,
         sortRank: quality.rank,
       });
     });
@@ -195,7 +224,9 @@ function buildStacks({ qualityInventory, seedInventory, careInventory }) {
 
 function getDropTarget(clientX, clientY) {
   const element = document.elementFromPoint(clientX, clientY);
-  return element?.closest?.("[data-backpack-drop]")?.dataset.backpackDrop || null;
+  return (
+    element?.closest?.("[data-backpack-drop]")?.dataset.backpackDrop || null
+  );
 }
 
 export default function InventoryModal({
@@ -206,6 +237,7 @@ export default function InventoryModal({
   appliedCare = [],
   canPlantSeed = false,
   canUseCare = false,
+  canUseAcidWater = false,
   onPlantSeed,
   onUseCare,
   onClose,
@@ -222,7 +254,9 @@ export default function InventoryModal({
     [stacks],
   );
 
-  const [layouts, setLayouts] = useState(() => reconcileLayouts(readStoredLayout(), stacks));
+  const [layouts, setLayouts] = useState(() =>
+    reconcileLayouts(readStoredLayout(), stacks),
+  );
   const [activeCategory, setActiveCategory] = useState("harvest");
   const [selectedKey, setSelectedKey] = useState(null);
   const [deleteConfirmKey, setDeleteConfirmKey] = useState(null);
@@ -236,7 +270,9 @@ export default function InventoryModal({
   useEffect(() => {
     const frameId = window.requestAnimationFrame(() => {
       setLayouts((previous) => reconcileLayouts(previous, stacks));
-      setSelectedKey((previous) => (previous && stackMap[previous] ? previous : null));
+      setSelectedKey((previous) =>
+        previous && stackMap[previous] ? previous : null,
+      );
     });
 
     return () => window.cancelAnimationFrame(frameId);
@@ -254,13 +290,17 @@ export default function InventoryModal({
     }
   }, []);
 
-  useEffect(() => () => {
-    if (dragFrameRef.current) cancelAnimationFrame(dragFrameRef.current);
-  }, []);
+  useEffect(
+    () => () => {
+      if (dragFrameRef.current) cancelAnimationFrame(dragFrameRef.current);
+    },
+    [],
+  );
 
   if (!isOpen) return null;
 
-  const activeLayout = layouts[activeCategory] || createEmptyLayouts()[activeCategory];
+  const activeLayout =
+    layouts[activeCategory] || createEmptyLayouts()[activeCategory];
   const selected = selectedKey ? stackMap[selectedKey] : null;
   const draggedStack = dragState?.key ? stackMap[dragState.key] : null;
 
@@ -299,7 +339,12 @@ export default function InventoryModal({
   const handleDrop = (drag, dropTarget) => {
     if (!dropTarget?.startsWith("slot:")) return;
     const targetIndex = Number(dropTarget.split(":")[1]);
-    if (!Number.isInteger(targetIndex) || targetIndex < 0 || targetIndex >= SLOT_COUNT) return;
+    if (
+      !Number.isInteger(targetIndex) ||
+      targetIndex < 0 ||
+      targetIndex >= SLOT_COUNT
+    )
+      return;
     moveToSlot(drag.key, targetIndex);
   };
 
@@ -336,7 +381,10 @@ export default function InventoryModal({
     const current = dragRef.current;
     if (!current || current.pointerId !== event.pointerId) return;
 
-    const distance = Math.hypot(event.clientX - current.startX, event.clientY - current.startY);
+    const distance = Math.hypot(
+      event.clientX - current.startX,
+      event.clientY - current.startY,
+    );
     if (!current.started && distance <= 8) return;
 
     event.preventDefault();
@@ -345,10 +393,16 @@ export default function InventoryModal({
     if (!current.started) {
       current.started = true;
       current.dropTarget = dropTarget;
-      setDragState({ key: current.key, sourceIndex: current.sourceIndex, dropTarget });
+      setDragState({
+        key: current.key,
+        sourceIndex: current.sourceIndex,
+        dropTarget,
+      });
     } else if (current.dropTarget !== dropTarget) {
       current.dropTarget = dropTarget;
-      setDragState((previous) => previous ? { ...previous, dropTarget } : previous);
+      setDragState((previous) =>
+        previous ? { ...previous, dropTarget } : previous,
+      );
     }
 
     positionDragGhost(event.clientX, event.clientY);
@@ -377,7 +431,27 @@ export default function InventoryModal({
     const sortedKeys = stacks
       .filter((stack) => stack.category === activeCategory)
       .sort((left, right) => {
-        if (left.sortRank !== right.sortRank) return left.sortRank - right.sortRank;
+        if (activeCategory === "harvest") {
+          const cropDifference =
+            (left.cropSortRank ?? Number.MAX_SAFE_INTEGER) -
+            (right.cropSortRank ?? Number.MAX_SAFE_INTEGER);
+          if (cropDifference !== 0) return cropDifference;
+
+          const qualityDifference =
+            (left.qualitySortRank ?? Number.MAX_SAFE_INTEGER) -
+            (right.qualitySortRank ?? Number.MAX_SAFE_INTEGER);
+          if (qualityDifference !== 0) return qualityDifference;
+        }
+
+        if (activeCategory === "seed") {
+          const cropDifference =
+            (left.cropSortRank ?? Number.MAX_SAFE_INTEGER) -
+            (right.cropSortRank ?? Number.MAX_SAFE_INTEGER);
+          if (cropDifference !== 0) return cropDifference;
+        }
+
+        if (left.sortRank !== right.sortRank)
+          return left.sortRank - right.sortRank;
         return left.name.localeCompare(right.name, "ru");
       })
       .map((stack) => stack.key);
@@ -387,7 +461,10 @@ export default function InventoryModal({
         ...previous,
         [activeCategory]: [
           ...sortedKeys,
-          ...Array.from({ length: Math.max(0, SLOT_COUNT - sortedKeys.length) }, () => null),
+          ...Array.from(
+            { length: Math.max(0, SLOT_COUNT - sortedKeys.length) },
+            () => null,
+          ),
         ].slice(0, SLOT_COUNT),
       };
       writeStoredLayout(next);
@@ -395,11 +472,18 @@ export default function InventoryModal({
     });
   };
 
-  const selectedCareAlreadyApplied = selected?.type === "care" && appliedCare.includes(selected.itemId);
-  const canUseSelectedCare = canUseCare && !selectedCareAlreadyApplied;
-  const selectedHarvestPrice = selected?.type === "harvest"
-    ? Math.round(selected.basePrice * QUALITY_PRICE_MULTIPLIERS[selected.qualityId])
-    : null;
+  const selectedCareAlreadyApplied =
+    selected?.type === "care" && appliedCare.includes(selected.itemId);
+  const canUseSelectedCare =
+    selected?.itemId === "acidWater"
+      ? canUseAcidWater
+      : canUseCare && !selectedCareAlreadyApplied;
+  const selectedHarvestPrice =
+    selected?.type === "harvest"
+      ? Math.round(
+          selected.basePrice * QUALITY_PRICE_MULTIPLIERS[selected.qualityId],
+        )
+      : null;
 
   const canDiscardSelected = Boolean(
     selected && !(selected.type === "seed" && !Number.isFinite(selected.count)),
@@ -474,24 +558,40 @@ export default function InventoryModal({
                   className={`backpack-slot${stack ? " filled" : " empty"}${isSelected ? " selected" : ""}${isDragging ? " dragging-source" : ""}${isDropTarget ? " drop-target" : ""}`}
                   type="button"
                   data-backpack-drop={`slot:${index}`}
-                  onPointerDown={stack ? (event) => beginPointerDrag(event, stack.key, index) : undefined}
+                  onPointerDown={
+                    stack
+                      ? (event) => beginPointerDrag(event, stack.key, index)
+                      : undefined
+                  }
                   onPointerMove={stack ? updatePointerDrag : undefined}
                   onPointerUp={stack ? endPointerDrag : undefined}
                   onPointerCancel={stack ? cancelPointerDrag : undefined}
-                  aria-label={stack ? `${stack.name}, ${stack.countLabel}` : `Пустая ячейка ${index + 1}`}
+                  aria-label={
+                    stack
+                      ? `${stack.name}, ${stack.countLabel}`
+                      : `Пустая ячейка ${index + 1}`
+                  }
                 >
-                  <span className="backpack-slot-index">{String(index + 1).padStart(2, "0")}</span>
+                  <span className="backpack-slot-index">
+                    {String(index + 1).padStart(2, "0")}
+                  </span>
                   {stack && (
                     <>
-                      <span className={`backpack-item-card category-${stack.category} quality-${QUALITY_CLASS[stack.qualityId] || "none"}`}>
+                      <span
+                        className={`backpack-item-card category-${stack.category} quality-${QUALITY_CLASS[stack.qualityId] || "none"}`}
+                      >
                         <ItemArt stack={stack} />
                       </span>
                       {stack.quality && (
-                        <span className={`backpack-quality-mark quality-${QUALITY_CLASS[stack.qualityId]}`}>
+                        <span
+                          className={`backpack-quality-mark quality-${QUALITY_CLASS[stack.qualityId]}`}
+                        >
                           {stack.quality.icon}
                         </span>
                       )}
-                      <span className="backpack-item-count">{stack.countLabel}</span>
+                      <span className="backpack-item-count">
+                        {stack.countLabel}
+                      </span>
                     </>
                   )}
                 </button>
@@ -501,12 +601,20 @@ export default function InventoryModal({
         </section>
 
         <footer className="backpack-bottom-actions">
-          <button className="backpack-sort-button" type="button" onClick={autoSort}>
+          <button
+            className="backpack-sort-button"
+            type="button"
+            onClick={autoSort}
+          >
             <span aria-hidden="true">⇅</span>
             Сортировать
           </button>
 
-          <button className="backpack-close-bottom" type="button" onClick={closeInventory}>
+          <button
+            className="backpack-close-bottom"
+            type="button"
+            onClick={closeInventory}
+          >
             Закрыть рюкзак
           </button>
         </footer>
@@ -538,20 +646,29 @@ export default function InventoryModal({
 
               <div className="backpack-item-modal-art">
                 <ItemArt stack={selected} />
-                <span className="backpack-item-modal-count">{selected.countLabel}</span>
+                <span className="backpack-item-modal-count">
+                  {selected.countLabel}
+                </span>
               </div>
 
-              <h3 id="backpack-item-modal-title" className="backpack-item-modal-title">
+              <h3
+                id="backpack-item-modal-title"
+                className="backpack-item-modal-title"
+              >
                 {selected.name}
               </h3>
 
-              <p className="backpack-item-modal-description">{selected.description}</p>
+              <p className="backpack-item-modal-description">
+                {selected.description}
+              </p>
 
               {selected.type === "harvest" && (
                 <div className="backpack-item-modal-stats">
                   <div>
                     <span>Качество</span>
-                    <strong className={`quality-${QUALITY_CLASS[selected.qualityId]}`}>
+                    <strong
+                      className={`quality-${QUALITY_CLASS[selected.qualityId]}`}
+                    >
                       {selected.quality.icon} {selected.quality.name}
                     </strong>
                   </div>
@@ -607,17 +724,28 @@ export default function InventoryModal({
               </div>
 
               {deleteConfirmKey === selected.key && (
-                <div className="backpack-delete-confirm-layer" role="presentation">
+                <div
+                  className="backpack-delete-confirm-layer"
+                  role="presentation"
+                >
                   <section
                     className="backpack-delete-confirm"
                     role="alertdialog"
                     aria-modal="true"
                     aria-labelledby="backpack-delete-confirm-title"
                   >
-                    <div className="backpack-delete-confirm-icon" aria-hidden="true">!</div>
-                    <h4 id="backpack-delete-confirm-title">Выбросить предмет?</h4>
+                    <div
+                      className="backpack-delete-confirm-icon"
+                      aria-hidden="true"
+                    >
+                      !
+                    </div>
+                    <h4 id="backpack-delete-confirm-title">
+                      Выбросить предмет?
+                    </h4>
                     <p>
-                      «{selected.name}» {selected.countLabel}. Вернуть его после удаления уже не получится.
+                      «{selected.name}» {selected.countLabel}. Вернуть его после
+                      удаления уже не получится.
                     </p>
                     <div className="backpack-delete-confirm-actions">
                       <button
@@ -644,8 +772,14 @@ export default function InventoryModal({
       </section>
 
       {dragState && draggedStack && (
-        <div ref={dragGhostRef} className="backpack-drag-ghost" aria-hidden="true">
-          <span className={`backpack-item-card category-${draggedStack.category} quality-${QUALITY_CLASS[draggedStack.qualityId] || "none"}`}>
+        <div
+          ref={dragGhostRef}
+          className="backpack-drag-ghost"
+          aria-hidden="true"
+        >
+          <span
+            className={`backpack-item-card category-${draggedStack.category} quality-${QUALITY_CLASS[draggedStack.qualityId] || "none"}`}
+          >
             <ItemArt stack={draggedStack} />
           </span>
           <span>{draggedStack.countLabel}</span>

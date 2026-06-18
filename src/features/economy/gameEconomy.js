@@ -27,7 +27,6 @@ export const GAME_ECONOMY = {
     },
   },
   equipment: {
-    wateringCan: 140,
     secondSlot: 180,
     thirdSlot: 700,
   },

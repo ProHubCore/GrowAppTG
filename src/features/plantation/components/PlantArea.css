@@ -2,10 +2,28 @@
   /* Настройки коробки с семенами */
   --seed-basket-left: 10px;
   --seed-basket-bottom: -40px;
-  --seed-basket-width: 140px;
-  --seed-basket-height: 150px;
+  --seed-basket-width: 130px;
+  --seed-basket-height: 140px;
   --seed-basket-z-index: 30;
   --seed-basket-disabled-opacity: 0.42;
+
+  /* Настройки набора для ухода. Seed basket эти значения не затрагивают. */
+  --plant-care-right: -40px;
+  --plant-care-bottom: -60px;
+  --plant-care-width: 200px;
+  --plant-care-height: 190px;
+  --plant-care-z-index: 30;
+  --plant-care-disabled-opacity: 0.38;
+
+
+  /* Мягкая тень набора ухода */
+  --plant-care-shadow-left: 50%;
+  --plant-care-shadow-bottom: -2px;
+  --plant-care-shadow-width: 104%;
+  --plant-care-shadow-height: 24px;
+  --plant-care-shadow-opacity: 0.14;
+  --plant-care-shadow-fade-opacity: 0.055;
+  --plant-care-shadow-blur: 6px;
 
   /* Мягкая рассеянная тень ведра — свет идёт сверху */
   --pot-shadow-left: 50%;
@@ -86,7 +104,7 @@
 .plant-area {
   position: absolute;
   left: calc(50% - 140px);
-  bottom: 20px;
+  bottom: 10px;
 
   width: 280px;
   height: 500px;
@@ -253,6 +271,164 @@
     plantReadyGlow 2.45s 0.74s ease-in-out infinite;
 }
 
+/*
+ * Явный запрос на полив в виде мысли растения.
+ * Внутри облака находится одна статичная капля, а к растению тянется
+ * цепочка маленьких пузырьков. Никаких счётчиков и падающих капель.
+ */
+.plant-water-request {
+  position: absolute;
+  top: -64px;
+  right: -34px;
+  z-index: 30;
+
+  width: 76px;
+  height: 68px;
+
+  pointer-events: none;
+  transform-origin: 24% 100%;
+  animation: plantWaterThoughtFloat 3.4s ease-in-out infinite;
+}
+
+.plant-water-request__cloud {
+  position: absolute;
+  top: 0;
+  right: 0;
+
+  width: 70px;
+  height: 51px;
+
+  filter: drop-shadow(0 5px 6px rgba(0, 0, 0, 0.27));
+}
+
+/* Одно цельное облако без отдельных крупных кругов по краям. */
+.plant-water-request__cloud-shape {
+  position: absolute;
+  inset: -4px -5px -3px -4px;
+  z-index: 1;
+
+  width: 79px;
+  height: 58px;
+  overflow: visible;
+}
+
+.plant-water-request__cloud-body {
+  fill: url("#water-thought-cloud-gradient");
+  stroke: rgba(74, 65, 52, 0.72);
+  stroke-width: 1.8;
+  stroke-linejoin: round;
+}
+
+.plant-water-request__cloud-highlight {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.72);
+  stroke-width: 2.1;
+  stroke-linecap: round;
+}
+
+.plant-water-request__drop {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 2;
+
+  width: 24px;
+  height: 31px;
+  overflow: visible;
+  transform: translate(-50%, -47%);
+  filter: drop-shadow(0 2px 2px rgba(20, 70, 99, 0.28));
+}
+
+.plant-water-request__drop-shape {
+  fill: url("#water-thought-drop-gradient");
+  stroke: #246f98;
+  stroke-width: 2.2;
+  stroke-linejoin: round;
+}
+
+.plant-water-request__drop-highlight {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.82);
+  stroke-width: 3;
+  stroke-linecap: round;
+}
+
+.plant-water-request__thought-bubbles {
+  position: absolute;
+  left: 1px;
+  bottom: -1px;
+  width: 34px;
+  height: 31px;
+}
+
+.plant-water-request__thought-bubbles i {
+  position: absolute;
+  display: block;
+
+  border: 1.5px solid rgba(74, 65, 52, 0.66);
+  border-radius: 50%;
+  background: linear-gradient(180deg, #fffdf5, #e8dec6);
+  box-shadow:
+    0 2px 5px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.92);
+}
+
+/* Пузырьки идут к растению мягкой S-образной дугой, а не ровной линией. */
+.plant-water-request__thought-bubbles i:nth-child(1) {
+  top: 0;
+  right: 1px;
+  width: 13px;
+  height: 13px;
+}
+
+.plant-water-request__thought-bubbles i:nth-child(2) {
+  left: 4px;
+  top: 11px;
+  width: 9px;
+  height: 9px;
+}
+
+.plant-water-request__thought-bubbles i:nth-child(3) {
+  left: 13px;
+  bottom: 0;
+  width: 5px;
+  height: 5px;
+}
+
+/* Одноразовая реакция растения сразу после подтверждённого полива. */
+.plant-button-image.just-watered {
+  animation: plantWateredResponse 0.76s cubic-bezier(0.2, 0.82, 0.24, 1) both;
+}
+
+@keyframes plantWaterThoughtFloat {
+  0%,
+  100% {
+    transform: translateY(0) rotate(-0.6deg);
+  }
+
+  50% {
+    transform: translateY(-3px) rotate(0.6deg);
+  }
+}
+
+@keyframes plantWateredResponse {
+  0% {
+    transform: translateX(-50%) translateY(0) scaleX(1) scaleY(1);
+  }
+
+  38% {
+    transform: translateX(-50%) translateY(-8px) scaleX(0.96) scaleY(1.08);
+  }
+
+  67% {
+    transform: translateX(-50%) translateY(2px) scaleX(1.035) scaleY(0.98);
+  }
+
+  100% {
+    transform: translateX(-50%) translateY(0) scaleX(1) scaleY(1);
+  }
+}
+
 /* Корзинка с семенами всегда остаётся на экране */
 
 .plantation-seed-basket {
@@ -400,7 +576,7 @@
   z-index: 30;
 
   width: 96px;
-  height: 150px;
+  height: 120px;
 
   pointer-events: auto;
   isolation: isolate;
@@ -522,161 +698,16 @@
   -webkit-filter: grayscale(0.15);
 }
 
-/* Закрытый слот */
+/* Закрытый и доступный новый спот */
+.add-pot-button{position:absolute;left:50%;bottom:34px;z-index:25;width:224px;min-height:196px;padding:18px 18px 15px;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:9px;transform:translateX(-50%);border:1px solid rgba(220,238,229,.18);border-radius:30px;background:radial-gradient(circle at 50% 4%,rgba(255,255,255,.08),transparent 34%),linear-gradient(145deg,rgba(45,55,51,.58),rgba(20,24,22,.64));color:rgba(240,248,243,.94);box-shadow:0 16px 34px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.055),inset 0 0 0 5px rgba(255,255,255,.018);backdrop-filter:blur(11px);-webkit-backdrop-filter:blur(11px);cursor:pointer;pointer-events:auto;appearance:none;-webkit-appearance:none;-webkit-tap-highlight-color:transparent;transition:transform .15s ease,border-color .15s ease,background .15s ease,filter .15s ease}
+.add-pot-button:before{content:"";position:absolute;inset:7px;border:1px solid rgba(232,247,239,.055);border-radius:23px;pointer-events:none}.add-pot-button__shine{position:absolute;top:-48px;left:50%;width:170px;height:110px;border-radius:50%;background:rgba(130,239,183,.08);filter:blur(22px);transform:translateX(-50%);pointer-events:none}
+.add-pot-button--available{border-color:rgba(151,230,188,.34);background:radial-gradient(circle at 50% 2%,rgba(113,245,177,.14),transparent 34%),linear-gradient(145deg,rgba(42,70,57,.63),rgba(18,28,23,.68));box-shadow:0 16px 34px rgba(0,0,0,.28),0 0 24px rgba(94,225,163,.07),inset 0 1px 0 rgba(255,255,255,.06),inset 0 0 0 5px rgba(255,255,255,.018)}.add-pot-button--locked{border-color:rgba(199,211,205,.15);background:radial-gradient(circle at 50% 0%,rgba(214,226,220,.07),transparent 34%),linear-gradient(145deg,rgba(55,60,58,.5),rgba(24,27,26,.58));color:rgba(230,237,233,.78)}.add-pot-button:not(:disabled):active{transform:translateX(-50%) translateY(3px) scale(.975);filter:brightness(1.07)}
+.add-pot-symbol{position:relative;z-index:1;display:grid;width:72px;height:72px;place-items:center;border:1px solid rgba(221,239,230,.19);border-radius:24px;background:radial-gradient(circle at 34% 25%,rgba(255,255,255,.08),transparent 36%),rgba(12,18,15,.42);box-shadow:0 9px 18px rgba(0,0,0,.24),inset 0 0 0 1px rgba(255,255,255,.025)}.add-pot-button--available .add-pot-symbol{border-color:rgba(156,237,194,.31);background:radial-gradient(circle at 34% 25%,rgba(255,255,255,.11),transparent 36%),rgba(42,112,79,.22);box-shadow:0 9px 18px rgba(0,0,0,.24),0 0 17px rgba(92,224,160,.1),inset 0 0 0 1px rgba(255,255,255,.025)}.add-pot-symbol__plus{color:#c9f5dc;font-family:Arial,sans-serif;font-size:48px;font-weight:200;line-height:.8;text-shadow:0 0 12px rgba(111,239,172,.34)}
+.add-pot-symbol__lock{position:relative;display:block;width:38px;height:45px}.add-pot-symbol__lock-loop{position:absolute;top:0;left:50%;width:24px;height:24px;border:4px solid rgba(210,220,215,.58);border-bottom:0;border-radius:13px 13px 3px 3px;transform:translateX(-50%)}.add-pot-symbol__lock-body{position:absolute;left:50%;bottom:0;display:grid;width:38px;height:29px;place-items:center;border:1px solid rgba(232,240,236,.15);border-radius:9px;background:linear-gradient(180deg,rgba(127,141,134,.74),rgba(66,75,71,.78));box-shadow:0 5px 8px rgba(0,0,0,.23),inset 0 1px 0 rgba(255,255,255,.1);transform:translateX(-50%)}.add-pot-symbol__keyhole{position:relative;width:6px;height:11px;border-radius:999px;background:rgba(25,30,28,.74)}.add-pot-symbol__keyhole:before{content:"";position:absolute;top:-2px;left:50%;width:9px;height:9px;border-radius:50%;background:inherit;transform:translateX(-50%)}
+.add-pot-copy{position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:3px}.add-pot-copy strong{color:rgba(244,250,246,.95);font-size:15px;font-weight:1000;line-height:1.05;text-shadow:0 2px 7px rgba(0,0,0,.34)}.add-pot-copy small{color:rgba(216,230,222,.48);font-size:9px;font-weight:800;letter-spacing:.03em;line-height:1.1}
+.add-pot-status{position:relative;z-index:1;display:inline-flex;min-height:31px;align-items:center;justify-content:center;gap:6px;padding:6px 11px;border:1px solid rgba(226,241,233,.13);border-radius:999px;background:rgba(8,13,10,.34);box-shadow:inset 0 1px 0 rgba(255,255,255,.025)}.add-pot-status strong{color:rgba(243,249,245,.92);font-size:11px;font-weight:1000;line-height:1}.add-pot-status small,.add-pot-status>span{color:rgba(209,222,215,.57);font-size:8px;font-weight:900;line-height:1;text-transform:uppercase}.add-pot-status--price{border-color:rgba(153,230,188,.22);background:rgba(29,76,54,.26)}.add-pot-status__coin{width:18px;height:18px;border:1px solid rgba(255,240,181,.55);border-radius:50%;background:radial-gradient(circle at 32% 25%,#fff0a9 0 12%,#deb954 34%,#9b6b24 74%,#4d2d12 100%);box-shadow:inset 0 1px 1px rgba(255,255,255,.48),0 2px 4px rgba(0,0,0,.3)}.add-pot-status--level{gap:7px;border-color:rgba(206,218,212,.12);background:rgba(20,24,22,.36)}.add-pot-current-level{position:relative;z-index:1;margin-top:-4px;color:rgba(205,217,211,.38);font-size:8px;font-weight:800;line-height:1}
 
-.add-pot-button {
-  position: absolute;
-  left: 50%;
-  bottom: 28px;
-  z-index: 25;
-
-  width: 210px;
-  height: 220px;
-
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-
-  gap: 10px;
-  padding: 0;
-
-  transform: translateX(-50%);
-
-  border:
-    2px dashed
-    rgba(210, 255, 229, 0.55);
-
-  border-radius: 34px;
-
-  background:
-    linear-gradient(
-      145deg,
-      rgba(78, 255, 177, 0.12),
-      rgba(139, 105, 255, 0.12)
-    );
-
-  box-shadow:
-    0 12px 30px rgba(0, 0, 0, 0.23),
-    inset 0 0 24px rgba(255, 255, 255, 0.05);
-
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-
-  color: rgba(240, 255, 247, 0.96);
-
-  cursor: pointer;
-  pointer-events: auto;
-
-  appearance: none;
-  -webkit-appearance: none;
-  -webkit-tap-highlight-color: transparent;
-
-  transition:
-    transform 150ms ease,
-    border-color 150ms ease,
-    background 150ms ease;
-}
-
-.add-pot-button:active {
-  transform:
-    translateX(-50%)
-    scale(0.96);
-
-  border-color:
-    rgba(220, 255, 235, 0.8);
-
-  background:
-    linear-gradient(
-      145deg,
-      rgba(78, 255, 177, 0.21),
-      rgba(139, 105, 255, 0.2)
-    );
-}
-
-.add-pot-button.unavailable {
-  border-color:
-    rgba(204, 216, 222, 0.3);
-
-  background:
-    linear-gradient(
-      145deg,
-      rgba(117, 132, 136, 0.12),
-      rgba(69, 74, 78, 0.18)
-    );
-
-  color: rgba(231, 239, 241, 0.74);
-}
-
-.add-pot-plus {
-  width: 76px;
-  height: 76px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  border:
-    2px solid
-    rgba(219, 255, 234, 0.67);
-
-  border-radius: 50%;
-
-  background:
-    rgba(111, 255, 184, 0.11);
-
-  box-shadow:
-    0 0 22px
-    rgba(95, 255, 180, 0.2);
-
-  font-family: Arial, sans-serif;
-  font-size: 56px;
-  font-weight: 200;
-  line-height: 1;
-
-  text-shadow:
-    0 0 13px
-    rgba(134, 255, 195, 0.72);
-}
-
-.add-pot-button.unavailable
-  .add-pot-plus {
-  border-color:
-    rgba(220, 231, 235, 0.34);
-
-  background:
-    rgba(205, 220, 225, 0.06);
-
-  box-shadow: none;
-  text-shadow: none;
-}
-
-.add-pot-label {
-  font-size: 15px;
-  font-weight: 900;
-
-  text-shadow:
-    0 2px 8px
-    rgba(0, 0, 0, 0.4);
-}
-
-.add-pot-price {
-  padding: 5px 11px;
-
-  border:
-    1px solid
-    rgba(225, 255, 238, 0.2);
-
-  border-radius: 999px;
-
-  background:
-    rgba(10, 21, 17, 0.23);
-
-  font-size: 12px;
-  font-weight: 800;
-}
-
-/* Стрелки смены места */
+/* Стрелки смены места — прозрачные кнопки, видны только сами стрелки. */
 
 .plantation-arrow {
   position: absolute;
@@ -686,14 +717,18 @@
   display: grid;
   place-items: center;
 
-  width: 52px;
-  height: 66px;
+  width: 48px;
+  height: 72px;
   padding: 0;
 
   transform: translateY(-50%);
 
   border: 0;
+  border-radius: 0;
   background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 
   cursor: pointer;
   pointer-events: auto;
@@ -707,42 +742,9 @@
     filter 140ms ease;
 }
 
-.plantation-arrow::before {
-  content: "";
-  position: absolute;
-  inset: 13px 7px;
-
-  border: 1px solid rgba(173, 241, 153, 0.32);
-  border-radius: 13px 5px 13px 5px;
-
-  background:
-    radial-gradient(circle at 50% 42%, rgba(177, 247, 145, 0.17), transparent 62%),
-    linear-gradient(145deg, rgba(37, 50, 38, 0.82), rgba(17, 22, 20, 0.74));
-
-  box-shadow:
-    0 7px 16px rgba(0, 0, 0, 0.35),
-    inset 0 1px 0 rgba(239, 255, 223, 0.08),
-    0 0 14px rgba(139, 235, 112, 0.12);
-
-  transform: rotate(45deg);
-}
-
+.plantation-arrow::before,
 .plantation-arrow::after {
-  content: "";
-  position: absolute;
-  top: 50%;
-  left: 50%;
-
-  width: 5px;
-  height: 5px;
-
-  border: 1px solid rgba(22, 29, 23, 0.85);
-  border-radius: 50%;
-
-  background: radial-gradient(circle at 35% 30%, #d6cb9c, #66563e 75%);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.75);
-
-  transform: translate(-50%, -50%);
+  display: none;
 }
 
 .plantation-arrow__chevron {
@@ -750,18 +752,19 @@
   z-index: 2;
 
   display: block;
+  width: 18px;
+  height: 18px;
 
-  width: 14px;
-  height: 14px;
+  border-bottom: 3px solid rgba(226, 255, 218, 0.86);
+  border-left: 3px solid rgba(226, 255, 218, 0.86);
 
-  border-bottom: 3px solid #d8f7aa;
-  border-left: 3px solid #d8f7aa;
-
-  filter: drop-shadow(0 0 5px rgba(174, 247, 130, 0.48));
+  filter:
+    drop-shadow(0 2px 2px rgba(0, 0, 0, 0.72))
+    drop-shadow(0 0 4px rgba(154, 235, 128, 0.24));
 }
 
 .plantation-arrow-left {
-  left: 8px;
+  left: 6px;
 }
 
 .plantation-arrow-left .plantation-arrow__chevron {
@@ -769,7 +772,7 @@
 }
 
 .plantation-arrow-right {
-  right: 8px;
+  right: 6px;
 }
 
 .plantation-arrow-right .plantation-arrow__chevron {
@@ -777,13 +780,13 @@
 }
 
 .plantation-arrow:active {
-  transform: translateY(-50%) scale(0.9);
-  filter: brightness(1.18);
+  transform: translateY(-50%) scale(0.88);
+  filter: brightness(1.12);
 }
 
 .plantation-arrow:disabled {
-  opacity: 0.35;
-  filter: grayscale(0.55);
+  opacity: 0.20;
+  filter: grayscale(0.45);
 }
 
 /* Анимация свайпа */
@@ -1018,8 +1021,193 @@
 .pot-type-change-button{position:absolute;left:50%;bottom:42px;z-index:26;display:flex;align-items:center;gap:5px;padding:6px 10px;border:1px solid rgba(224,255,236,.14);border-radius:999px;transform:translateX(-50%);color:#eaf8ee;font:inherit;font-size:9px;font-weight:850;background:rgba(24,31,27,.75);box-shadow:0 5px 14px rgba(0,0,0,.23);pointer-events:auto}.pot-type-change-button b{color:#8ff0b7;font-size:8px}.pot-type-change-button:active{transform:translateX(-50%) scale(.95)}.plant-emoji{display:grid!important;place-items:center;width:100%!important;height:100%!important;font-size:82px!important;filter:drop-shadow(0 8px 8px rgba(0,0,0,.3))}.pot-emoji{display:grid;place-items:center;font-size:100px;line-height:1;filter:drop-shadow(0 12px 10px rgba(0,0,0,.3))}
 
 
-/* Инструмент ухода рядом с лопатой */
-.plantation-care-tool{position:absolute;right:82px;bottom:78px;z-index:33;pointer-events:auto}.care-tool{position:relative;display:grid;place-items:center;width:54px;height:54px;padding:0;border:1px solid rgba(216,255,234,.2);border-radius:50%;background:radial-gradient(circle at 35% 25%,rgba(161,255,206,.22),transparent 58%),rgba(26,47,38,.86);box-shadow:0 9px 18px rgba(0,0,0,.3),0 0 18px rgba(98,236,163,.12),inset 0 1px 0 rgba(255,255,255,.06);backdrop-filter:blur(7px);color:#effff5;pointer-events:auto}.care-tool:active:not(:disabled){transform:scale(.94)}.care-tool.disabled{opacity:.34;filter:grayscale(.55)}.care-tool-icon{font-size:25px;filter:drop-shadow(0 3px 4px rgba(0,0,0,.35))}.care-tool-count{position:absolute;right:-3px;top:-4px;display:grid;place-items:center;min-width:25px;height:20px;padding:0 5px;border:2px solid rgba(17,28,22,.9);border-radius:999px;background:#74d9a3;color:#10261b;font-size:8px;font-weight:1000}.plant-care-status{display:flex!important;align-items:center;gap:4px}.plant-care-status b{margin-left:2px;color:#fff;font-size:9px}
+/* Набор ухода — отдельная PNG-кнопка справа от ведра. */
+.plantation-care-tool {
+  position: absolute;
+  right: var(--plant-care-right);
+  bottom: var(--plant-care-bottom);
+  z-index: var(--plant-care-z-index);
 
-/* Единый флакон: уход и удаление растения */
-.plantation-care-tool{right:18px!important;bottom:42px!important;z-index:34!important}.care-tool{width:62px!important;height:62px!important;border-radius:22px!important;background:radial-gradient(circle at 35% 24%,rgba(185,255,219,.25),transparent 55%),linear-gradient(160deg,rgba(34,74,58,.95),rgba(21,39,33,.94))!important}.care-tool-icon{font-size:31px!important}
+  width: var(--plant-care-width);
+  height: var(--plant-care-height);
+
+  pointer-events: auto;
+  isolation: isolate;
+}
+
+.plantation-care-tool::before {
+  content: "";
+  position: absolute;
+  left: var(--plant-care-shadow-left);
+  bottom: var(--plant-care-shadow-bottom);
+  z-index: 0;
+
+  width: var(--plant-care-shadow-width);
+  height: var(--plant-care-shadow-height);
+
+  border-radius: 50%;
+  transform: translateX(-50%);
+  background: radial-gradient(
+    ellipse at center,
+    rgba(7, 6, 5, var(--plant-care-shadow-opacity)) 0%,
+    rgba(7, 6, 5, var(--plant-care-shadow-fade-opacity)) 48%,
+    transparent 86%
+  );
+  filter: blur(var(--plant-care-shadow-blur));
+  pointer-events: none;
+}
+
+.care-tool {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+
+  width: 100%;
+  height: 100%;
+
+  display: block;
+  padding: 0;
+  margin: 0;
+
+  border: 0;
+  outline: 0;
+  background: transparent;
+
+  cursor: pointer;
+  pointer-events: auto;
+  appearance: none;
+  -webkit-appearance: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.care-tool-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+
+  object-fit: contain;
+  image-rendering: auto;
+  opacity: 1;
+  filter: none;
+  -webkit-filter: none;
+  pointer-events: none;
+
+  transform-origin: 50% 85%;
+  transition:
+    transform 140ms ease,
+    opacity 180ms ease;
+}
+
+.care-tool:not(:disabled):active .care-tool-image {
+  transform: scale(0.94);
+}
+
+.care-tool:disabled {
+  cursor: default;
+}
+
+.care-tool:disabled .care-tool-image {
+  opacity: var(--plant-care-disabled-opacity);
+}
+
+
+/* Интерактивный полив прямо из облачка над растением. */
+.plant-button-image.collectable {
+  pointer-events: none;
+}
+
+.plant-collect-button {
+  display: block;
+  width: 100%;
+  padding: 0;
+  margin: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  appearance: none;
+  -webkit-appearance: none;
+  -webkit-tap-highlight-color: transparent;
+  pointer-events: none;
+}
+
+.plant-button-image.collectable .plant-collect-button {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.plant-button-image.collectable .plant-collect-button:active {
+  transform: scale(0.96);
+}
+
+.plant-water-request {
+  padding: 0;
+  margin: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  appearance: none;
+  -webkit-appearance: none;
+  -webkit-tap-highlight-color: transparent;
+  pointer-events: auto;
+  cursor: pointer;
+  touch-action: manipulation;
+
+  /* Облачко важнее двери: вся нарисованная форма, включая края SVG
+     и цепочку пузырьков, входит в надёжную область нажатия. */
+  z-index: 80;
+}
+
+.plant-water-request::before {
+  content: "";
+  position: absolute;
+  inset: -9px -10px -8px -9px;
+  border-radius: 30px;
+  background: transparent;
+}
+
+.plant-water-request:active .plant-water-request__cloud {
+  transform: scale(0.92);
+}
+
+.plant-water-request:focus-visible {
+  outline: 2px solid rgba(120, 220, 255, 0.78);
+  outline-offset: 3px;
+  border-radius: 50%;
+}
+
+.plant-collect-button:disabled {
+  opacity: 1;
+  cursor: default;
+}
+
+/* Сбор после закрытия итоговой карточки: исчезает именно растение в ведре. */
+.plant-button-image.harvesting {
+  z-index: 42;
+  pointer-events: none;
+}
+
+.plant-button-image.harvesting .plant {
+  animation: harvestPlantFromPot 130ms ease-out forwards !important;
+  transform-origin: 50% 70%;
+  will-change: opacity, transform, filter;
+}
+
+@keyframes harvestPlantFromPot {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+    filter: none;
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1);
+    filter: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .plant-button-image.harvesting .plant {
+    animation-duration: 1ms !important;
+  }
+}

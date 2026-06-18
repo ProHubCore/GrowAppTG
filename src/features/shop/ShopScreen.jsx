@@ -80,6 +80,7 @@ export default function ShopScreen({
   premiumCoins = 0,
   premiumRefreshPrice = 5,
   onPremiumRefresh,
+  onOpenPremiumStore,
   onBuy,
 }) {
   const [department, setDepartment] = useState("seed");
@@ -403,6 +404,11 @@ export default function ShopScreen({
         cancelText="Подождать"
         confirmDisabled={premiumCoins < premiumRefreshPrice}
         onConfirm={refreshWithPremium}
+        onInsufficientFunds={() => {
+          setIsPremiumRefreshOpen(false);
+          onOpenPremiumStore?.();
+        }}
+        insufficientText="Приобрести"
         onCancel={() => setIsPremiumRefreshOpen(false)}
       />
 

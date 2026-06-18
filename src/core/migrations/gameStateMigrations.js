@@ -48,9 +48,9 @@ export const migrateSeedInventory = (value) =>
 export function migrateCareInventory(value) {
   const source = value && typeof value === "object" ? value : {};
   return {
-    wateringCan: safeNumber(source.wateringCan) > 0 ? 1 : 0,
     nutrition: safeNumber(source.nutrition),
     mariaMix: safeNumber(source.mariaMix) + safeNumber(source.joeMix),
+    acidWater: source.acidWater === undefined ? 1 : safeNumber(source.acidWater),
   };
 }
 
@@ -59,6 +59,7 @@ export function migrateShopStock(value) {
   const next = {};
 
   for (const [oldId, amount] of Object.entries(source)) {
+    if (oldId === "wateringCan") continue;
     const newId = oldId === "joeMix" ? "mariaMix" : mapCropId(oldId);
     next[newId] = safeNumber(next[newId]) + safeNumber(amount);
   }

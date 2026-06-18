@@ -1,24 +1,32 @@
+/* Премиальные монеты: только монета и баланс, без подписи G. */
 .premium-wallet {
   position: absolute;
-  top: var(--hud-top, max(18px, calc(env(safe-area-inset-top) + 8px)));
+  top: calc(var(--hud-top, max(18px, calc(env(safe-area-inset-top) + 8px))) + 8px);
   left: var(--hud-left, 16px);
   z-index: 72;
-  min-width: 78px;
-  height: 36px;
+
+  min-width: 88px;
+  height: 40px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  padding: 0 11px 0 8px;
-  border: 1px solid rgba(190, 174, 255, 0.24);
-  border-radius: 13px;
+  gap: 8px;
+  padding: 0 13px 0 8px;
+
+  border: 1px solid rgba(219, 200, 255, 0.34);
+  border-radius: 15px;
   background:
-    radial-gradient(circle at 18% 20%, rgba(213, 199, 255, 0.12), transparent 42%),
-    linear-gradient(180deg, rgba(43, 34, 68, 0.84), rgba(23, 19, 38, 0.9));
-  color: #eee7ff;
+    radial-gradient(circle at 22% 18%, rgba(235, 222, 255, 0.22), transparent 34%),
+    radial-gradient(circle at 84% 118%, rgba(123, 75, 220, 0.28), transparent 52%),
+    linear-gradient(180deg, rgba(61, 43, 91, 0.94), rgba(25, 20, 43, 0.96));
+  color: #f5efff;
+
   box-shadow:
-    0 8px 18px rgba(0, 0, 0, 0.24),
-    inset 0 1px rgba(255, 255, 255, 0.06);
+    0 9px 20px rgba(0, 0, 0, 0.30),
+    0 0 12px rgba(164, 113, 255, 0.10),
+    inset 0 1px 0 rgba(255, 255, 255, 0.11),
+    inset 0 -1px 0 rgba(25, 12, 50, 0.42);
+
   font: inherit;
   cursor: pointer;
   backdrop-filter: blur(8px);
@@ -35,37 +43,53 @@
 }
 
 .premium-wallet__icon {
-  width: 22px;
-  height: 22px;
-  display: grid;
-  place-items: center;
-  border: 1px solid rgba(230, 219, 255, 0.34);
-  border-radius: 8px;
-  background: linear-gradient(145deg, #d8c8ff, #8c70ee 62%, #4a3981);
-  color: #fff;
-  font-size: 12px;
-  line-height: 1;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.55);
-  box-shadow: inset 0 1px rgba(255, 255, 255, 0.48), 0 2px 5px rgba(0, 0, 0, 0.28);
+  position: relative;
+  flex: 0 0 auto;
+  width: 25px;
+  height: 25px;
+  border: 1px solid rgba(245, 234, 255, 0.58);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 33% 27%, #fff8ff 0 10%, #ddc8ff 18%, #9a72ec 48%, #57328f 76%, #2a1749 100%);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.72),
+    inset 0 -2px 3px rgba(31, 13, 61, 0.42),
+    0 2px 5px rgba(0, 0, 0, 0.34),
+    0 0 7px rgba(184, 132, 255, 0.24);
+}
+
+.premium-wallet__icon::before {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border: 1px solid rgba(255, 248, 255, 0.40);
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(65, 30, 110, 0.24);
+}
+
+.premium-wallet__icon::after {
+  content: "";
+  position: absolute;
+  top: 7px;
+  left: 10px;
+  width: 5px;
+  height: 10px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.65), rgba(255,255,255,0));
+  transform: rotate(32deg);
+  opacity: 0.72;
 }
 
 .premium-wallet__copy {
   min-width: 0;
   display: flex;
-  align-items: baseline;
-  gap: 4px;
-}
-
-.premium-wallet__copy small {
-  color: rgba(227, 216, 255, 0.58);
-  font-size: 7px;
-  font-weight: 1000;
-  letter-spacing: 0.08em;
+  align-items: center;
 }
 
 .premium-wallet__copy strong {
-  font-size: 14px;
+  font-size: 15px;
   font-weight: 1000;
   line-height: 1;
   font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.48);
 }

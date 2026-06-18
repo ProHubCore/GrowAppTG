@@ -4,11 +4,8 @@ import "./PremiumWallet.css";
 export default function PremiumWallet({ balance = 0, onClick, disabled = false }) {
   const content = (
     <>
-      <span className="premium-wallet__icon" aria-hidden="true">
-        {PREMIUM_CURRENCY.icon}
-      </span>
+      <span className="premium-wallet__icon" aria-hidden="true" />
       <span className="premium-wallet__copy">
-        <small>{PREMIUM_CURRENCY.shortName}</small>
         <strong>{Math.max(0, Math.floor(Number(balance) || 0))}</strong>
       </span>
     </>

@@ -17,21 +17,6 @@ const cropItems = CROPS.filter((crop) => crop.shop).map((crop) => ({
   seedType: crop.type,
 }));
 
-const toolItems = [
-  {
-    id: "wateringCan",
-    type: "tool",
-    name: "Старая лейка",
-    icon: "💧",
-    description: "Постоянный инструмент. Один раз на каждой стадии срезает ровно 20% полной длительности стадии.",
-    pricePerSeed: 120,
-    minStock: 1,
-    maxStock: 1,
-    requiredClubLevel: 1,
-    requiredTrust: 25,
-  },
-];
-
 const careItems = [
   {
     id: "nutrition",
@@ -57,9 +42,21 @@ const careItems = [
     requiredClubLevel: 3,
     requiredTrust: 240,
   },
+  {
+    id: "acidWater",
+    type: "care",
+    name: "Кислотная вода",
+    icon: "☣",
+    description: "Аварийный одноразовый флакон. Уничтожает растение и полностью освобождает ёмкость.",
+    pricePerSeed: 24,
+    minStock: 1,
+    maxStock: 3,
+    requiredClubLevel: 1,
+    requiredTrust: 0,
+  },
 ];
 
-export const shopItems = [...cropItems, ...toolItems, ...careItems];
+export const shopItems = [...cropItems, ...careItems];
 
 export function createShopStock() {
   return Object.fromEntries(

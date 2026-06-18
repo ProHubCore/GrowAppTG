@@ -48,9 +48,9 @@ export const CROPS = [
       requiredTrust: 60,
     },
     stages: [
-      stage(ASSETS.plants.greenTomato[0], "Росток Кислоплода", 75, 125),
-      stage(ASSETS.plants.greenTomato[1], "Молодой Кислоплод", 145, 135),
-      stage(ASSETS.plants.greenTomato[2], "Спелый Кислоплод", 200, 115, 49),
+      stage(ASSETS.plants.greenTomato[0], "Росток Кислоплода", 75, 85),
+      stage(ASSETS.plants.greenTomato[1], "Молодой Кислоплод", 150, 100),
+      stage(ASSETS.plants.greenTomato[2], "Спелый Кислоплод", 150, 85, 49),
     ],
   },
   {

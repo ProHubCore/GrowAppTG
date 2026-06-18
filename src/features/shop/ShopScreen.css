@@ -27,16 +27,21 @@
   left:0;
   right:0;
   top:0;
-  height:max(68px,calc(env(safe-area-inset-top) + 52px));
+  height:max(122px,calc(env(safe-area-inset-top) + 104px));
   z-index:1;
   pointer-events:none;
   background:linear-gradient(180deg,rgba(7,4,9,.48),transparent);
 }
 
+
+.game-screen--shop .premium-wallet{
+  top:calc(var(--hud-top, max(18px, calc(env(safe-area-inset-top) + 8px))) + 20px);
+}
+
 .shop-wallet{
   position:absolute;
   right:16px;
-  top:max(18px,calc(env(safe-area-inset-top) + 8px));
+  top:calc(var(--hud-top, max(18px, calc(env(safe-area-inset-top) + 8px))) + 20px);
   z-index:30;
   min-width:76px;
   height:38px;
@@ -81,8 +86,8 @@
   left:12px;
   right:12px;
   bottom:max(14px,env(safe-area-inset-bottom));
-  height:min(560px,67.5dvh);
-  min-height:500px;
+  height:min(540px,64dvh);
+  min-height:480px;
   display:flex;
   flex-direction:column;
   padding:13px 13px 12px;
@@ -883,8 +888,8 @@
 
 @media(max-height:740px){
   .shop-stall{
-    height:min(520px,72dvh);
-    min-height:455px;
+    height:min(490px,68dvh);
+    min-height:435px;
     padding-top:10px;
   }
   .shop-signboard{min-height:55px;margin-bottom:8px}

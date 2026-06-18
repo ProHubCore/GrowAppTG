@@ -1,0 +1,281 @@
+.reset-progress-modal {
+  position: absolute;
+  inset: 0;
+  z-index: 180;
+  display: grid;
+  place-items: center;
+  padding:
+    max(82px, calc(env(safe-area-inset-top) + 58px))
+    18px
+    max(24px, env(safe-area-inset-bottom));
+  background:
+    radial-gradient(circle at 50% 35%, rgba(159, 66, 48, 0.18), transparent 42%),
+    rgba(8, 6, 5, 0.78);
+  backdrop-filter: blur(9px);
+  -webkit-backdrop-filter: blur(9px);
+}
+
+.reset-progress-modal__card {
+  position: relative;
+  width: min(100%, 350px);
+  max-height: min(690px, calc(100dvh - 116px));
+  overflow-y: auto;
+  padding: 25px 20px 19px;
+  border: 1px solid rgba(255, 216, 152, 0.38);
+  border-radius: 29px;
+  color: #fff1d0;
+  text-align: center;
+  background:
+    linear-gradient(135deg, transparent 0 48%, rgba(255, 255, 255, 0.025) 48% 52%, transparent 52%) 0 0 / 18px 18px,
+    linear-gradient(180deg, rgba(72, 45, 31, 0.99), rgba(30, 20, 16, 0.995));
+  box-shadow:
+    0 28px 80px rgba(0, 0, 0, 0.68),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    inset 0 0 0 5px rgba(26, 16, 12, 0.28);
+  scrollbar-width: none;
+  animation: reset-progress-modal-in 0.2s ease-out both;
+}
+
+.reset-progress-modal__card::-webkit-scrollbar {
+  display: none;
+}
+
+.reset-progress-modal__card::before {
+  content: "";
+  position: absolute;
+  inset: 7px;
+  z-index: -1;
+  border: 1px solid rgba(255, 226, 169, 0.12);
+  border-radius: 22px;
+  pointer-events: none;
+}
+
+.reset-progress-modal__close {
+  position: absolute;
+  top: 12px;
+  right: 13px;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0 0 2px;
+  border: 1px solid rgba(255, 226, 177, 0.18);
+  border-radius: 50%;
+  color: #f9e8c5;
+  font: 300 27px/1 Arial, sans-serif;
+  background: rgba(19, 13, 11, 0.48);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+}
+
+.reset-progress-modal__emblem {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 78px;
+  height: 78px;
+  margin: 0 auto 12px;
+  border: 1px solid rgba(255, 190, 151, 0.36);
+  border-radius: 25px;
+  background:
+    radial-gradient(circle at 45% 35%, rgba(255, 207, 166, 0.18), transparent 38%),
+    linear-gradient(145deg, rgba(156, 68, 51, 0.72), rgba(78, 31, 27, 0.9));
+  box-shadow:
+    0 13px 28px rgba(39, 12, 9, 0.36),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+.reset-progress-modal__arrow {
+  color: #ffe5be;
+  font-size: 46px;
+  line-height: 1;
+  filter: drop-shadow(0 3px 7px rgba(39, 8, 5, 0.4));
+}
+
+.reset-progress-modal__spark {
+  position: absolute;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #ffdca1;
+  box-shadow: 0 0 8px rgba(255, 206, 126, 0.75);
+}
+
+.reset-progress-modal__spark--one { top: 13px; right: 13px; }
+.reset-progress-modal__spark--two { left: 11px; bottom: 17px; width: 3px; height: 3px; }
+.reset-progress-modal__spark--three { right: 18px; bottom: 10px; width: 3px; height: 3px; }
+
+.reset-progress-modal__eyebrow {
+  margin-bottom: 5px;
+  color: rgba(255, 202, 134, 0.68);
+  font-size: 9px;
+  font-weight: 950;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.reset-progress-modal h2 {
+  margin: 0 38px 8px;
+  font-family: Georgia, "Times New Roman", serif;
+  font-size: 27px;
+  line-height: 1.08;
+  color: #fff0cb;
+}
+
+.reset-progress-modal__lead {
+  max-width: 290px;
+  margin: 0 auto;
+  color: rgba(255, 238, 207, 0.7);
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.42;
+}
+
+.reset-progress-modal__losses {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+  text-align: left;
+}
+
+.reset-progress-modal__loss {
+  display: grid;
+  grid-template-columns: 40px 1fr;
+  gap: 10px;
+  align-items: center;
+  min-height: 58px;
+  padding: 9px 11px;
+  border: 1px solid rgba(255, 221, 164, 0.1);
+  border-radius: 16px;
+  background: rgba(13, 9, 8, 0.28);
+}
+
+.reset-progress-modal__loss > span {
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  border: 1px solid rgba(255, 193, 152, 0.18);
+  border-radius: 13px;
+  color: #ffd7aa;
+  font-size: 20px;
+  font-weight: 900;
+  background: rgba(150, 62, 46, 0.22);
+}
+
+.reset-progress-modal__loss strong,
+.reset-progress-modal__loss small {
+  display: block;
+}
+
+.reset-progress-modal__loss strong {
+  margin-bottom: 2px;
+  color: #ffebc7;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.reset-progress-modal__loss small {
+  color: rgba(255, 235, 202, 0.55);
+  font-size: 9px;
+  font-weight: 650;
+  line-height: 1.3;
+}
+
+.reset-progress-modal__kept {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 11px;
+  padding: 8px 10px;
+  border: 1px solid rgba(137, 207, 119, 0.2);
+  border-radius: 13px;
+  color: rgba(218, 247, 201, 0.82);
+  font-size: 10px;
+  font-weight: 850;
+  background: rgba(60, 105, 50, 0.16);
+}
+
+.reset-progress-modal__kept span {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  color: #e5ffd2;
+  background: rgba(108, 164, 82, 0.42);
+}
+
+.reset-progress-modal__actions {
+  display: grid;
+  gap: 9px;
+  margin-top: 16px;
+}
+
+.reset-progress-modal__cancel,
+.reset-progress-modal__confirm {
+  min-height: 47px;
+  border-radius: 15px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 950;
+  cursor: pointer;
+}
+
+.reset-progress-modal__cancel {
+  border: 1px solid rgba(255, 229, 184, 0.15);
+  color: #fbe8c3;
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.reset-progress-modal__confirm {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid rgba(255, 187, 164, 0.52);
+  color: #fff7ee;
+  background: linear-gradient(180deg, #d86756, #92352c);
+  box-shadow:
+    0 7px 0 rgba(84, 24, 20, 0.78),
+    0 12px 24px rgba(66, 15, 11, 0.3);
+}
+
+.reset-progress-modal__confirm:active {
+  transform: translateY(4px);
+  box-shadow:
+    0 3px 0 rgba(84, 24, 20, 0.78),
+    0 6px 13px rgba(66, 15, 11, 0.25);
+}
+
+.reset-progress-modal__confirm span {
+  font-size: 19px;
+  line-height: 1;
+}
+
+@keyframes reset-progress-modal-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (max-height: 690px) {
+  .reset-progress-modal {
+    align-items: start;
+    padding-top: max(72px, calc(env(safe-area-inset-top) + 48px));
+  }
+
+  .reset-progress-modal__card {
+    padding-top: 18px;
+  }
+
+  .reset-progress-modal__emblem {
+    width: 62px;
+    height: 62px;
+    margin-bottom: 8px;
+  }
+
+  .reset-progress-modal__arrow { font-size: 38px; }
+  .reset-progress-modal__loss { min-height: 51px; padding-block: 6px; }
+}

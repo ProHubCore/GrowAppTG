@@ -1,4 +1,4 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import Pot from "./Pot";
 import Plant from "./Plant";
@@ -20,6 +20,8 @@ function PlantArea({
   unlockPrice,
   isSlotAvailable,
   lockedStatusText,
+  requiredClubLevel,
+  currentClubLevel,
   isUnlocked,
   isEmpty,
   canCollect,
@@ -27,9 +29,10 @@ function PlantArea({
   onSeedClick,
   onUnlock,
   onOpenCare,
+  onWater,
   careApplied,
   wateredStages = [],
-  hasWateringCan = false,
+  canWater = false,
   canCare = false,
   onPreviousPot,
   onNextPot,
@@ -39,15 +42,73 @@ function PlantArea({
   unlockDisabled = false,
   onOpenGrowthInfo,
   growthInfoDisabled = false,
+  isHarvesting = false,
 }) {
   const touchStartX = useRef(null);
   const touchStartY = useRef(null);
+  const suppressClickUntil = useRef(0);
 
   const [animationClass, setAnimationClass] =
     useState("");
 
   const [isChanging, setIsChanging] =
     useState(false);
+
+  const [isJustWatered, setIsJustWatered] =
+    useState(false);
+
+  const previousWaterState = useRef({
+    potId: pot?.id || null,
+    plantId: plant?.id || null,
+    wateredCount: Array.isArray(wateredStages) ? wateredStages.length : 0,
+  });
+
+  const normalizedWateredStages = Array.isArray(wateredStages)
+    ? wateredStages.map(Number)
+    : [];
+
+  const safeRequiredClubLevel = Math.max(1, Math.floor(Number(requiredClubLevel) || 1));
+  const safeCurrentClubLevel = Math.max(1, Math.floor(Number(currentClubLevel) || 1));
+
+  const needsWater = Boolean(
+    plant &&
+    canWater &&
+    growStep > 0 &&
+    growStep < 3 &&
+    !normalizedWateredStages.includes(Number(growStep)),
+  );
+
+  useEffect(() => {
+    const nextState = {
+      potId: pot?.id || null,
+      plantId: plant?.id || null,
+      wateredCount: normalizedWateredStages.length,
+    };
+
+    const previousState = previousWaterState.current;
+    const isSamePlant =
+      previousState.potId === nextState.potId &&
+      previousState.plantId === nextState.plantId;
+
+    previousWaterState.current = nextState;
+
+    if (!isSamePlant) {
+      setIsJustWatered(false);
+      return undefined;
+    }
+
+    if (nextState.wateredCount <= previousState.wateredCount) {
+      return undefined;
+    }
+
+    setIsJustWatered(true);
+
+    const timer = window.setTimeout(() => {
+      setIsJustWatered(false);
+    }, 760);
+
+    return () => window.clearTimeout(timer);
+  }, [pot?.id, plant?.id, normalizedWateredStages.length]);
 
   const changePot = (direction) => {
     if (navigationDisabled || isChanging) {
@@ -84,71 +145,89 @@ function PlantArea({
     }, SLIDE_OUT_TIME);
   };
 
-  const handleTouchStart = (event) => {
-    if (navigationDisabled) {
+  const resetTouch = () => {
+    touchStartX.current = null;
+    touchStartY.current = null;
+  };
+
+  const handleTouchStartCapture = (event) => {
+    if (navigationDisabled || isChanging) {
+      resetTouch();
       return;
     }
 
-    const touch = event.touches[0];
+    const touch = event.touches?.[0];
+
+    if (!touch) {
+      resetTouch();
+      return;
+    }
 
     touchStartX.current = touch.clientX;
     touchStartY.current = touch.clientY;
   };
 
-  const handleTouchEnd = (event) => {
+  const handleTouchEndCapture = (event) => {
     if (
       touchStartX.current === null ||
       touchStartY.current === null ||
       isChanging
     ) {
+      resetTouch();
       return;
     }
 
-    const touch = event.changedTouches[0];
+    const touch = event.changedTouches?.[0];
 
-    const differenceX =
-      touch.clientX - touchStartX.current;
-
-    const differenceY =
-      touch.clientY - touchStartY.current;
-
-    touchStartX.current = null;
-    touchStartY.current = null;
-
-    if (
-      Math.abs(differenceY) >
-      Math.abs(differenceX)
-    ) {
+    if (!touch) {
+      resetTouch();
       return;
     }
 
-    if (
-      Math.abs(differenceX) <
-      SWIPE_DISTANCE
-    ) {
+    const differenceX = touch.clientX - touchStartX.current;
+    const differenceY = touch.clientY - touchStartY.current;
+
+    resetTouch();
+
+    if (Math.abs(differenceY) > Math.abs(differenceX)) {
       return;
     }
 
-    changePot(
-      differenceX < 0 ? "next" : "previous",
-    );
-  };
+    if (Math.abs(differenceX) < SWIPE_DISTANCE) {
+      return;
+    }
 
-  const handleTouchCancel = () => {
-    touchStartX.current = null;
-    touchStartY.current = null;
-  };
-
-  const stopSwipeStart = (event) => {
+    // Не даём кнопке под пальцем открыть модалку после горизонтального жеста.
+    if (event.cancelable) {
+      event.preventDefault();
+    }
     event.stopPropagation();
+    suppressClickUntil.current = Date.now() + 180;
+
+    changePot(differenceX < 0 ? "next" : "previous");
+  };
+
+  const handleTouchCancelCapture = () => {
+    resetTouch();
+  };
+
+  const handleClickCapture = (event) => {
+    if (Date.now() >= suppressClickUntil.current) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    suppressClickUntil.current = 0;
   };
 
   return (
     <div
       className="plantation-slider"
-      onTouchStart={handleTouchStart}
-      onTouchEnd={handleTouchEnd}
-      onTouchCancel={handleTouchCancel}
+      onTouchStartCapture={handleTouchStartCapture}
+      onTouchEndCapture={handleTouchEndCapture}
+      onTouchCancelCapture={handleTouchCancelCapture}
+      onClickCapture={handleClickCapture}
     >
       <button
         className="plantation-arrow plantation-arrow-left"
@@ -181,6 +260,8 @@ function PlantArea({
               <GrowTimer
                 growStep={growStep}
                 timeLeft={timeLeft}
+                fastForwardKey={normalizedWateredStages.length}
+                fastForwardIdentity={pot?.id || "pot"}
                 onOpenInfo={onOpenGrowthInfo}
                 infoDisabled={growthInfoDisabled}
               />
@@ -190,45 +271,36 @@ function PlantArea({
                   plant={plant}
                   canCollect={canCollect && !collectDisabled}
                   onCollect={onCollect}
+                  needsWater={needsWater}
+                  onWater={onWater}
+                  isJustWatered={isJustWatered}
+                  isHarvesting={isHarvesting}
                 />
               )}
             </div>
 
 
-            {growStep > 0 && growStep < 3 && (
-              (Array.isArray(careApplied) && careApplied.length > 0) ||
-              (Array.isArray(wateredStages) && wateredStages.length > 0)
-            ) && (
-              <div className="plant-care-status">
-                {Array.isArray(wateredStages) && wateredStages.length > 0 && (
-                  <span>💧 {wateredStages.length}/2</span>
-                )}
-                {Array.isArray(careApplied) && careApplied.includes("nutrition") && <span>🌿</span>}
-                {Array.isArray(careApplied) && careApplied.includes("mariaMix") && <span>🧪</span>}
-              </div>
-            )}
+            {growStep > 0 && growStep < 3 &&
+              Array.isArray(careApplied) &&
+              (careApplied.includes("nutrition") || careApplied.includes("mariaMix")) && (
+                <div className="plant-care-status" aria-label="Применённые средства ухода">
+                  {careApplied.includes("nutrition") && <span>🌿</span>}
+                  {careApplied.includes("mariaMix") && <span>🧪</span>}
+                </div>
+              )}
 
-            <div
-              className="plantation-seed-basket"
-              onTouchStart={stopSwipeStart}
-              onTouchEnd={stopSwipeStart}
-            >
+            <div className="plantation-seed-basket">
               <SeedBasket
                 disabled={!isEmpty || seedDisabled}
                 onClick={onSeedClick}
               />
             </div>
 
-            <div
-              className="plantation-care-tool"
-              onTouchStart={stopSwipeStart}
-              onTouchEnd={stopSwipeStart}
-            >
+            <div className="plantation-care-tool">
               <CareTool
                 disabled={!canCare}
                 appliedCount={Array.isArray(careApplied) ? careApplied.length : careApplied ? 1 : 0}
                 wateredCount={Array.isArray(wateredStages) ? wateredStages.length : 0}
-                hasWateringCan={hasWateringCan}
                 onClick={onOpenCare}
               />
             </div>
@@ -236,41 +308,36 @@ function PlantArea({
           </>
         ) : (
           <button
-            className={`add-pot-button${
-              isSlotAvailable
-                ? ""
-                : " unavailable"
-            }`}
+            className={`add-pot-button ${isSlotAvailable ? "add-pot-button--available" : "add-pot-button--locked"}`}
             type="button"
-            onTouchStart={stopSwipeStart}
-            onTouchEnd={stopSwipeStart}
             disabled={unlockDisabled}
             onClick={onUnlock}
+            aria-label={isSlotAvailable ? `Добавить новое ведро за ${unlockPrice} монет` : lockedStatusText || `Место откроется на ${safeRequiredClubLevel} уровне клуба`}
           >
-            <span className="add-pot-plus">
-              +
+            <span className="add-pot-button__shine" aria-hidden="true" />
+            <span className="add-pot-symbol" aria-hidden="true">
+              {isSlotAvailable ? (
+                <span className="add-pot-symbol__plus">+</span>
+              ) : (
+                <span className="add-pot-symbol__lock">
+                  <span className="add-pot-symbol__lock-loop" />
+                  <span className="add-pot-symbol__lock-body"><span className="add-pot-symbol__keyhole" /></span>
+                </span>
+              )}
             </span>
-
+            <span className="add-pot-copy">
+              <strong>{isSlotAvailable ? "Добавить ведро" : "Место закрыто"}</strong>
+              <small>{isSlotAvailable ? "Расширить свою плантацию" : "Расширение плантации"}</small>
+            </span>
             {isSlotAvailable ? (
-              <>
-                <span className="add-pot-label">
-                  Добавить ведро
-                </span>
-
-                <span className="add-pot-price">
-                  {unlockPrice} монет
-                </span>
-              </>
+              <span className="add-pot-status add-pot-status--price">
+                <span className="add-pot-status__coin" aria-hidden="true" />
+                <strong>{unlockPrice}</strong><small>монет</small>
+              </span>
             ) : (
               <>
-                <span className="add-pot-label">
-                  Новое место
-                </span>
-
-                <span className="add-pot-price">
-                  {lockedStatusText ||
-                    "Пока что недоступно"}
-                </span>
+                <span className="add-pot-status add-pot-status--level"><span>Клуб</span><strong>{safeRequiredClubLevel} уровень</strong></span>
+                <span className="add-pot-current-level">Сейчас: {safeCurrentClubLevel} уровень</span>
               </>
             )}
           </button>

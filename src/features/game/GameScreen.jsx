@@ -16,8 +16,13 @@ import { MARIA_QUESTS } from "../maria-ivanovna/mariaQuests";
 import ActionModal from "../../shared/components/ActionModal/ActionModal";
 import UnlockCelebration from "../progression/components/UnlockCelebration";
 import SupportScreen from "../support/SupportScreen";
+import CoinBankScreen from "../support/CoinBankScreen";
 import HarvestCareModal from "../plantation/components/HarvestCareModal";
 import HarvestResultModal from "../plantation/components/HarvestResultModal";
+import LockedSlotModal from "../plantation/components/LockedSlotModal";
+import ReadyHarvestModal from "../plantation/components/ReadyHarvestModal";
+import InstantGrowModal from "../plantation/components/InstantGrowModal";
+import ResetProgressModal from "./components/ResetProgressModal";
 import PlantCatalogModal from "../catalog/components/PlantCatalogModal";
 import PotTypeModal from "../plantation/components/PotTypeModal";
 import TutorialOverlay from "../tutorial/TutorialOverlay";
@@ -25,7 +30,10 @@ import usePersistentState from "../../core/hooks/usePersistentState";
 import useResponsiveStage from "../../core/hooks/useResponsiveStage";
 import usePotGrowth from "../plantation/hooks/usePotGrowth";
 import useClubReputation from "../club/useClubReputation";
-import { triggerTelegramHaptic, triggerTelegramNotification } from "../../core/telegram";
+import {
+  triggerTelegramHaptic,
+  triggerTelegramNotification,
+} from "../../core/telegram";
 import { requestGameProgressReset } from "../../core/bootstrap/prepareReleaseState";
 import {
   PREMIUM_CURRENCY,
@@ -42,12 +50,27 @@ import {
 import { CLUB_LEVELS, getClubLevel } from "../club/clubProgression";
 import { MARIA_TRUST_LEVELS } from "../maria-ivanovna/mariaProgression";
 import { plantsBySeed } from "../plantation/data/plants";
-import { CROP_IDS, createEmptyCropInventory, createEmptySeedInventory } from "../plantation/data/crops";
+import {
+  CROP_IDS,
+  createEmptyCropInventory,
+  createEmptySeedInventory,
+} from "../plantation/data/crops";
 import { seeds } from "../plantation/data/seeds";
 import { SHOP_REFRESH_MS, createShopStock, shopItems } from "../shop/shopItems";
-import { getHarvestYield, getQualityById, rollHarvestQuality } from "../plantation/data/harvestQuality";
+import {
+  getHarvestYield,
+  getQualityById,
+  rollHarvestQuality,
+} from "../plantation/data/harvestQuality";
 import { POT_TYPES_BY_ID } from "../plantation/data/potTypes";
-import { addQualityItems, createEmptyQualityInventory, getQualityAmount, getQualityTotal, removeAnyQuality, removeQualityItems } from "../plantation/data/qualityInventory";
+import {
+  addQualityItems,
+  createEmptyQualityInventory,
+  getQualityAmount,
+  getQualityTotal,
+  removeAnyQuality,
+  removeQualityItems,
+} from "../plantation/data/qualityInventory";
 import {
   migrateCareInventory,
   migrateCropInventory,
@@ -70,7 +93,6 @@ const STAGE_HEIGHT = 844;
 const INVENTORY_SLOT_LIMIT = 20;
 const LAST_SEEN_STORAGE_KEY = "growapp-last-seen-at";
 const OFFLINE_NOTICE_THRESHOLD_MS = 60_000;
-
 
 function createPotState() {
   return {
@@ -132,10 +154,7 @@ function readLastSeenAt() {
 }
 
 function getTutorialScreen(step) {
-  if (
-    step === "district-finish" ||
-    step === "open-maria-house"
-  ) {
+  if (step === "district-finish" || step === "open-maria-house") {
     return "district";
   }
 
@@ -180,14 +199,19 @@ function GameScreen() {
 
   const [careInventory, setCareInventory] = usePersistentState(
     "growapp-care-inventory",
-    { wateringCan: 0, nutrition: 0, mariaMix: 0 },
+    { nutrition: 0, mariaMix: 0, acidWater: 1 },
     { migrate: migrateCareInventory },
   );
 
   const [shopStock, setShopStock] = usePersistentState(
     "growapp-shop-stock",
     createShopStock,
-    { migrate: (value) => ({ ...createShopStock(), ...migrateShopStock(value) }) },
+    {
+      migrate: (value) => ({
+        ...createShopStock(),
+        ...migrateShopStock(value),
+      }),
+    },
   );
 
   const [shopRefreshAt, setShopRefreshAt] = usePersistentState(
@@ -197,11 +221,9 @@ function GameScreen() {
 
   const [shopClock, setShopClock] = useState(() => Date.now());
 
-  const [coins, setCoins] = usePersistentState(
-    "growapp-coins",
-    INITIAL_COINS,
-    { migrate: normalizeCoins },
-  );
+  const [coins, setCoins] = usePersistentState("growapp-coins", INITIAL_COINS, {
+    migrate: normalizeCoins,
+  });
 
   const [premiumCoins, setPremiumCoins] = usePersistentState(
     PREMIUM_CURRENCY.storageKey,
@@ -247,7 +269,10 @@ function GameScreen() {
   const previousMariaTrustRef = useRef(null);
   const previousClubReputationRef = useRef(null);
 
-  const [activeScreen, setActiveScreen] = useState(() => getTutorialScreen(tutorialStep));
+  const [activeScreen, setActiveScreen] = useState(() =>
+    getTutorialScreen(tutorialStep),
+  );
+  const [bankReturnScreen, setBankReturnScreen] = useState("plantation");
   const {
     viewportRef,
     scale: stageScale,
@@ -256,10 +281,7 @@ function GameScreen() {
     cropY,
     visibleWidth,
     visibleHeight,
-  } = useResponsiveStage(
-    STAGE_WIDTH,
-    STAGE_HEIGHT,
-  );
+  } = useResponsiveStage(STAGE_WIDTH, STAGE_HEIGHT);
 
   const [isSeedModalOpen, setIsSeedModalOpen] = useState(
     () => tutorialStep === "choose-seed" || tutorialStep === "plant-seed",
@@ -270,27 +292,33 @@ function GameScreen() {
       : null,
   );
 
-  const [isRemoveModalOpen, setIsRemoveModalOpen] =
-    useState(false);
+  const [isRemoveModalOpen, setIsRemoveModalOpen] = useState(false);
 
   const [isInventoryOpen, setIsInventoryOpen] = useState(false);
   const [isCareModalOpen, setIsCareModalOpen] = useState(false);
-  const [isInventoryFullModalOpen, setIsInventoryFullModalOpen] = useState(false);
+  const [isInventoryFullModalOpen, setIsInventoryFullModalOpen] =
+    useState(false);
   const [isCatalogOpen, setIsCatalogOpen] = useState(false);
   const [isPotTypeModalOpen, setIsPotTypeModalOpen] = useState(false);
   const [harvestResult, setHarvestResult] = useState(null);
 
   const [flyingLootItems, setFlyingLootItems] = useState([]);
+  const [harvestAnimation, setHarvestAnimation] = useState(null);
+  const harvestAnimationTimersRef = useRef([]);
 
-  const [pendingSlotIndex, setPendingSlotIndex] =
-    useState(null);
+  useEffect(() => () => {
+    harvestAnimationTimersRef.current.forEach((timerId) => {
+      window.clearTimeout(timerId);
+    });
+    harvestAnimationTimersRef.current = [];
+  }, []);
 
-  const [isUnavailableModalOpen, setIsUnavailableModalOpen] =
-    useState(false);
+  const [pendingSlotIndex, setPendingSlotIndex] = useState(null);
+
+  const [isUnavailableModalOpen, setIsUnavailableModalOpen] = useState(false);
   const [isResetProgressModalOpen, setIsResetProgressModalOpen] =
     useState(false);
   const [instantGrowRequest, setInstantGrowRequest] = useState(null);
-
 
   useEffect(() => {
     const currentTrust = Math.max(0, Number(mariaQuestState?.trust) || 0);
@@ -350,22 +378,10 @@ function GameScreen() {
 
       if (unlockedLevels.length > 0) {
         const clubUnlocks = {
-          2: [
-            "+5% к клубным ценам",
-            "Новый статус поставщика",
-          ],
-          3: [
-            "Второе место под ведро",
-            "+10% к клубным ценам",
-          ],
-          4: [
-            "+15% к клубным ценам",
-            "Статус звезды клуба",
-          ],
-          5: [
-            "Третье место под ведро",
-            "+20% к клубным ценам",
-          ],
+          2: ["+5% к клубным ценам", "Новый статус поставщика"],
+          3: ["Второе место под ведро", "+10% к клубным ценам"],
+          4: ["+15% к клубным ценам", "Статус звезды клуба"],
+          5: ["Третье место под ведро", "+20% к клубным ценам"],
         };
 
         setUnlockQueue((queue) => [
@@ -388,8 +404,7 @@ function GameScreen() {
     previousClubReputationRef.current = currentReputation;
   }, [clubReputation]);
 
-  const isTutorialActive =
-    tutorialStep !== "completed";
+  const isTutorialActive = tutorialStep !== "completed";
 
   const hasBlockingOverlay = Boolean(
     isSeedModalOpen ||
@@ -404,13 +419,11 @@ function GameScreen() {
     instantGrowRequest ||
     isResetProgressModalOpen ||
     isUnavailableModalOpen ||
-    unlockQueue.length > 0
+    unlockQueue.length > 0,
   );
 
   const showBottomMenu =
-    !hasBlockingOverlay &&
-    (activeScreen === "plantation" || activeScreen === "district") &&
-    (!isTutorialActive || tutorialStep === "go-district");
+    !hasBlockingOverlay && activeScreen === "district" && !isTutorialActive;
 
   const tutorialAllows = (action) => {
     if (!isTutorialActive) {
@@ -449,7 +462,8 @@ function GameScreen() {
 
     const checkTimer = window.setTimeout(() => {
       const awayFor = Date.now() - initialLastSeenAt;
-      if (initialLastSeenAt <= 0 || awayFor < OFFLINE_NOTICE_THRESHOLD_MS) return;
+      if (initialLastSeenAt <= 0 || awayFor < OFFLINE_NOTICE_THRESHOLD_MS)
+        return;
 
       const readyCount = (potStatesRef.current || []).filter(
         (potState) => potState?.unlocked && potState.growStep === 3,
@@ -496,10 +510,8 @@ function GameScreen() {
     );
   }, [setPotStates]);
 
-
   useEffect(() => {
-    document.body.dataset.tutorialLocked =
-      isTutorialActive ? "true" : "false";
+    document.body.dataset.tutorialLocked = isTutorialActive ? "true" : "false";
 
     return () => {
       delete document.body.dataset.tutorialLocked;
@@ -507,8 +519,9 @@ function GameScreen() {
   }, [isTutorialActive]);
 
   useEffect(() => {
-    document.body.dataset.gameOverlayOpen =
-      hasBlockingOverlay ? "true" : "false";
+    document.body.dataset.gameOverlayOpen = hasBlockingOverlay
+      ? "true"
+      : "false";
 
     return () => {
       delete document.body.dataset.gameOverlayOpen;
@@ -567,12 +580,10 @@ function GameScreen() {
 
   const currentPot = pots[currentPotIndex];
 
-  const currentSlot =
-    plantationSlots[currentPotIndex] || null;
+  const currentSlot = plantationSlots[currentPotIndex] || null;
 
   const currentPotState =
-    potStates[currentPotIndex] ||
-    createPotState(currentPotIndex);
+    potStates[currentPotIndex] || createPotState(currentPotIndex);
 
   const currentSlotState = getPlantationSlotState(
     currentSlot,
@@ -580,18 +591,22 @@ function GameScreen() {
     Boolean(currentPotState.unlocked),
   );
 
-  const currentPotType = POT_TYPES_BY_ID[currentPotState.potTypeId] || POT_TYPES_BY_ID.soil;
-  const displayPot = { ...currentPot, name: currentPotType.name, image: currentPotType.image, icon: currentPotType.icon };
+  const currentPotType =
+    POT_TYPES_BY_ID[currentPotState.potTypeId] || POT_TYPES_BY_ID.soil;
+  const displayPot = {
+    ...currentPot,
+    name: currentPotType.name,
+    image: currentPotType.image,
+    icon: currentPotType.icon,
+  };
 
   const growStep = currentPotState.growStep;
   const timeLeft = currentPotState.timeLeft;
   const plantedSeedId = currentPotState.selectedSeedId;
 
-  const isCurrentPotUnlocked =
-    currentPotState.unlocked;
+  const isCurrentPotUnlocked = currentPotState.unlocked;
 
-  const currentPlantStages =
-    plantsBySeed[plantedSeedId] || null;
+  const currentPlantStages = plantsBySeed[plantedSeedId] || null;
 
   const currentPlant =
     growStep > 0 && currentPlantStages
@@ -615,22 +630,16 @@ function GameScreen() {
     ) {
       setTutorialStep("collect");
     }
-  }, [
-    activeScreen,
-    growStep,
-    setTutorialStep,
-    tutorialStep,
-  ]);
+  }, [activeScreen, growStep, setTutorialStep, tutorialStep]);
 
-  const availableSeedsForCurrentPot = seeds.filter((seed) =>
-    (seed.seedType || "plant") === currentPotType.seedType &&
-    (mariaQuestState.trust || 0) >= (seed.requiredTrust || 0)
+  const availableSeedsForCurrentPot = seeds.filter(
+    (seed) =>
+      (seed.seedType || "plant") === currentPotType.seedType &&
+      (mariaQuestState.trust || 0) >= (seed.requiredTrust || 0),
   );
 
   const pendingSlot =
-    pendingSlotIndex === null
-      ? null
-      : plantationSlots[pendingSlotIndex];
+    pendingSlotIndex === null ? null : plantationSlots[pendingSlotIndex];
 
   const updateCurrentPotState = (updates) => {
     setPotStates((previousStates) =>
@@ -660,8 +669,7 @@ function GameScreen() {
 
     closePlantationModals();
 
-    const safeIndex =
-      (nextIndex + pots.length) % pots.length;
+    const safeIndex = (nextIndex + pots.length) % pots.length;
 
     setCurrentPotIndex(safeIndex);
   };
@@ -683,15 +691,10 @@ function GameScreen() {
       return;
     }
 
-    if (
-      tutorialStep === "unlock-pot" &&
-      currentPotIndex === 0
-    ) {
+    if (tutorialStep === "unlock-pot" && currentPotIndex === 0) {
       setPotStates((previousStates) =>
         previousStates.map((potState, index) =>
-          index === 0
-            ? createEmptyPotState(true)
-            : potState,
+          index === 0 ? createEmptyPotState(true) : potState,
         ),
       );
 
@@ -711,11 +714,28 @@ function GameScreen() {
   const choosePendingSlotType = (potTypeId) => {
     if (pendingSlotIndex === null) return;
     const slot = plantationSlots[pendingSlotIndex];
-    const slotState = getPlantationSlotState(slot, clubLevel, Boolean(potStates[pendingSlotIndex]?.unlocked));
+    const slotState = getPlantationSlotState(
+      slot,
+      clubLevel,
+      Boolean(potStates[pendingSlotIndex]?.unlocked),
+    );
     const type = POT_TYPES_BY_ID[potTypeId];
-    if (!type || (mariaQuestState.trust || 0) < type.requiredTrust || !slotState.canBuy || slot.unlockPrice === null || coins < slot.unlockPrice) return;
+    if (
+      !type ||
+      (mariaQuestState.trust || 0) < type.requiredTrust ||
+      !slotState.canBuy ||
+      slot.unlockPrice === null ||
+      coins < slot.unlockPrice
+    )
+      return;
     setCoins((value) => value - slot.unlockPrice);
-    setPotStates((states) => states.map((state,index)=> index===pendingSlotIndex ? { ...createEmptyPotState(true), potTypeId } : state));
+    setPotStates((states) =>
+      states.map((state, index) =>
+        index === pendingSlotIndex
+          ? { ...createEmptyPotState(true), potTypeId }
+          : state,
+      ),
+    );
     setPendingSlotIndex(null);
     setIsPotTypeModalOpen(false);
   };
@@ -752,10 +772,7 @@ function GameScreen() {
 
     setSelectedSeed(seed);
 
-    if (
-      tutorialStep === "choose-seed" &&
-      seed?.id === "tabakko"
-    ) {
+    if (tutorialStep === "choose-seed" && seed?.id === "tabakko") {
       setTutorialStep("plant-seed");
     }
   };
@@ -787,8 +804,7 @@ function GameScreen() {
     const seedId = selectedSeed.id;
 
     if (!selectedSeed.infinite) {
-      const currentAmount =
-        seedInventory[seedId] || 0;
+      const currentAmount = seedInventory[seedId] || 0;
 
       if (currentAmount <= 0) {
         return;
@@ -796,10 +812,7 @@ function GameScreen() {
 
       setSeedInventory((previousInventory) => ({
         ...previousInventory,
-        [seedId]: Math.max(
-          0,
-          (previousInventory[seedId] || 0) - 1,
-        ),
+        [seedId]: Math.max(0, (previousInventory[seedId] || 0) - 1),
       }));
     }
 
@@ -810,7 +823,10 @@ function GameScreen() {
     const now = Date.now();
     const totalGrowTime = Math.max(1, Math.ceil(growTime));
     const totalGrowDurationMs = totalGrowTime * 1000;
-    const firstPhaseDurationMs = Math.max(1000, Math.round(totalGrowDurationMs / 2));
+    const firstPhaseDurationMs = Math.max(
+      1000,
+      Math.round(totalGrowDurationMs / 2),
+    );
 
     triggerTelegramHaptic("light");
 
@@ -820,7 +836,10 @@ function GameScreen() {
       selectedSeedId: seedId,
       growTime: totalGrowTime,
       timeLeft: totalGrowTime,
-      nextGrowthAt: Math.min(now + firstPhaseDurationMs, now + totalGrowDurationMs),
+      nextGrowthAt: Math.min(
+        now + firstPhaseDurationMs,
+        now + totalGrowDurationMs,
+      ),
       harvestAt: now + totalGrowDurationMs,
       growthTimingVersion: 2,
       careApplied: [],
@@ -855,10 +874,6 @@ function GameScreen() {
       : [];
 
     if (careType === "water") {
-      if ((careInventory.wateringCan || 0) <= 0) {
-        return;
-      }
-
       if (wateredStages.includes(growStep)) {
         return;
       }
@@ -877,7 +892,8 @@ function GameScreen() {
       const currentNextGrowthAt = Number(currentPotState.nextGrowthAt);
       const fallbackHarvestAt =
         currentNextGrowthAt + (growStep === 1 ? phaseDurationMs : 0);
-      const currentHarvestAt = Number(currentPotState.harvestAt) || fallbackHarvestAt;
+      const currentHarvestAt =
+        Number(currentPotState.harvestAt) || fallbackHarvestAt;
       const nextGrowthAt = Math.max(now, currentNextGrowthAt - reductionMs);
       const harvestAt = Math.max(nextGrowthAt, currentHarvestAt - reductionMs);
 
@@ -938,7 +954,7 @@ function GameScreen() {
       return;
     }
 
-    if (growStep !== 3 || !plantedSeedId) {
+    if (growStep !== 3 || !plantedSeedId || harvestResult || harvestAnimation) {
       return;
     }
 
@@ -955,79 +971,29 @@ function GameScreen() {
     const harvestItemId = seedData?.harvestItemId || plantedSeedId || "tabakko";
     const itemName = seedData?.name || "Урожай";
     const itemIcon = seedData?.icon || "🌱";
-    const previousRecord = plantCatalog[harvestItemId] || {};
-    const firstDiscovery = !(previousRecord.qualities?.[quality.id] > 0);
-    const existingQualityStack = getQualityAmount(qualityInventory, harvestItemId, quality.id) > 0;
+    const existingQualityStack =
+      getQualityAmount(qualityInventory, harvestItemId, quality.id) > 0;
     const occupiedInventorySlots = getOccupiedInventorySlots();
 
-    if (!existingQualityStack && occupiedInventorySlots >= INVENTORY_SLOT_LIMIT) {
+    if (
+      !existingQualityStack &&
+      occupiedInventorySlots >= INVENTORY_SLOT_LIMIT
+    ) {
       setIsInventoryFullModalOpen(true);
       return;
     }
 
-    const newLootItems = Array.from(
-      {
-        length: reward,
-      },
-      (_, index) => ({
-        id: `${Date.now()}-${index}`,
-        startX: 190 + index * 12,
-        startY: 470 - index * 8,
-        delay: index * 120,
-        itemId: harvestItemId,
-      }),
-    );
-
-    setFlyingLootItems(newLootItems);
-
-    setInventory((previousInventory) => ({
-      ...previousInventory,
-      [harvestItemId]: (previousInventory[harvestItemId] || 0) + reward,
-    }));
-    setQualityInventory((previous) => addQualityItems(previous, harvestItemId, quality.id, reward));
-
-    setPlantCatalog((previousCatalog) => {
-      const record = previousCatalog[harvestItemId] || {
-        totalHarvested: 0,
-        qualities: {},
-        bestQualityRank: -1,
-        bestQualityName: null,
-      };
-
-      return {
-        ...previousCatalog,
-        [harvestItemId]: {
-          ...record,
-          totalHarvested: (record.totalHarvested || 0) + reward,
-          qualities: {
-            ...(record.qualities || {}),
-            [quality.id]: ((record.qualities || {})[quality.id] || 0) + 1,
-          },
-          bestQualityRank: Math.max(record.bestQualityRank ?? -1, quality.rank),
-          bestQualityName:
-            quality.rank >= (record.bestQualityRank ?? -1)
-              ? quality.name
-              : record.bestQualityName,
-        },
-      };
-    });
-
-    triggerTelegramNotification("success");
-
+    // Пока открыто итоговое окно, урожай ещё остаётся в ведре и не начисляется.
     setHarvestResult({
+      potIndex: currentPotIndex,
+      potTypeId: currentPotState.potTypeId || "soil",
       itemId: harvestItemId,
       itemName,
       itemIcon,
+      itemImage: currentPlantStages?.[2]?.image || currentPlant?.image || null,
       amount: reward,
       quality,
-      firstDiscovery,
     });
-
-    updateCurrentPotState({ ...createEmptyPotState(true), potTypeId: currentPotState.potTypeId || "soil" });
-
-    window.setTimeout(() => {
-      setFlyingLootItems([]);
-    }, 1100);
   };
 
   const advanceTutorialAfterHarvestResult = () => {
@@ -1037,17 +1003,133 @@ function GameScreen() {
     }
   };
 
+  const confirmHarvestResult = () => {
+    const result = harvestResult;
+    if (!result || harvestAnimation) return;
+
+    // Итоговая карточка закрывается сразу. Дальше анимируется только
+    // настоящее растение, которое всё ещё находится в ведре.
+    setHarvestResult(null);
+    setHarvestAnimation({
+      potIndex: result.potIndex,
+      itemId: result.itemId,
+    });
+    triggerTelegramHaptic("medium");
+
+    const finishPlantAnimationTimer = window.setTimeout(() => {
+      const visualLootCount = Math.max(3, Math.min(6, result.amount));
+      const newLootItems = Array.from(
+        { length: visualLootCount },
+        (_, index) => ({
+          id: `${Date.now()}-${index}`,
+          // Все иконки рождаются в одной центральной точке на месте растения
+          // и плавным потоком летят к рюкзаку.
+          startX: 176,
+          startY: 474,
+          delay: index * 55,
+          itemId: result.itemId,
+          icon: result.itemIcon,
+          image: result.itemImage,
+        }),
+      );
+
+      // Маленькие изображения появляются ровно там, где только что исчезло
+      // большое растение. В этот же момент урожай зачисляется, а ведро очищается.
+      setFlyingLootItems(newLootItems);
+
+      setInventory((previousInventory) => ({
+        ...previousInventory,
+        [result.itemId]:
+          (previousInventory[result.itemId] || 0) + result.amount,
+      }));
+
+      setQualityInventory((previous) =>
+        addQualityItems(
+          previous,
+          result.itemId,
+          result.quality.id,
+          result.amount,
+        ),
+      );
+
+      setPlantCatalog((previousCatalog) => {
+        const record = previousCatalog[result.itemId] || {
+          totalHarvested: 0,
+          qualities: {},
+          bestQualityRank: -1,
+          bestQualityName: null,
+        };
+
+        return {
+          ...previousCatalog,
+          [result.itemId]: {
+            ...record,
+            totalHarvested: (record.totalHarvested || 0) + result.amount,
+            qualities: {
+              ...(record.qualities || {}),
+              [result.quality.id]:
+                ((record.qualities || {})[result.quality.id] || 0) + 1,
+            },
+            bestQualityRank: Math.max(
+              record.bestQualityRank ?? -1,
+              result.quality.rank,
+            ),
+            bestQualityName:
+              result.quality.rank >= (record.bestQualityRank ?? -1)
+                ? result.quality.name
+                : record.bestQualityName,
+          },
+        };
+      });
+
+      setPotStates((previousStates) =>
+        previousStates.map((potState, index) =>
+          index === result.potIndex
+            ? {
+                ...createEmptyPotState(true),
+                potTypeId:
+                  result.potTypeId || potState.potTypeId || "soil",
+              }
+            : potState,
+        ),
+      );
+
+      triggerTelegramNotification("success");
+      advanceTutorialAfterHarvestResult();
+    }, 130);
+
+    const finishLootAnimationTimer = window.setTimeout(() => {
+      setFlyingLootItems([]);
+      setHarvestAnimation(null);
+      harvestAnimationTimersRef.current = [];
+    }, 1600);
+
+    harvestAnimationTimersRef.current = [
+      finishPlantAnimationTimer,
+      finishLootAnimationTimer,
+    ];
+  };
+
   const requestInstantGrow = () => {
-    if (isTutorialActive || growStep <= 0 || growStep >= 3 || !instantGrowCost) {
+    if (
+      isTutorialActive ||
+      growStep <= 0 ||
+      growStep >= 3 ||
+      !instantGrowCost
+    ) {
       return;
     }
 
     setInstantGrowRequest({
       potIndex: currentPotIndex,
       cost: instantGrowCost,
-      cropName: seeds.find((seed) => seed.id === plantedSeedId)?.name || "Растение",
+      cropName:
+        seeds.find((seed) => seed.id === plantedSeedId)?.name || "Растение",
+      cropImage:
+        currentPlantStages?.[2]?.image || currentPlant?.image || null,
       growStep,
       timeLeft,
+      formattedTime: formatGrowthTime(timeLeft),
     });
   };
 
@@ -1056,7 +1138,11 @@ function GameScreen() {
     if (!request) return;
 
     const targetState = potStatesRef.current?.[request.potIndex];
-    if (!targetState || targetState.growStep <= 0 || targetState.growStep >= 3) {
+    if (
+      !targetState ||
+      targetState.growStep <= 0 ||
+      targetState.growStep >= 3
+    ) {
       setInstantGrowRequest(null);
       return;
     }
@@ -1115,15 +1201,33 @@ function GameScreen() {
       return;
     }
 
-    updateCurrentPotState({ ...createEmptyPotState(true), potTypeId: currentPotState.potTypeId || "soil" });
+    if ((careInventory.acidWater || 0) <= 0) {
+      setIsRemoveModalOpen(false);
+      return;
+    }
+
+    setCareInventory((previous) => ({
+      ...previous,
+      acidWater: Math.max(0, (previous.acidWater || 0) - 1),
+    }));
+
+    updateCurrentPotState({
+      ...createEmptyPotState(true),
+      potTypeId: currentPotState.potTypeId || "soil",
+    });
 
     setIsRemoveModalOpen(false);
   };
 
   const deleteQualityItem = (itemId, qualityId, count) => {
     const safe = Math.max(0, Math.floor(Number(count) || 0));
-    setQualityInventory((previous) => removeQualityItems(previous, itemId, qualityId, safe));
-    setInventory((previous) => ({ ...previous, [itemId]: Math.max(0, (previous[itemId] || 0) - safe) }));
+    setQualityInventory((previous) =>
+      removeQualityItems(previous, itemId, qualityId, safe),
+    );
+    setInventory((previous) => ({
+      ...previous,
+      [itemId]: Math.max(0, (previous[itemId] || 0) - safe),
+    }));
   };
 
   const deleteSeedItem = (itemId, count) => {
@@ -1141,12 +1245,55 @@ function GameScreen() {
 
   const deleteCareItem = (itemId, count) => {
     const safe = Math.max(0, Math.floor(Number(count) || 0));
-    if (safe <= 0 || itemId === "wateringCan") return;
+    if (safe <= 0) return;
 
     setCareInventory((previous) => ({
       ...previous,
       [itemId]: Math.max(0, (previous[itemId] || 0) - safe),
     }));
+  };
+
+  const openPremiumBank = () => {
+    if (isTutorialActive) {
+      return;
+    }
+
+    if (activeScreen !== "support" && activeScreen !== "coin-bank") {
+      setBankReturnScreen(activeScreen);
+    }
+
+    triggerTelegramHaptic("light");
+    setActiveScreen("support");
+  };
+
+  const openCoinBank = () => {
+    if (isTutorialActive) {
+      return;
+    }
+
+    if (activeScreen !== "support" && activeScreen !== "coin-bank") {
+      setBankReturnScreen(activeScreen);
+    }
+
+    triggerTelegramHaptic("light");
+    setActiveScreen("coin-bank");
+  };
+
+  const closeCurrencyBank = () => {
+    setActiveScreen(bankReturnScreen || "plantation");
+  };
+
+  const exchangePremiumForCoins = (pack) => {
+    const gCost = Math.max(0, Math.floor(Number(pack?.gCost) || 0));
+    const coinAmount = Math.max(0, Math.floor(Number(pack?.coins) || 0));
+
+    if (gCost <= 0 || coinAmount <= 0 || premiumCoins < gCost) {
+      return false;
+    }
+
+    setPremiumCoins((value) => Math.max(0, value - gCost));
+    setCoins((value) => value + coinAmount);
+    return true;
   };
 
   const openClub = () => {
@@ -1185,6 +1332,19 @@ function GameScreen() {
     setActiveScreen("district");
   };
 
+  const goToDistrictFromDoor = () => {
+    if (!tutorialAllows("go-district")) {
+      return;
+    }
+
+    triggerTelegramHaptic("light");
+    setActiveScreen("district");
+
+    if (tutorialStep === "go-district") {
+      setTutorialStep("district-finish");
+    }
+  };
+
   const buyShopItem = (item, amount) => {
     if (!item) {
       return {
@@ -1193,14 +1353,10 @@ function GameScreen() {
       };
     }
 
-    const requestedAmount = item.type === "tool"
-      ? 1
-      : Math.floor(Number(amount));
+    const requestedAmount =
+      item.type === "tool" ? 1 : Math.floor(Number(amount));
 
-    if (
-      !Number.isFinite(requestedAmount) ||
-      requestedAmount <= 0
-    ) {
+    if (!Number.isFinite(requestedAmount) || requestedAmount <= 0) {
       return {
         success: false,
         message: "Выбери количество товара.",
@@ -1214,8 +1370,7 @@ function GameScreen() {
       };
     }
 
-    const availableStock =
-      shopStock[item.id] || 0;
+    const availableStock = shopStock[item.id] || 0;
 
     if (requestedAmount > availableStock) {
       return {
@@ -1224,8 +1379,7 @@ function GameScreen() {
       };
     }
 
-    const totalPrice =
-      requestedAmount * item.pricePerSeed;
+    const totalPrice = requestedAmount * item.pricePerSeed;
 
     if (coins < totalPrice) {
       return {
@@ -1234,19 +1388,12 @@ function GameScreen() {
       };
     }
 
-    setCoins(
-      (previousCoins) =>
-        previousCoins - totalPrice,
-    );
+    setCoins((previousCoins) => previousCoins - totalPrice);
     triggerTelegramHaptic("medium");
 
     setShopStock((previousStock) => ({
       ...previousStock,
-      [item.id]: Math.max(
-        0,
-        (previousStock[item.id] || 0) -
-          requestedAmount,
-      ),
+      [item.id]: Math.max(0, (previousStock[item.id] || 0) - requestedAmount),
     }));
 
     if (item.type === "tool") {
@@ -1268,29 +1415,35 @@ function GameScreen() {
 
     return {
       success: true,
-      message: item.type === "tool"
-        ? `Куплено: ${item.name}. Инструмент останется у тебя навсегда.`
-        : `Куплено: ${item.name} — ${requestedAmount} шт.`,
+      message:
+        item.type === "tool"
+          ? `Куплено: ${item.name}. Инструмент останется у тебя навсегда.`
+          : `Куплено: ${item.name} — ${requestedAmount} шт.`,
     };
   };
 
   const deliverMariaItems = ({ itemId, amount, items }) => {
-    const deliveryItems = items && typeof items === "object"
-      ? Object.entries(items)
-          .map(([deliveryItemId, deliveryAmount]) => [
-            deliveryItemId,
-            Math.max(0, Math.floor(Number(deliveryAmount) || 0)),
-          ])
-          .filter(([deliveryItemId, deliveryAmount]) => deliveryItemId && deliveryAmount > 0)
-      : [[itemId, Math.max(0, Math.floor(Number(amount) || 0))]];
+    const deliveryItems =
+      items && typeof items === "object"
+        ? Object.entries(items)
+            .map(([deliveryItemId, deliveryAmount]) => [
+              deliveryItemId,
+              Math.max(0, Math.floor(Number(deliveryAmount) || 0)),
+            ])
+            .filter(
+              ([deliveryItemId, deliveryAmount]) =>
+                deliveryItemId && deliveryAmount > 0,
+            )
+        : [[itemId, Math.max(0, Math.floor(Number(amount) || 0))]];
 
     if (
       deliveryItems.length === 0 ||
-      deliveryItems.some(([deliveryItemId, deliveryAmount]) => (
-        !deliveryItemId ||
-        deliveryAmount <= 0 ||
-        (inventory[deliveryItemId] || 0) < deliveryAmount
-      ))
+      deliveryItems.some(
+        ([deliveryItemId, deliveryAmount]) =>
+          !deliveryItemId ||
+          deliveryAmount <= 0 ||
+          (inventory[deliveryItemId] || 0) < deliveryAmount,
+      )
     ) {
       return false;
     }
@@ -1345,7 +1498,6 @@ function GameScreen() {
     }));
   };
 
-
   return (
     <div className={`game-screen game-screen--${activeScreen}`}>
       <div className="game-viewport" ref={viewportRef}>
@@ -1362,453 +1514,450 @@ function GameScreen() {
             "--visible-height": `${visibleHeight}px`,
           }}
         >
-        {!isTutorialActive &&
-          ["plantation", "district", "shop"].includes(activeScreen) && (
-          <PremiumWallet
-            balance={premiumCoins}
-            disabled={isTutorialActive}
-            onClick={() => {
-              if (!isTutorialActive) setActiveScreen("support");
-            }}
-          />
-        )}
+          {!isTutorialActive &&
+            ["plantation", "district", "shop"].includes(activeScreen) && (
+              <PremiumWallet
+                balance={premiumCoins}
+                disabled={isTutorialActive}
+                onClick={openPremiumBank}
+              />
+            )}
 
-        {activeScreen === "plantation" && (
-          <>
-            <div className="background" />
+          {activeScreen === "plantation" && (
+            <>
+              <div className="background" />
 
-            <div className="top-wallet" aria-label={`Монеты: ${coins}`}>
-              <span className="top-wallet__coin" aria-hidden="true" />
-              <strong>{coins}</strong>
-            </div>
+              <button
+                type="button"
+                className="plantation-door-hitbox"
+                data-action="district"
+                data-screen="district"
+                onClick={goToDistrictFromDoor}
+                disabled={!tutorialAllows("go-district")}
+                aria-label="Выйти через дверь в район"
+              />
 
-            <button
-              type="button"
-              className="progress-reset-button"
-              onClick={() => {
-                triggerTelegramHaptic("medium");
-                setIsResetProgressModalOpen(true);
-              }}
-              aria-label="Сбросить прогресс и начать игру заново"
-            >
-              <span className="progress-reset-button__icon" aria-hidden="true">↻</span>
-              <span>Сброс</span>
-            </button>
+              <button
+                type="button"
+                className="top-wallet"
+                onClick={openCoinBank}
+                aria-label={`Монеты: ${coins}. Открыть банк монет.`}
+              >
+                <span className="top-wallet__coin" aria-hidden="true" />
+                <strong>{coins}</strong>
+              </button>
 
-            <BackpackTool
-              disabled={isTutorialActive}
-              onClick={() => {
-                if (!isTutorialActive) {
+              <button
+                type="button"
+                className="progress-reset-button"
+                onClick={() => {
+                  triggerTelegramHaptic("medium");
+                  setIsResetProgressModalOpen(true);
+                }}
+                aria-label="Сбросить прогресс и начать игру заново"
+              >
+                <span
+                  className="progress-reset-button__icon"
+                  aria-hidden="true"
+                >
+                  ↻
+                </span>
+                <span>Сброс</span>
+              </button>
+
+              <BackpackTool
+                disabled={isTutorialActive}
+                onClick={() => {
+                  if (!isTutorialActive) {
+                    setIsInventoryOpen(true);
+                  }
+                }}
+              />
+
+              <button
+                type="button"
+                className="plant-catalog-tool"
+                onClick={() => setIsCatalogOpen(true)}
+                disabled={isTutorialActive}
+                aria-label="Открыть каталог культур"
+              >
+                <span aria-hidden="true">☘</span>
+              </button>
+
+              <FlyingLoot lootItems={flyingLootItems} />
+
+              <div className="game-content">
+                <div className="table-scene">
+                  <PlantArea
+                    pot={displayPot}
+                    plant={currentPlant}
+                    growStep={growStep}
+                    timeLeft={timeLeft}
+                    unlockPrice={
+                      tutorialStep === "unlock-pot" && currentPotIndex === 0
+                        ? 0
+                        : currentSlot?.unlockPrice
+                    }
+                    isSlotAvailable={
+                      tutorialStep === "unlock-pot" && currentPotIndex === 0
+                        ? true
+                        : currentSlotState.canBuy
+                    }
+                    lockedStatusText={currentSlotState.statusText}
+                    isUnlocked={isCurrentPotUnlocked}
+                    isEmpty={growStep === 0}
+                    canCollect={growStep === 3}
+                    onCollect={collectPlant}
+                    onSeedClick={openSeedModal}
+                    onUnlock={handleLockedSlotClick}
+                    onOpenCare={() => setIsCareModalOpen(true)}
+                    onWater={() => applyPlantCare("water")}
+                    careApplied={currentPotState.careApplied}
+                    wateredStages={currentPotState.wateredStages}
+                    canWater={
+                      !isTutorialActive &&
+                      growStep > 0 &&
+                      (mariaQuestState.trust || 0) >= 25
+                    }
+                    canCare={!isTutorialActive && growStep > 0}
+                    onPreviousPot={showPreviousPot}
+                    onNextPot={showNextPot}
+                    navigationDisabled={isTutorialActive || Boolean(harvestAnimation)}
+                    seedDisabled={!tutorialAllows("open-seeds")}
+                    collectDisabled={!tutorialAllows("collect")}
+                    unlockDisabled={!tutorialAllows("unlock-pot")}
+                    onOpenGrowthInfo={requestInstantGrow}
+                    growthInfoDisabled={isTutorialActive}
+                    isHarvesting={
+                      harvestAnimation?.potIndex === currentPotIndex
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="plantation-pagination">
+                {pots.map((pot, index) => (
+                  <button
+                    key={pot.id}
+                    className={`plantation-pagination-dot${
+                      index === currentPotIndex ? " active" : ""
+                    }${potStates[index]?.unlocked ? " unlocked" : ""}`}
+                    type="button"
+                    aria-label={`Перейти к ведру ${index + 1}`}
+                    disabled={isTutorialActive}
+                    onClick={() => changePot(index)}
+                  />
+                ))}
+              </div>
+
+              <SeedModal
+                isOpen={isSeedModalOpen && isCurrentPotUnlocked}
+                seeds={availableSeedsForCurrentPot}
+                seedInventory={seedInventory}
+                selectedSeed={selectedSeed}
+                onSelectSeed={selectSeed}
+                onPlantSeed={plantSelectedSeed}
+                onClose={closeSeedModal}
+                tutorialStep={tutorialStep}
+                potTypeName={currentPotType.name}
+              />
+
+              <RemovePlantModal
+                isOpen={isRemoveModalOpen && isCurrentPotUnlocked}
+                amount={careInventory.acidWater || 0}
+                onConfirm={removePlant}
+                onCancel={() => setIsRemoveModalOpen(false)}
+              />
+
+              <InventoryModal
+                isOpen={isInventoryOpen}
+                qualityInventory={qualityInventory}
+                seedInventory={seedInventory}
+                careInventory={careInventory}
+                appliedCare={
+                  Array.isArray(currentPotState.careApplied)
+                    ? currentPotState.careApplied
+                    : []
+                }
+                canPlantSeed={isCurrentPotUnlocked && growStep === 0}
+                canUseCare={growStep > 0 && growStep < 3}
+                canUseAcidWater={growStep > 0}
+                onPlantSeed={(cropId) => {
+                  const seed = seeds.find((item) => item.id === cropId);
+                  if (!seed || !isCurrentPotUnlocked || growStep !== 0) return;
+                  setSelectedSeed(seed);
+                  setIsInventoryOpen(false);
+                  setIsSeedModalOpen(true);
+                }}
+                onUseCare={(careType) => {
+                  if (careType === "acidWater") {
+                    if (growStep <= 0 || (careInventory.acidWater || 0) <= 0)
+                      return;
+                    setIsInventoryOpen(false);
+                    setIsRemoveModalOpen(true);
+                    return;
+                  }
+
+                  if (growStep <= 0 || growStep >= 3) return;
+                  applyPlantCare(careType);
+                  setIsInventoryOpen(false);
+                }}
+                onClose={() => setIsInventoryOpen(false)}
+                onDeleteQualityItem={deleteQualityItem}
+                onDeleteSeedItem={deleteSeedItem}
+                onDeleteCareItem={deleteCareItem}
+              />
+
+              <HarvestCareModal
+                isOpen={isCareModalOpen}
+                trust={mariaQuestState.trust || 0}
+                careInventory={careInventory}
+                appliedCare={currentPotState.careApplied}
+                canApplyCare={growStep > 0 && growStep < 3}
+                onChoose={applyPlantCare}
+                onRemovePlant={() => {
+                  setIsCareModalOpen(false);
+                  setIsRemoveModalOpen(true);
+                }}
+                onClose={() => setIsCareModalOpen(false)}
+              />
+
+              <HarvestResultModal
+                result={harvestResult}
+                onContinue={confirmHarvestResult}
+              />
+
+              <PlantCatalogModal
+                isOpen={isCatalogOpen}
+                catalog={plantCatalog}
+                onClose={() => setIsCatalogOpen(false)}
+              />
+
+              <PotTypeModal
+                isOpen={isPotTypeModalOpen}
+                trust={mariaQuestState.trust || 0}
+                title="Купить место и установить ведро"
+                description="На верхней плантации используются растительные гидропонные вёдра. Грибные ёмкости появятся позже в отдельном подвале."
+                price={pendingSlot?.unlockPrice ?? null}
+                coins={coins}
+                onChoose={choosePendingSlotType}
+                onClose={() => {
+                  setIsPotTypeModalOpen(false);
+                  setPendingSlotIndex(null);
+                }}
+              />
+
+              <ActionModal
+                isOpen={isInventoryFullModalOpen}
+                title="Рюкзак переполнен"
+                description="Для урожая нового качества нет свободной ячейки. Удали или продай одну стопку, затем вернись и собери растение."
+                confirmText="Открыть инвентарь"
+                cancelText="Оставить урожай"
+                onConfirm={() => {
+                  setIsInventoryFullModalOpen(false);
                   setIsInventoryOpen(true);
+                }}
+                onCancel={() => setIsInventoryFullModalOpen(false)}
+              />
+
+              <ReadyHarvestModal
+                isOpen={offlineReadyCount > 0}
+                readyCount={offlineReadyCount}
+                onContinue={() => {
+                  const firstReadyIndex = (
+                    potStatesRef.current || []
+                  ).findIndex(
+                    (potState) => potState?.unlocked && potState.growStep === 3,
+                  );
+
+                  if (firstReadyIndex >= 0) {
+                    setCurrentPotIndex(firstReadyIndex);
+                  }
+
+                  setOfflineReadyCount(0);
+                  setActiveScreen("plantation");
+                }}
+              />
+
+              <InstantGrowModal
+                request={instantGrowRequest}
+                coins={premiumCoins}
+                onConfirm={confirmInstantGrow}
+                onBuyCoins={() => {
+                  setInstantGrowRequest(null);
+                  openPremiumBank();
+                }}
+                onCancel={() => setInstantGrowRequest(null)}
+              />
+
+              <ResetProgressModal
+                isOpen={isResetProgressModalOpen}
+                onConfirm={() => {
+                  triggerTelegramNotification("warning");
+                  requestGameProgressReset();
+                }}
+                onCancel={() => setIsResetProgressModalOpen(false)}
+              />
+
+              <LockedSlotModal
+                isOpen={isUnavailableModalOpen}
+                currentLevel={clubLevel}
+                requiredLevel={currentSlot?.requiredClubLevel ?? null}
+                onClose={() => setIsUnavailableModalOpen(false)}
+              />
+            </>
+          )}
+
+          {activeScreen === "district" && (
+            <DistrictScreen
+              onOpenClub={openClub}
+              onOpenShop={openShop}
+              onOpenMariaHouse={openMariaHouse}
+              showMariaNotice={
+                (mariaQuestState.completedQuestIds || []).length <
+                MARIA_QUESTS.length
+              }
+            />
+          )}
+
+          {activeScreen === "maria-house" && (
+            <MariaHouseScreen
+              inventory={inventory}
+              seedInventory={seedInventory}
+              careInventory={careInventory}
+              clubReputation={clubReputation}
+              questState={mariaQuestState}
+              plantCatalog={plantCatalog}
+              onQuestStateChange={setMariaQuestState}
+              onDeliverItems={deliverMariaItems}
+              onRewardClaimed={claimMariaReward}
+              onBack={goBackToDistrict}
+              tutorialStep={tutorialStep}
+              onTutorialAction={(action) => {
+                if (
+                  action === "open-maria-board" &&
+                  tutorialStep === "open-maria-board"
+                ) {
+                  setTutorialStep("claim-first-quest");
+                }
+
+                if (
+                  action === "claim-first-quest" &&
+                  tutorialStep === "claim-first-quest"
+                ) {
+                  setTutorialStep("onboarding-finish");
                 }
               }}
             />
+          )}
 
-            <button
-              type="button"
-              className="plant-catalog-tool"
-              onClick={() => setIsCatalogOpen(true)}
-              disabled={isTutorialActive}
-              aria-label="Открыть каталог культур"
-            >
-              <span aria-hidden="true">☘</span>
-            </button>
-
-            <FlyingLoot lootItems={flyingLootItems} />
-
-            <div className="game-content">
-              <div className="table-scene">
-                <PlantArea
-                  pot={displayPot}
-                  plant={currentPlant}
-                  growStep={growStep}
-                  timeLeft={timeLeft}
-                  unlockPrice={
-                    tutorialStep === "unlock-pot" &&
-                    currentPotIndex === 0
-                      ? 0
-                      : currentSlot?.unlockPrice
-                  }
-                  isSlotAvailable={
-                    tutorialStep === "unlock-pot" &&
-                    currentPotIndex === 0
-                      ? true
-                      : currentSlotState.canBuy
-                  }
-        lockedStatusText={currentSlotState.statusText}
-                  isUnlocked={isCurrentPotUnlocked}
-                  isEmpty={growStep === 0}
-                  canCollect={growStep === 3}
-                  onCollect={collectPlant}
-                  onSeedClick={openSeedModal}
-                  onUnlock={handleLockedSlotClick}
-                  onOpenCare={() => setIsCareModalOpen(true)}
-                  careApplied={currentPotState.careApplied}
-                  wateredStages={currentPotState.wateredStages}
-                  hasWateringCan={(careInventory.wateringCan || 0) > 0}
-                  canCare={!isTutorialActive && growStep > 0 && growStep < 3}
-                  onPreviousPot={showPreviousPot}
-                  onNextPot={showNextPot}
-                  navigationDisabled={isTutorialActive}
-                  seedDisabled={!tutorialAllows("open-seeds")}
-                  collectDisabled={!tutorialAllows("collect")}
-                  unlockDisabled={!tutorialAllows("unlock-pot")}
-                  onOpenGrowthInfo={requestInstantGrow}
-                  growthInfoDisabled={isTutorialActive}
-                />
-              </div>
-            </div>
-
-            <div className="plantation-pagination">
-              {pots.map((pot, index) => (
-                <button
-                  key={pot.id}
-                  className={`plantation-pagination-dot${
-                    index === currentPotIndex
-                      ? " active"
-                      : ""
-                  }${
-                    potStates[index]?.unlocked
-                      ? " unlocked"
-                      : ""
-                  }`}
-                  type="button"
-                  aria-label={`Перейти к ведру ${index + 1}`}
-                  disabled={isTutorialActive}
-                  onClick={() => changePot(index)}
-                />
-              ))}
-            </div>
-
-            <SeedModal
-              isOpen={
-                isSeedModalOpen &&
-                isCurrentPotUnlocked
-              }
-              seeds={availableSeedsForCurrentPot}
-              seedInventory={seedInventory}
-              selectedSeed={selectedSeed}
-              onSelectSeed={selectSeed}
-              onPlantSeed={plantSelectedSeed}
-              onClose={closeSeedModal}
-              tutorialStep={tutorialStep}
-              potTypeName={currentPotType.name}
-            />
-
-            <RemovePlantModal
-              isOpen={
-                isRemoveModalOpen &&
-                isCurrentPotUnlocked
-              }
-              onConfirm={removePlant}
-              onCancel={() =>
-                setIsRemoveModalOpen(false)
-              }
-            />
-
-            <InventoryModal
-              isOpen={isInventoryOpen}
-              qualityInventory={qualityInventory}
-              seedInventory={seedInventory}
-              careInventory={careInventory}
-              appliedCare={Array.isArray(currentPotState.careApplied) ? currentPotState.careApplied : []}
-              canPlantSeed={isCurrentPotUnlocked && growStep === 0}
-              canUseCare={growStep > 0 && growStep < 3}
-              onPlantSeed={(cropId) => {
-                const seed = seeds.find((item) => item.id === cropId);
-                if (!seed || !isCurrentPotUnlocked || growStep !== 0) return;
-                setSelectedSeed(seed);
-                setIsInventoryOpen(false);
-                setIsSeedModalOpen(true);
-              }}
-              onUseCare={(careType) => {
-                if (growStep <= 0 || growStep >= 3) return;
-                applyPlantCare(careType);
-                setIsInventoryOpen(false);
-              }}
-              onClose={() => setIsInventoryOpen(false)}
-              onDeleteQualityItem={deleteQualityItem}
-              onDeleteSeedItem={deleteSeedItem}
-              onDeleteCareItem={deleteCareItem}
-            />
-
-            <HarvestCareModal
-              isOpen={isCareModalOpen}
-              trust={mariaQuestState.trust || 0}
-              careInventory={careInventory}
-              appliedCare={currentPotState.careApplied}
-              wateredStages={currentPotState.wateredStages}
-              currentStage={growStep}
-              canApplyCare={growStep > 0 && growStep < 3}
-              onChoose={applyPlantCare}
-              onRemovePlant={() => {
-                setIsCareModalOpen(false);
-                setIsRemoveModalOpen(true);
-              }}
-              onClose={() => setIsCareModalOpen(false)}
-            />
-
-            <HarvestResultModal
-              result={harvestResult}
-              onClose={() => {
-                setHarvestResult(null);
-                advanceTutorialAfterHarvestResult();
-              }}
-              onOpenCatalog={() => {
-                setHarvestResult(null);
-                setIsCatalogOpen(true);
-                advanceTutorialAfterHarvestResult();
-              }}
-            />
-
-            <PlantCatalogModal
-              isOpen={isCatalogOpen}
-              catalog={plantCatalog}
-              onClose={() => setIsCatalogOpen(false)}
-            />
-
-            <PotTypeModal
-              isOpen={isPotTypeModalOpen}
-              trust={mariaQuestState.trust || 0}
-              title="Купить место и установить ведро"
-              description="На верхней плантации используются растительные гидропонные вёдра. Грибные ёмкости появятся позже в отдельном подвале."
-              price={pendingSlot?.unlockPrice ?? null}
+          {activeScreen === "shop" && (
+            <ShopScreen
+              key={shopRefreshAt}
+              onGoBack={goBackToDistrict}
+              items={shopItems}
+              stock={shopStock}
               coins={coins}
-              onChoose={choosePendingSlotType}
-              onClose={() => {
-                setIsPotTypeModalOpen(false);
-                setPendingSlotIndex(null);
-              }}
+              seedInventory={seedInventory}
+              careInventory={careInventory}
+              clubReputation={clubReputation}
+              mariaTrust={mariaQuestState.trust || 0}
+              refreshAt={shopRefreshAt}
+              currentTime={shopClock}
+              premiumCoins={premiumCoins}
+              premiumRefreshPrice={PREMIUM_PRICES.shopRefresh}
+              onPremiumRefresh={refreshShopWithPremium}
+              onOpenPremiumStore={openPremiumBank}
+              onBuy={buyShopItem}
             />
+          )}
 
-            <ActionModal
-              isOpen={isInventoryFullModalOpen}
-              title="Рюкзак переполнен"
-              description="Для урожая нового качества нет свободной ячейки. Удали или продай одну стопку, затем вернись и собери растение."
-              confirmText="Открыть инвентарь"
-              cancelText="Оставить урожай"
-              onConfirm={() => {
-                setIsInventoryFullModalOpen(false);
-                setIsInventoryOpen(true);
-              }}
-              onCancel={() => setIsInventoryFullModalOpen(false)}
+          {activeScreen === "club" && (
+            <ClubScreen
+              setInventory={setInventory}
+              qualityInventory={qualityInventory}
+              setQualityInventory={setQualityInventory}
+              coins={coins}
+              setCoins={setCoins}
+              onSaleCompleted={handleClubSaleForMaria}
+              onGoBack={goBackToDistrict}
             />
+          )}
 
-            <ActionModal
-              isOpen={offlineReadyCount > 0}
-              title="Пока тебя не было"
-              description={`Созрело растений: ${offlineReadyCount}. Они ждали тебя и не пропали.`}
-              confirmText="Проверить растения"
-              cancelText="Позже"
-              onConfirm={() => {
-                setOfflineReadyCount(0);
+          {activeScreen === "support" && (
+            <SupportScreen
+              premiumCoins={premiumCoins}
+              onPremiumCoinsAdded={(amount) =>
+                setPremiumCoins(
+                  (value) =>
+                    value + Math.max(0, Math.floor(Number(amount) || 0)),
+                )
+              }
+              onClose={closeCurrencyBank}
+              onOpenCoinStore={() => setActiveScreen("coin-bank")}
+            />
+          )}
+
+          {activeScreen === "coin-bank" && (
+            <CoinBankScreen
+              coins={coins}
+              premiumCoins={premiumCoins}
+              onExchange={exchangePremiumForCoins}
+              onClose={closeCurrencyBank}
+              onOpenPremiumStore={() => setActiveScreen("support")}
+            />
+          )}
+
+          {showBottomMenu && (
+            <BottomMenu
+              activeScreen={activeScreen}
+              onGoPlantation={() => {
                 setActiveScreen("plantation");
               }}
-              onCancel={() => setOfflineReadyCount(0)}
+              readyPlants={readyPlantCount}
             />
+          )}
 
-            <ActionModal
-              isOpen={Boolean(instantGrowRequest)}
-              title={instantGrowRequest?.cropName || "Растение растёт"}
-              description={instantGrowRequest
-                ? `${instantGrowRequest.cropName} · до урожая ${formatGrowthTime(instantGrowRequest.timeLeft)}. Можно дождаться или завершить рост сейчас. Полив и смеси сохранятся.`
-                : ""}
-              price={instantGrowRequest?.cost ?? null}
-              coins={premiumCoins}
-              currencyLabel="G"
-              currencyIcon={PREMIUM_CURRENCY.icon}
-              modalIcon="⚡"
-              confirmText="Вырастить сейчас"
-              cancelText="Пусть растёт"
-              confirmDisabled={!instantGrowRequest || premiumCoins < (instantGrowRequest?.cost || 0)}
-              onConfirm={confirmInstantGrow}
-              onCancel={() => setInstantGrowRequest(null)}
-            />
+          <UnlockCelebration
+            notification={unlockQueue[0] || null}
+            queuedCount={Math.max(0, unlockQueue.length - 1)}
+            onClose={() => setUnlockQueue((queue) => queue.slice(1))}
+          />
 
-            <ActionModal
-              isOpen={isResetProgressModalOpen}
-              title="Начать игру заново?"
-              description="Будут удалены монеты, растения, предметы, задания, репутация и обучение. Покупки поддержки сохранятся. Отменить действие после подтверждения нельзя."
-              confirmText="Сбросить прогресс"
-              cancelText="Оставить как есть"
-              danger
-              onConfirm={() => {
-                triggerTelegramNotification("warning");
-                requestGameProgressReset();
+          {!isResetProgressModalOpen && !harvestResult && !isCatalogOpen && (
+            <TutorialOverlay
+              step={tutorialStep}
+              stageScale={stageScale}
+              activeScreen={activeScreen}
+              onContinue={() => {
+                if (!tutorialAllows("continue")) {
+                  return;
+                }
+
+                if (tutorialStep === "intro") {
+                  setActiveScreen("plantation");
+                  setCurrentPotIndex(0);
+                  setTutorialStep("unlock-pot");
+                  return;
+                }
+
+                if (tutorialStep === "growing") {
+                  return;
+                }
+
+                if (tutorialStep === "district-finish") {
+                  setActiveScreen("district");
+                  setTutorialStep("open-maria-house");
+                  return;
+                }
+
+                if (tutorialStep === "onboarding-finish") {
+                  setTutorialStep("completed");
+                  setActiveScreen("maria-house");
+                }
               }}
-              onCancel={() => setIsResetProgressModalOpen(false)}
             />
-
-            <ActionModal
-              isOpen={isUnavailableModalOpen}
-              title="Пока что недоступно"
-              description={
-        currentSlotState.isLevelLocked
-          ? currentSlotState.statusText
-          : "Это место появится в одном из следующих обновлений."
-      }
-              confirmText="Понятно"
-              cancelText="Закрыть"
-              onConfirm={() =>
-                setIsUnavailableModalOpen(false)
-              }
-              onCancel={() =>
-                setIsUnavailableModalOpen(false)
-              }
-            />
-
-          </>
-        )}
-
-        {activeScreen === "district" && (
-          <DistrictScreen
-            onOpenClub={openClub}
-            onOpenShop={openShop}
-            onOpenMariaHouse={openMariaHouse}
-            showMariaNotice={(mariaQuestState.completedQuestIds || []).length < MARIA_QUESTS.length}
-          />
-        )}
-
-        {activeScreen === "maria-house" && (
-          <MariaHouseScreen
-            inventory={inventory}
-            seedInventory={seedInventory}
-            careInventory={careInventory}
-            clubReputation={clubReputation}
-            questState={mariaQuestState}
-            plantCatalog={plantCatalog}
-            onQuestStateChange={setMariaQuestState}
-            onDeliverItems={deliverMariaItems}
-            onRewardClaimed={claimMariaReward}
-            onBack={goBackToDistrict}
-            tutorialStep={tutorialStep}
-            onTutorialAction={(action) => {
-              if (
-                action === "open-maria-board" &&
-                tutorialStep === "open-maria-board"
-              ) {
-                setTutorialStep("claim-first-quest");
-              }
-
-              if (
-                action === "claim-first-quest" &&
-                tutorialStep === "claim-first-quest"
-              ) {
-                setTutorialStep("onboarding-finish");
-              }
-            }}
-          />
-        )}
-
-        {activeScreen === "shop" && (
-          <ShopScreen
-            key={shopRefreshAt}
-            onGoBack={goBackToDistrict}
-            items={shopItems}
-            stock={shopStock}
-            coins={coins}
-            seedInventory={seedInventory}
-            careInventory={careInventory}
-            clubReputation={clubReputation}
-            mariaTrust={mariaQuestState.trust || 0}
-            refreshAt={shopRefreshAt}
-            currentTime={shopClock}
-            premiumCoins={premiumCoins}
-            premiumRefreshPrice={PREMIUM_PRICES.shopRefresh}
-            onPremiumRefresh={refreshShopWithPremium}
-            onBuy={buyShopItem}
-          />
-        )}
-
-        {activeScreen === "club" && (
-          <ClubScreen
-            setInventory={setInventory}
-            qualityInventory={qualityInventory}
-            setQualityInventory={setQualityInventory}
-            coins={coins}
-            setCoins={setCoins}
-            onSaleCompleted={handleClubSaleForMaria}
-            onGoBack={goBackToDistrict}
-          />
-        )}
-
-
-        {activeScreen === "support" && (
-          <SupportScreen
-            premiumCoins={premiumCoins}
-            onPremiumCoinsAdded={(amount) =>
-              setPremiumCoins((value) => value + Math.max(0, Math.floor(Number(amount) || 0)))
-            }
-            onGoBack={() => setActiveScreen("district")}
-          />
-        )}
-
-        {showBottomMenu && (
-          <BottomMenu
-            activeScreen={activeScreen}
-            tutorialStep={tutorialStep}
-            onGoPlantation={() => {
-              if (isTutorialActive) {
-                return;
-              }
-
-              setActiveScreen("plantation");
-            }}
-            onGoDistrict={() => {
-              if (!tutorialAllows("go-district")) {
-                return;
-              }
-
-              setActiveScreen("district");
-
-              if (tutorialStep === "go-district") {
-                setTutorialStep("district-finish");
-              }
-            }}
-            readyPlants={readyPlantCount}
-          />
-        )}
-
-        <UnlockCelebration
-          notification={unlockQueue[0] || null}
-          queuedCount={Math.max(0, unlockQueue.length - 1)}
-          onClose={() => setUnlockQueue((queue) => queue.slice(1))}
-        />
-
-        {!isResetProgressModalOpen && !harvestResult && !isCatalogOpen && (
-          <TutorialOverlay
-          step={tutorialStep}
-          stageScale={stageScale}
-          activeScreen={activeScreen}
-          onContinue={() => {
-            if (!tutorialAllows("continue")) {
-              return;
-            }
-
-            if (tutorialStep === "intro") {
-              setActiveScreen("plantation");
-              setCurrentPotIndex(0);
-              setTutorialStep("unlock-pot");
-              return;
-            }
-
-            if (tutorialStep === "growing") {
-              return;
-            }
-
-            if (tutorialStep === "district-finish") {
-              setActiveScreen("district");
-              setTutorialStep("open-maria-house");
-              return;
-            }
-
-            if (tutorialStep === "onboarding-finish") {
-              setTutorialStep("completed");
-              setActiveScreen("maria-house");
-            }
-          }}
-        />
-        )}
+          )}
         </div>
       </div>
     </div>

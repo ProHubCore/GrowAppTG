@@ -23,6 +23,7 @@ export async function createStarsInvoice(input) {
 
   const stars = Math.max(1, Math.floor(Number(input?.stars ?? input) || 1));
   const premiumCoins = Math.max(0, Math.floor(Number(input?.premiumCoins) || 0));
+  const packageId = String(input?.packageId || "custom").trim() || "custom";
 
   const response = await fetch(invoiceEndpoint, {
     method: "POST",
@@ -34,7 +35,8 @@ export async function createStarsInvoice(input) {
       amount: stars,
       productId: "growapp-premium-coins",
       premiumCoins,
-      payload: `growapp-premium-${stars}-${premiumCoins}-${Date.now()}`,
+      packageId,
+      payload: `growapp-premium-${packageId}-${stars}-${premiumCoins}-${Date.now()}`,
     }),
   });
 

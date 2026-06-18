@@ -14,7 +14,7 @@
   background-size: cover;
   background-repeat: no-repeat;
   overscroll-behavior: none;
-  touch-action: manipulation;
+  touch-action: pan-x pan-y;
   isolation: isolate;
 }
 
@@ -47,7 +47,7 @@
 }
 
 html[data-telegram-app="true"] .game-screen {
-  --telegram-header-safe: 72px;
+  --telegram-header-safe: 88px;
 }
 
 .game-viewport {
@@ -97,7 +97,11 @@ html[data-telegram-app="true"] .game-screen {
 .game-content {
   position: absolute;
   inset: 0;
-  z-index: 2;
+
+  /* Плантация должна быть выше невидимого хитбокса двери.
+     Сам контейнер не ловит касания, поэтому дверь остаётся доступной
+     везде, кроме реальных интерактивных элементов — например облачка полива. */
+  z-index: 31;
 
   pointer-events: none;
 }
@@ -117,37 +121,35 @@ html[data-telegram-app="true"] .game-screen {
 
 .top-wallet {
   position: absolute;
-
-  top: 18px;
+  top: 26px;
   right: 18px;
   z-index: 50;
 
   display: inline-flex;
-  min-width: 74px;
-  height: 36px;
+  min-width: 88px;
+  height: 40px;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  padding: 0 12px 0 8px;
+  gap: 8px;
+  padding: 0 13px 0 8px;
 
-  border:
-    1px solid
-    rgba(255, 225, 164, 0.24);
-
-  border-radius: 13px;
-
+  border: 1px solid rgba(255, 222, 139, 0.38);
+  border-radius: 15px;
   background:
-    linear-gradient(180deg, rgba(41, 30, 23, 0.84), rgba(20, 16, 14, 0.88));
+    radial-gradient(circle at 22% 16%, rgba(255, 238, 183, 0.18), transparent 34%),
+    radial-gradient(circle at 86% 116%, rgba(190, 108, 32, 0.24), transparent 54%),
+    linear-gradient(180deg, rgba(67, 43, 24, 0.94), rgba(27, 20, 15, 0.96));
 
-  color: #ffe9b9;
-
+  color: #fff0c7;
   font-size: 15px;
   font-weight: 900;
   font-variant-numeric: tabular-nums;
 
   box-shadow:
-    0 8px 18px rgba(0, 0, 0, 0.24),
-    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    0 9px 20px rgba(0, 0, 0, 0.30),
+    0 0 12px rgba(255, 186, 69, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.10),
+    inset 0 -1px 0 rgba(45, 25, 10, 0.46);
 
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
@@ -155,107 +157,105 @@ html[data-telegram-app="true"] .game-screen {
 
 .top-wallet__coin {
   position: relative;
-  width: 21px;
-  height: 21px;
+  flex: 0 0 auto;
+  width: 25px;
+  height: 25px;
+  border: 1px solid rgba(255, 239, 181, 0.68);
   border-radius: 50%;
   background:
-    radial-gradient(circle at 34% 26%, #fff0ad 0 18%, #f3c764 42%, #b87925 76%);
+    radial-gradient(circle at 32% 25%, #fff7c6 0 10%, #f8dc77 20%, #dda43c 50%, #9c5e1e 78%, #583014 100%);
   box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.62),
-    0 2px 5px rgba(0, 0, 0, 0.3);
+    inset 0 1px 1px rgba(255, 255, 255, 0.74),
+    inset 0 -2px 3px rgba(88, 43, 10, 0.40),
+    0 2px 5px rgba(0, 0, 0, 0.36),
+    0 0 7px rgba(255, 193, 65, 0.18);
+}
+
+.top-wallet__coin::before {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border: 1px solid rgba(112, 63, 17, 0.48);
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(255, 240, 171, 0.18);
 }
 
 .top-wallet__coin::after {
   content: "";
   position: absolute;
-  inset: 5px;
-  border: 1px solid rgba(83, 50, 14, 0.38);
-  border-radius: inherit;
+  top: 7px;
+  left: 10px;
+  width: 5px;
+  height: 10px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.62), rgba(255,255,255,0));
+  transform: rotate(32deg);
+  opacity: 0.64;
 }
 
 .top-wallet strong {
   line-height: 1;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.48);
 }
 
-/* Точки переключения между ведрами */
+/* Точки переключения между ведрами — без подложки, только полупрозрачные маркеры. */
 
 .plantation-pagination {
   position: absolute;
-
   left: 50%;
-  bottom: 120px;
+  bottom: 78px;
   z-index: 48;
 
   display: flex;
   align-items: center;
   justify-content: center;
-
-  gap: 8px;
-  padding: 7px 11px;
+  gap: 10px;
+  padding: 5px 8px;
 
   transform: translateX(-50%);
 
-  border:
-    1px solid
-    rgba(222, 255, 241, 0.14);
-
-  border-radius: 999px;
-
-  background:
-    rgba(28, 24, 20, 0.46);
-
-  box-shadow:
-    0 6px 18px
-    rgba(0, 0, 0, 0.2);
-
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 
   pointer-events: auto;
 }
 
 .plantation-pagination-dot {
-  width: 7px;
-  height: 7px;
-
+  width: 6px;
+  height: 6px;
   padding: 0;
+  border: 0;
+  border-radius: 999px;
 
-  border: none;
-  border-radius: 50%;
-
-  background:
-    rgba(226, 236, 230, 0.28);
-
+  background: rgba(224, 238, 229, 0.16);
   box-shadow: none;
+  opacity: 0.72;
 
   cursor: pointer;
-
   appearance: none;
   -webkit-appearance: none;
 
   transition:
     width 180ms ease,
+    opacity 180ms ease,
     background 180ms ease,
-    box-shadow 180ms ease,
-    transform 180ms ease;
+    transform 150ms ease;
 }
 
 .plantation-pagination-dot.unlocked {
-  background:
-    rgba(209, 255, 230, 0.52);
+  background: rgba(216, 244, 226, 0.30);
+  opacity: 0.82;
 }
 
 .plantation-pagination-dot.active {
-  width: 22px;
-
-  border-radius: 999px;
-
-  background:
-    rgba(136, 255, 195, 0.94);
-
-  box-shadow:
-    0 0 10px
-    rgba(99, 255, 181, 0.55);
+  width: 20px;
+  background: rgba(194, 242, 214, 0.56);
+  opacity: 1;
+  box-shadow: none;
 }
 
 .plantation-pagination-dot:active {
@@ -265,53 +265,73 @@ html[data-telegram-app="true"] .game-screen {
 .flying-loot-layer {
   position: absolute;
   inset: 0;
-  z-index: 45;
-
+  z-index: 46;
   pointer-events: none;
 }
 
 .flying-loot-item {
   position: absolute;
-
-  width: 34px;
-  height: 34px;
-
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  font-size: 28px;
-
-  animation:
-    flyToBackpack
-    0.95s ease-in forwards;
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  opacity: 0;
+  transform-origin: center;
+  offset-path: path("M 0 0 C 14 -76 74 -208 116 -266");
+  offset-distance: 0%;
+  offset-rotate: 0deg;
+  animation: flyHarvestToBackpack .92s cubic-bezier(.22, .72, .24, 1) forwards;
+  will-change: offset-distance, opacity, transform;
 }
 
-@keyframes flyToBackpack {
+.flying-loot-item img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter:
+    drop-shadow(0 5px 5px rgba(0, 0, 0, .34))
+    drop-shadow(0 0 7px rgba(203, 245, 151, .34));
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.flying-loot-item span {
+  font-size: 28px;
+  line-height: 1;
+  filter: drop-shadow(0 5px 5px rgba(0, 0, 0, .34));
+}
+
+@keyframes flyHarvestToBackpack {
   0% {
     opacity: 0;
-
-    transform:
-      translate(0, 0)
-      scale(0.7);
+    offset-distance: 0%;
+    transform: scale(.42);
   }
 
-  15% {
+  14% {
     opacity: 1;
+    transform: scale(1);
+  }
 
-    transform:
-      translate(0, -18px)
-      scale(1.15);
+  82% {
+    opacity: 1;
+    transform: scale(.76);
   }
 
   100% {
     opacity: 0;
-
-    transform:
-      translate(145px, -265px)
-      scale(0.3);
+    offset-distance: 100%;
+    transform: scale(.26);
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  .flying-loot-item {
+    animation-duration: 1ms;
+  }
+}
+
 .plant-catalog-tool {
   position: absolute;
   top: 74px;
@@ -363,14 +383,68 @@ html[data-telegram-app="true"] .game-screen {
 
 /* Критичный HUD всегда находится внутри реально видимой части cover-сцены. */
 .top-wallet {
-  top: var(--hud-top);
+  top: calc(var(--hud-top) + 8px);
   right: var(--hud-right);
 }
 
 
+/*
+ * РЮКЗАК НА ПЛАНТАЦИИ — ЕДИНСТВЕННОЕ МЕСТО НАСТРОЙКИ.
+ * Меняй эти четыре значения: элемент останется привязан к сцене 390x844
+ * и будет масштабироваться вместе с фоном на любом устройстве.
+ */
 .backpack-tool {
-  right: calc(var(--visible-right, 0px) + 28px) !important;
+  left: 250px;   /* больше = правее, меньше = левее */
+  right: auto;
+  top: 149px;    /* больше = ниже, меньше = выше */
+
+  width: 87px;   /* ширина рюкзака */
+  height: 125px; /* высота рюкзака */
+
+  overflow: visible;
+  isolation: isolate;
+
+  /* Постоянная спокойная подсветка без мерцания и hover-эффекта. */
+  filter:
+    drop-shadow(0 6px 7px rgba(0, 0, 0, 0.34))
+    drop-shadow(0 0 5px rgba(255, 205, 126, 0.18));
+
+  /* Движение остаётся на .backpack-tool-image из game.css. */
 }
+
+/* Небольшой неподвижный ореол под рюкзаком. */
+.backpack-tool::before {
+  content: "";
+  position: absolute;
+  left: 17%;
+  right: 17%;
+  bottom: 7%;
+  height: 24%;
+  z-index: -1;
+
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 211, 139, 0.20) 0%,
+    rgba(255, 190, 100, 0.08) 48%,
+    rgba(255, 176, 73, 0) 76%
+  );
+  filter: blur(6px);
+  opacity: 1;
+  pointer-events: none;
+}
+
+.backpack-tool img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter:
+    brightness(1.035)
+    contrast(1.025)
+    saturate(1.025);
+}
+
+/* Hover намеренно отсутствует: интерфейс рассчитан на Telegram Mini App. */
 
 .plant-catalog-tool {
   top: calc(var(--hud-top) + var(--hud-row-height) + var(--hud-row-gap));
@@ -378,7 +452,7 @@ html[data-telegram-app="true"] .game-screen {
 }
 
 .plantation-pagination {
-  bottom: calc(var(--visible-bottom, 0px) + 120px);
+  bottom: calc(var(--visible-bottom, 0px) + 78px);
 }
 
 /* Нижнее меню не должно попадать под системную полосу или обрезание сцены. */
@@ -418,7 +492,7 @@ html[data-telegram-app="true"] .game-screen {
   }
 
   .plantation-pagination {
-    bottom: calc(var(--visible-bottom, 0px) + 104px);
+    bottom: calc(var(--visible-bottom, 0px) + 66px);
   }
 }
 
@@ -473,3 +547,70 @@ html[data-telegram-app="true"] .game-screen {
 }
 
 /* Премиум-кошелёк занимает верхний левый угол; сброс расположен ниже и не перекрывает его. */
+
+/*
+ * Интерактивная область двери на фоне плантации.
+ * Координаты указаны внутри неизменной игровой сцены 390 × 844,
+ * поэтому зона масштабируется вместе с фоном и не съезжает на других устройствах.
+ *
+ * Для ручной подгонки меняй только эти четыре значения:
+ * left / top / width / height.
+ */
+.plantation-door-hitbox {
+  position: absolute;
+  left: 130px;
+  top: 198px;
+  z-index: 30;
+
+  width: 130px;
+  height: 224px;
+
+  margin: 0;
+  padding: 0;
+
+  border: 0;
+  border-radius: 10px 10px 5px 5px;
+  background: transparent;
+  box-shadow: none;
+
+  cursor: pointer;
+  pointer-events: auto;
+  touch-action: manipulation;
+  appearance: none;
+  -webkit-appearance: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.plantation-door-hitbox__label {
+  display: none;
+}
+
+.plantation-door-hitbox:not(:disabled):hover {
+  border-color: transparent;
+  background: transparent;
+  box-shadow: none;
+}
+
+.plantation-door-hitbox:not(:disabled):active {
+  background: transparent;
+}
+
+.plantation-door-hitbox:disabled {
+  cursor: default;
+  pointer-events: none;
+  opacity: 1;
+}
+
+/* Кошелёк обычных монет открывает отдельный банк. */
+.top-wallet {
+  margin: 0;
+  font: inherit;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.top-wallet:active {
+  transform: translateY(2px) scale(0.98);
+}

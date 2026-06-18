@@ -67,8 +67,8 @@ const STEPS = {
     name: "Мария Ивановна",
     text:
       "Урожай в кармане. Теперь глянем район — там клуб, магазин и люди, с которыми ещё познакомишься.",
-    hint: "Перейди в «Район»",
-    target: ".bottom-menu-button:last-child",
+    hint: "Нажми на дверь",
+    target: ".plantation-door-hitbox",
     characterMode: "compact",
   },
   "district-finish": {

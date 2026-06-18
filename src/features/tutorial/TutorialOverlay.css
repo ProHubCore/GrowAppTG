@@ -847,9 +847,9 @@
   box-shadow: none !important;
 }
 
-/* Район: подсветка самой кнопки без outline. */
+/* Район: подсветка интерактивной области двери без смещения. */
 .game-stage:has(.tutorial-step-go-district)
-  .bottom-menu-button:last-child {
+  .plantation-door-hitbox {
   outline: none !important;
   animation: tutorialButtonSoftGlow 2.1s ease-in-out infinite !important;
 }
@@ -1065,9 +1065,9 @@
     tutorialCollectPlantGlow 2s ease-in-out infinite !important;
 }
 
-/* Финальная кнопка района — округлое свечение без outline. */
+/* Финальный переход в район — подсветка двери без смещения. */
 .game-stage:has(.tutorial-step-go-district)
-  .bottom-menu-button:last-child {
+  .plantation-door-hitbox {
   outline: none !important;
   animation: tutorialDistrictGlow 2.1s ease-in-out infinite !important;
 }

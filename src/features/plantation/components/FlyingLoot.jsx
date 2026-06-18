@@ -1,6 +1,6 @@
 function FlyingLoot({ lootItems }) {
   return (
-    <div className="flying-loot-layer">
+    <div className="flying-loot-layer" aria-hidden="true">
       {lootItems.map((item) => (
         <div
           key={item.id}
@@ -11,7 +11,11 @@ function FlyingLoot({ lootItems }) {
             animationDelay: `${item.delay}ms`,
           }}
         >
-          🍅
+          {item.image ? (
+            <img src={item.image} alt="" draggable="false" />
+          ) : (
+            <span>{item.icon || "🌿"}</span>
+          )}
         </div>
       ))}
     </div>

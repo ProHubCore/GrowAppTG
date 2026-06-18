@@ -1,45 +1,96 @@
-.game-screen {
+ .game-screen {
+  --design-width: 390;
+  --design-height: 844;
+  --telegram-header-safe: 0px;
+
   position: fixed;
   inset: 0;
-
   width: 100vw;
   height: 100dvh;
-
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-
+  min-height: 100dvh;
   overflow: hidden;
-  background: #16100c;
+  background-color: #16100c;
+  background-position: center;
+  background-size: cover;
+  background-repeat: no-repeat;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+  isolation: isolate;
+}
+
+/* Настоящий полноэкранный фон без боковых блюр-подложек. */
+.game-screen--plantation {
+  background-image: url("/assets/backgrounds/plantation.png");
+}
+
+.game-screen--district {
+  background-image: url("/assets/backgrounds/district.png");
+}
+
+.game-screen--shop {
+  background-image: url("/assets/backgrounds/shop.png");
+}
+
+.game-screen--club {
+  background-image: url("/assets/backgrounds/club.png");
+}
+
+.game-screen--maria-house {
+  background-image:
+    radial-gradient(circle at 50% 24%, rgba(255, 184, 85, 0.28), transparent 38%),
+    linear-gradient(180deg, #2a2020, #120e11);
+}
+
+.game-screen::before,
+.game-screen::after {
+  display: none;
+}
+
+html[data-telegram-app="true"] .game-screen {
+  --telegram-header-safe: 72px;
+}
+
+.game-viewport {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  overflow: hidden;
+  background: transparent;
 }
 
 .game-stage {
-  position: relative;
-
+  position: absolute;
+  top: var(--stage-center-y, 50%);
+  left: 50%;
   width: 390px;
   height: 844px;
-
   overflow: hidden;
-  transform-origin: top center;
+  transform: translate(-50%, -50%) scale(var(--stage-scale, 1));
+  transform-origin: center center;
+  isolation: isolate;
+  contain: layout paint style;
+  background: transparent;
+  box-shadow: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
 
-  background: #16100c;
+.game-stage img {
+  max-width: none;
+  -webkit-user-drag: none;
+  user-select: none;
 }
 
 .background {
   position: absolute;
   inset: 0;
   z-index: 1;
-
   width: 100%;
   height: 100%;
-
-  background-image:
-    url("/assets/backgrounds/main-bg.png");
-
-  background-size: 100% 100%;
+  background-image: url("/assets/backgrounds/plantation.png");
+  background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-
   pointer-events: none;
 }
 
@@ -66,114 +117,152 @@
 
 .top-wallet {
   position: absolute;
-
-  top: 18px;
+  top: 26px;
   right: 18px;
   z-index: 50;
 
-  padding: 8px 14px;
+  display: inline-flex;
+  min-width: 88px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 13px 0 8px;
 
-  border:
-    2px solid
-    rgba(255, 226, 155, 0.6);
-
-  border-radius: 999px;
-
+  border: 1px solid rgba(255, 222, 139, 0.38);
+  border-radius: 15px;
   background:
-    rgba(47, 31, 20, 0.82);
+    radial-gradient(circle at 22% 16%, rgba(255, 238, 183, 0.18), transparent 34%),
+    radial-gradient(circle at 86% 116%, rgba(190, 108, 32, 0.24), transparent 54%),
+    linear-gradient(180deg, rgba(67, 43, 24, 0.94), rgba(27, 20, 15, 0.96));
 
-  color: #fff1cf;
-
-  font-size: 16px;
+  color: #fff0c7;
+  font-size: 15px;
   font-weight: 900;
+  font-variant-numeric: tabular-nums;
 
   box-shadow:
-    0 8px 18px
-    rgba(0, 0, 0, 0.28);
+    0 9px 20px rgba(0, 0, 0, 0.30),
+    0 0 12px rgba(255, 186, 69, 0.08),
+    inset 0 1px 0 rgba(255, 255, 255, 0.10),
+    inset 0 -1px 0 rgba(45, 25, 10, 0.46);
 
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 
-/* Точки переключения между ведрами */
+.top-wallet__coin {
+  position: relative;
+  flex: 0 0 auto;
+  width: 25px;
+  height: 25px;
+  border: 1px solid rgba(255, 239, 181, 0.68);
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 32% 25%, #fff7c6 0 10%, #f8dc77 20%, #dda43c 50%, #9c5e1e 78%, #583014 100%);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.74),
+    inset 0 -2px 3px rgba(88, 43, 10, 0.40),
+    0 2px 5px rgba(0, 0, 0, 0.36),
+    0 0 7px rgba(255, 193, 65, 0.18);
+}
+
+.top-wallet__coin::before {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border: 1px solid rgba(112, 63, 17, 0.48);
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 1px rgba(255, 240, 171, 0.18);
+}
+
+.top-wallet__coin::after {
+  content: "";
+  position: absolute;
+  top: 7px;
+  left: 10px;
+  width: 5px;
+  height: 10px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(255,255,255,0.62), rgba(255,255,255,0));
+  transform: rotate(32deg);
+  opacity: 0.64;
+}
+
+.top-wallet strong {
+  line-height: 1;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.48);
+}
+
+/* Точки переключения между ведрами — без подложки, только полупрозрачные маркеры. */
 
 .plantation-pagination {
   position: absolute;
-
   left: 50%;
-  bottom: 120px;
+  bottom: 78px;
   z-index: 48;
 
   display: flex;
   align-items: center;
   justify-content: center;
-
-  gap: 8px;
-  padding: 7px 11px;
+  gap: 10px;
+  padding: 5px 8px;
 
   transform: translateX(-50%);
 
-  border:
-    1px solid
-    rgba(222, 255, 241, 0.14);
-
-  border-radius: 999px;
-
-  background:
-    rgba(28, 24, 20, 0.46);
-
-  box-shadow:
-    0 6px 18px
-    rgba(0, 0, 0, 0.2);
-
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 
   pointer-events: auto;
 }
 
 .plantation-pagination-dot {
-  width: 7px;
-  height: 7px;
-
+  width: 6px;
+  height: 6px;
   padding: 0;
+  border: 1px solid rgba(239, 255, 246, 0.44);
+  border-radius: 999px;
 
-  border: none;
-  border-radius: 50%;
-
-  background:
-    rgba(226, 236, 230, 0.28);
-
-  box-shadow: none;
+  background: rgba(203, 226, 212, 0.46);
+  box-shadow:
+    0 1px 3px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.24);
+  opacity: 1;
 
   cursor: pointer;
-
   appearance: none;
   -webkit-appearance: none;
 
   transition:
     width 180ms ease,
+    border-color 180ms ease,
     background 180ms ease,
     box-shadow 180ms ease,
-    transform 180ms ease;
+    transform 150ms ease;
 }
 
 .plantation-pagination-dot.unlocked {
-  background:
-    rgba(209, 255, 230, 0.52);
+  border-color: rgba(222, 255, 235, 0.68);
+  background: rgba(174, 237, 201, 0.76);
+  box-shadow:
+    0 0 5px rgba(103, 255, 174, 0.20),
+    0 1px 3px rgba(0, 0, 0, 0.34),
+    inset 0 1px 0 rgba(255, 255, 255, 0.30);
 }
 
 .plantation-pagination-dot.active {
-  width: 22px;
-
-  border-radius: 999px;
-
+  width: 20px;
+  border-color: rgba(226, 255, 239, 0.92);
   background:
-    rgba(136, 255, 195, 0.94);
-
+    linear-gradient(180deg, rgba(203, 255, 227, 0.98), rgba(91, 217, 151, 0.94));
   box-shadow:
-    0 0 10px
-    rgba(99, 255, 181, 0.55);
+    0 0 8px rgba(82, 255, 166, 0.42),
+    0 2px 4px rgba(0, 0, 0, 0.30),
+    inset 0 1px 0 rgba(255, 255, 255, 0.48);
 }
 
 .plantation-pagination-dot:active {
@@ -230,4 +319,271 @@
       scale(0.3);
   }
 }
-.plant-catalog-tool{position:absolute;top:74px;right:18px;z-index:52;display:grid;place-items:center;width:44px;height:44px;padding:0;border:1px solid rgba(255,226,164,.16);border-radius:50%;font-size:21px;cursor:pointer;background:rgba(47,31,20,.78);box-shadow:0 8px 18px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.05);backdrop-filter:blur(6px)}.plant-catalog-tool:active{transform:scale(.94)}.plant-catalog-tool:disabled{opacity:.42}
+.plant-catalog-tool {
+  position: absolute;
+  top: 74px;
+  right: 18px;
+  z-index: 52;
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(213, 238, 178, 0.2);
+  border-radius: 13px;
+  background:
+    linear-gradient(180deg, rgba(34, 44, 27, 0.82), rgba(18, 25, 18, 0.88));
+  color: #d9f4af;
+  font-size: 19px;
+  cursor: pointer;
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.plant-catalog-tool:active {
+  transform: scale(0.94);
+}
+
+.plant-catalog-tool:disabled {
+  opacity: 0.42;
+}
+
+/* ==========================================================================\n   FINAL RESPONSIVE LAYOUT\n   Фон занимает реальный viewport. Мир остаётся в дизайн-координатах, а HUD\n   привязывается к вычисленной видимой области cover-сцены.\n   ========================================================================== */
+
+.game-screen {
+  --hud-gap: 18px;
+  --hud-left: calc(var(--visible-left, 0px) + var(--hud-gap));
+  --hud-right: calc(var(--visible-right, 0px) + var(--hud-gap));
+  --hud-top: calc(var(--visible-top, 0px) + var(--hud-gap) + var(--telegram-header-safe));
+  --hud-row-gap: 9px;
+  --hud-row-height: 36px;
+  --hud-bottom: calc(var(--visible-bottom, 0px) + var(--hud-gap));
+}
+
+/* Внутренний фон сцены больше не дублирует fullscreen-фон и не создаёт швы. */
+.game-stage > .background {
+  background: transparent !important;
+}
+
+/* Критичный HUD всегда находится внутри реально видимой части cover-сцены. */
+.top-wallet {
+  top: calc(var(--hud-top) + 8px);
+  right: var(--hud-right);
+}
+
+
+/*
+ * РЮКЗАК НА ПЛАНТАЦИИ — ЕДИНСТВЕННОЕ МЕСТО НАСТРОЙКИ.
+ * Меняй эти четыре значения: элемент останется привязан к сцене 390x844
+ * и будет масштабироваться вместе с фоном на любом устройстве.
+ */
+.backpack-tool {
+  left: 250px;   /* больше = правее, меньше = левее */
+  right: auto;
+  top: 149px;    /* больше = ниже, меньше = выше */
+
+  width: 87px;   /* ширина рюкзака */
+  height: 125px; /* высота рюкзака */
+
+  overflow: visible;
+  isolation: isolate;
+
+  /* Постоянная спокойная подсветка без мерцания и hover-эффекта. */
+  filter:
+    drop-shadow(0 6px 7px rgba(0, 0, 0, 0.34))
+    drop-shadow(0 0 5px rgba(255, 205, 126, 0.18));
+
+  /* Движение остаётся на .backpack-tool-image из game.css. */
+}
+
+/* Небольшой неподвижный ореол под рюкзаком. */
+.backpack-tool::before {
+  content: "";
+  position: absolute;
+  left: 17%;
+  right: 17%;
+  bottom: 7%;
+  height: 24%;
+  z-index: -1;
+
+  border-radius: 50%;
+  background: radial-gradient(
+    ellipse at center,
+    rgba(255, 211, 139, 0.20) 0%,
+    rgba(255, 190, 100, 0.08) 48%,
+    rgba(255, 176, 73, 0) 76%
+  );
+  filter: blur(6px);
+  opacity: 1;
+  pointer-events: none;
+}
+
+.backpack-tool img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter:
+    brightness(1.035)
+    contrast(1.025)
+    saturate(1.025);
+}
+
+/* Hover намеренно отсутствует: интерфейс рассчитан на Telegram Mini App. */
+
+.plant-catalog-tool {
+  top: calc(var(--hud-top) + var(--hud-row-height) + var(--hud-row-gap));
+  right: calc(var(--visible-right, 0px) + 18px) !important;
+}
+
+.plantation-pagination {
+  bottom: calc(var(--visible-bottom, 0px) + 78px);
+}
+
+/* Нижнее меню не должно попадать под системную полосу или обрезание сцены. */
+.bottom-menu,
+.bottom-navigation,
+.game-bottom-menu {
+  bottom: calc(var(--visible-bottom, 0px) + 12px) !important;
+}
+
+/* Стрелки и интерактивные края плантации держим внутри видимой зоны. */
+.plantation-arrow--left,
+.plantation-slider__arrow--left {
+  left: calc(var(--visible-left, 0px) + 8px) !important;
+}
+
+.plantation-arrow--right,
+.plantation-slider__arrow--right {
+  right: calc(var(--visible-right, 0px) + 8px) !important;
+}
+
+/* Модальные затемнения должны перекрывать именно весь дизайн-мир. */
+.modal-overlay,
+.action-modal-overlay,
+.seed-modal-overlay,
+.inventory-modal-overlay,
+.harvest-care-modal,
+.harvest-result-modal,
+.pot-type-modal,
+.catalog-modal {
+  inset: 0;
+}
+
+/* На очень коротких экранах чуть поднимаем главную сцену, не меняя якорь ведра. */
+@media (max-height: 680px) {
+  .table-scene {
+    bottom: 112px;
+  }
+
+  .plantation-pagination {
+    bottom: calc(var(--visible-bottom, 0px) + 66px);
+  }
+}
+
+/* Планшет/desktop preview: интерфейс остаётся мобильным, но не получает борта. */
+@media (min-aspect-ratio: 3 / 2) {
+  .game-screen {
+    background-position: center center;
+  }
+}
+
+/* Кнопка ручного перезапуска прогресса. Она остаётся частью интерфейса,
+   но не конкурирует с основными игровыми инструментами. */
+.progress-reset-button {
+  position: absolute;
+  top: calc(var(--hud-top) + var(--hud-row-height) + var(--hud-row-gap));
+  left: var(--hud-left);
+  z-index: 58;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-width: 78px;
+  min-height: 36px;
+  padding: 7px 11px;
+  border: 1px solid rgba(255, 201, 151, 0.2);
+  border-radius: 13px;
+  background:
+    linear-gradient(180deg, rgba(55, 39, 31, 0.82), rgba(25, 20, 18, 0.9));
+  color: #ffe7c2;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.02em;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.42);
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.07);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 140ms ease, filter 140ms ease;
+}
+
+.progress-reset-button__icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.progress-reset-button:active {
+  transform: translateY(2px) scale(0.97);
+  filter: brightness(0.92);
+}
+
+/* Премиум-кошелёк занимает верхний левый угол; сброс расположен ниже и не перекрывает его. */
+
+/*
+ * Интерактивная область двери на фоне плантации.
+ * Координаты указаны внутри неизменной игровой сцены 390 × 844,
+ * поэтому зона масштабируется вместе с фоном и не съезжает на других устройствах.
+ *
+ * Для ручной подгонки меняй только эти четыре значения:
+ * left / top / width / height.
+ */
+.plantation-door-hitbox {
+  position: absolute;
+  left: 134px;
+  top: 205px;
+  z-index: 1;
+
+  width: 120px;
+  height: 210px;
+
+  margin: 0;
+  padding: 0;
+
+  /* Едва заметная граница для ручной подгонки зоны двери. */
+  border: 1px dotted rgba(255, 229, 170, 0.11);
+  border-radius: 8px 8px 4px 4px;
+  background: transparent;
+  box-shadow: none;
+
+  cursor: pointer;
+  pointer-events: auto;
+  appearance: none;
+  -webkit-appearance: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.plantation-door-hitbox__label {
+  display: none;
+}
+
+.plantation-door-hitbox:not(:disabled):hover {
+  border-color: rgba(255, 229, 170, 0.11);
+  background: transparent;
+  box-shadow: none;
+}
+
+.plantation-door-hitbox:not(:disabled):active {
+  background: transparent;
+}
+
+.plantation-door-hitbox:disabled {
+  cursor: default;
+  pointer-events: none;
+  opacity: 1;
+}

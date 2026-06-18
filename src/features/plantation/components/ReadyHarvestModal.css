@@ -1,0 +1,149 @@
+.ready-harvest-overlay{
+  position:absolute;
+  inset:0;
+  z-index:143;
+  display:grid;
+  place-items:center;
+  padding:18px;
+  background:rgba(7,8,7,.74);
+  backdrop-filter:blur(9px);
+  -webkit-backdrop-filter:blur(9px);
+}
+.ready-harvest-modal{
+  position:relative;
+  width:min(346px,calc(100vw - 22px));
+  padding:11px;
+  overflow:hidden;
+  border:2px solid #465247;
+  border-radius:24px;
+  background:radial-gradient(circle at 50% -12%,rgba(118,211,139,.13),transparent 39%),linear-gradient(180deg,#242924 0%,#121512 100%);
+  color:#f2f4eb;
+  box-shadow:0 28px 62px rgba(0,0,0,.64),0 0 0 2px rgba(8,10,8,.76),inset 0 0 0 1px rgba(236,255,239,.05),0 0 30px rgba(82,188,111,.08);
+  animation:readyHarvestIn .18s cubic-bezier(.2,.82,.24,1) both;
+}
+.ready-harvest-modal:before{
+  content:"";
+  position:absolute;
+  inset:5px;
+  border:1px solid rgba(232,255,236,.065);
+  border-radius:18px;
+  pointer-events:none;
+}
+.ready-harvest-modal>*{position:relative;z-index:1}
+.ready-harvest-header{
+  position:relative;
+  min-height:84px;
+  padding:29px 18px 15px;
+  border:1px solid #4b584d;
+  border-radius:16px 16px 10px 10px;
+  background:linear-gradient(135deg,rgba(255,255,255,.045),transparent 40%),linear-gradient(180deg,#354038 0%,#252d27 100%);
+  box-shadow:inset 0 1px 0 rgba(242,255,245,.075),0 5px 13px rgba(0,0,0,.34);
+  text-align:center;
+}
+.ready-harvest-handle{
+  position:absolute;
+  top:9px;
+  left:50%;
+  width:78px;
+  height:8px;
+  border:1px solid rgba(230,250,233,.1);
+  border-radius:999px;
+  background:rgba(7,10,8,.7);
+  box-shadow:inset 0 2px 3px rgba(0,0,0,.86),0 1px 0 rgba(240,255,243,.06);
+  transform:translateX(-50%);
+}
+.ready-harvest-header>span:not(.ready-harvest-handle){
+  display:block;
+  margin-bottom:5px;
+  color:#9fd2a9;
+  font-size:9px;
+  font-weight:1000;
+  letter-spacing:.18em;
+  line-height:1;
+  text-transform:uppercase;
+}
+.ready-harvest-header h2{
+  margin:0;
+  color:#f4f6ef;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:24px;
+  font-weight:800;
+  line-height:1.05;
+}
+.ready-harvest-tray{
+  display:grid;
+  grid-template-columns:112px minmax(0,1fr);
+  gap:13px;
+  min-height:150px;
+  margin-top:8px;
+  padding:14px 15px;
+  align-items:center;
+  border:1px solid #414b43;
+  border-radius:10px 10px 16px 16px;
+  background:radial-gradient(circle at 24% 50%,rgba(105,211,131,.08),transparent 34%),linear-gradient(180deg,#202621 0%,#111512 100%);
+  box-shadow:inset 0 8px 18px rgba(0,0,0,.42),inset 0 0 0 2px rgba(236,255,239,.02),0 4px 12px rgba(0,0,0,.25);
+}
+.ready-harvest-emblem{
+  position:relative;
+  display:grid;
+  width:108px;
+  height:122px;
+  place-items:center;
+}
+.ready-harvest-glow{
+  position:absolute;
+  left:50%;
+  bottom:13px;
+  width:88px;
+  height:25px;
+  border-radius:50%;
+  background:rgba(101,214,128,.18);
+  filter:blur(12px);
+  transform:translateX(-50%);
+}
+.ready-harvest-crate{
+  position:relative;
+  z-index:1;
+  display:grid;
+  width:90px;
+  height:94px;
+  place-items:center;
+  border:1px solid rgba(166,220,178,.14);
+  border-radius:24px 24px 19px 19px;
+  background:radial-gradient(circle at 36% 25%,rgba(255,255,255,.12),transparent 38%),linear-gradient(180deg,rgba(75,144,91,.22),rgba(42,86,52,.2));
+  color:#bce5c3;
+  font-size:51px;
+  text-shadow:0 5px 9px rgba(0,0,0,.38);
+  box-shadow:inset 0 0 18px rgba(123,224,146,.045),0 7px 12px rgba(0,0,0,.24);
+}
+.ready-harvest-copy strong{
+  display:block;
+  color:#f1f5ed;
+  font-size:17px;
+  font-weight:1000;
+  line-height:1.16;
+}
+.ready-harvest-copy p{
+  margin:8px 0 0;
+  color:rgba(214,232,218,.62);
+  font-size:10px;
+  font-weight:700;
+  line-height:1.42;
+}
+.ready-harvest-continue{
+  width:100%;
+  min-height:49px;
+  margin-top:9px;
+  border:1px solid rgba(173,230,184,.25);
+  border-radius:13px;
+  background:radial-gradient(circle at 30% 0,rgba(226,255,231,.12),transparent 42%),linear-gradient(180deg,#4f875b 0%,#31583a 100%);
+  color:#f1fff3;
+  box-shadow:0 4px 0 #18301e,0 7px 14px rgba(10,48,20,.28),inset 0 1px 0 rgba(235,255,239,.12);
+  font:inherit;
+  font-size:12px;
+  font-weight:1000;
+  cursor:pointer;
+}
+.ready-harvest-continue:active{transform:translateY(3px) scale(.99);box-shadow:0 1px 0 #18301e,0 3px 7px rgba(10,48,20,.22)}
+@keyframes readyHarvestIn{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+@media(prefers-reduced-motion:reduce){.ready-harvest-modal{animation:none}}
