@@ -827,11 +827,14 @@ function GameScreen() {
       wateredStages: [],
     });
 
-    closeSeedModal();
-
     if (tutorialStep === "plant-seed") {
+      setSelectedSeed(null);
+      setIsSeedModalOpen(false);
       setTutorialStep("growing");
+      return;
     }
+
+    closeSeedModal();
   };
 
   const applyPlantCare = (careType) => {
@@ -1022,14 +1025,16 @@ function GameScreen() {
 
     updateCurrentPotState({ ...createEmptyPotState(true), potTypeId: currentPotState.potTypeId || "soil" });
 
+    window.setTimeout(() => {
+      setFlyingLootItems([]);
+    }, 1100);
+  };
+
+  const advanceTutorialAfterHarvestResult = () => {
     if (tutorialStep === "collect") {
       setTutorialStep("go-district");
       setActiveScreen("plantation");
     }
-
-    window.setTimeout(() => {
-      setFlyingLootItems([]);
-    }, 1100);
   };
 
   const requestInstantGrow = () => {
@@ -1357,7 +1362,8 @@ function GameScreen() {
             "--visible-height": `${visibleHeight}px`,
           }}
         >
-        {!isTutorialActive && activeScreen !== "support" && (
+        {!isTutorialActive &&
+          ["plantation", "district", "shop"].includes(activeScreen) && (
           <PremiumWallet
             balance={premiumCoins}
             disabled={isTutorialActive}
@@ -1371,8 +1377,9 @@ function GameScreen() {
           <>
             <div className="background" />
 
-            <div className="top-wallet">
-              {coins}
+            <div className="top-wallet" aria-label={`Монеты: ${coins}`}>
+              <span className="top-wallet__coin" aria-hidden="true" />
+              <strong>{coins}</strong>
             </div>
 
             <button
@@ -1402,9 +1409,9 @@ function GameScreen() {
               className="plant-catalog-tool"
               onClick={() => setIsCatalogOpen(true)}
               disabled={isTutorialActive}
-              aria-label="Открыть каталог растений"
+              aria-label="Открыть каталог культур"
             >
-              📖
+              <span aria-hidden="true">☘</span>
             </button>
 
             <FlyingLoot lootItems={flyingLootItems} />
@@ -1543,10 +1550,14 @@ function GameScreen() {
 
             <HarvestResultModal
               result={harvestResult}
-              onClose={() => setHarvestResult(null)}
+              onClose={() => {
+                setHarvestResult(null);
+                advanceTutorialAfterHarvestResult();
+              }}
               onOpenCatalog={() => {
                 setHarvestResult(null);
                 setIsCatalogOpen(true);
+                advanceTutorialAfterHarvestResult();
               }}
             />
 
@@ -1764,7 +1775,7 @@ function GameScreen() {
           onClose={() => setUnlockQueue((queue) => queue.slice(1))}
         />
 
-        {!isResetProgressModalOpen && (
+        {!isResetProgressModalOpen && !harvestResult && !isCatalogOpen && (
           <TutorialOverlay
           step={tutorialStep}
           stageScale={stageScale}

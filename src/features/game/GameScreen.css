@@ -47,7 +47,7 @@
 }
 
 html[data-telegram-app="true"] .game-screen {
-  --telegram-header-safe: 50px;
+  --telegram-header-safe: 72px;
 }
 
 .game-viewport {
@@ -122,28 +122,59 @@ html[data-telegram-app="true"] .game-screen {
   right: 18px;
   z-index: 50;
 
-  padding: 8px 14px;
+  display: inline-flex;
+  min-width: 74px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 12px 0 8px;
 
   border:
-    2px solid
-    rgba(255, 226, 155, 0.6);
+    1px solid
+    rgba(255, 225, 164, 0.24);
 
-  border-radius: 999px;
+  border-radius: 13px;
 
   background:
-    rgba(47, 31, 20, 0.82);
+    linear-gradient(180deg, rgba(41, 30, 23, 0.84), rgba(20, 16, 14, 0.88));
 
-  color: #fff1cf;
+  color: #ffe9b9;
 
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 900;
+  font-variant-numeric: tabular-nums;
 
   box-shadow:
-    0 8px 18px
-    rgba(0, 0, 0, 0.28);
+    0 8px 18px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
 
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.top-wallet__coin {
+  position: relative;
+  width: 21px;
+  height: 21px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 34% 26%, #fff0ad 0 18%, #f3c764 42%, #b87925 76%);
+  box-shadow:
+    inset 0 1px 1px rgba(255, 255, 255, 0.62),
+    0 2px 5px rgba(0, 0, 0, 0.3);
+}
+
+.top-wallet__coin::after {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  border: 1px solid rgba(83, 50, 14, 0.38);
+  border-radius: inherit;
+}
+
+.top-wallet strong {
+  line-height: 1;
 }
 
 /* Точки переключения между ведрами */
@@ -281,15 +312,47 @@ html[data-telegram-app="true"] .game-screen {
       scale(0.3);
   }
 }
-.plant-catalog-tool{position:absolute;top:74px;right:18px;z-index:52;display:grid;place-items:center;width:44px;height:44px;padding:0;border:1px solid rgba(255,226,164,.16);border-radius:50%;font-size:21px;cursor:pointer;background:rgba(47,31,20,.78);box-shadow:0 8px 18px rgba(0,0,0,.28),inset 0 1px 0 rgba(255,255,255,.05);backdrop-filter:blur(6px)}.plant-catalog-tool:active{transform:scale(.94)}.plant-catalog-tool:disabled{opacity:.42}
+.plant-catalog-tool {
+  position: absolute;
+  top: 74px;
+  right: 18px;
+  z-index: 52;
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(213, 238, 178, 0.2);
+  border-radius: 13px;
+  background:
+    linear-gradient(180deg, rgba(34, 44, 27, 0.82), rgba(18, 25, 18, 0.88));
+  color: #d9f4af;
+  font-size: 19px;
+  cursor: pointer;
+  box-shadow:
+    0 8px 18px rgba(0, 0, 0, 0.24),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+.plant-catalog-tool:active {
+  transform: scale(0.94);
+}
+
+.plant-catalog-tool:disabled {
+  opacity: 0.42;
+}
 
 /* ==========================================================================\n   FINAL RESPONSIVE LAYOUT\n   Фон занимает реальный viewport. Мир остаётся в дизайн-координатах, а HUD\n   привязывается к вычисленной видимой области cover-сцены.\n   ========================================================================== */
 
 .game-screen {
-  --hud-gap: 14px;
+  --hud-gap: 18px;
   --hud-left: calc(var(--visible-left, 0px) + var(--hud-gap));
   --hud-right: calc(var(--visible-right, 0px) + var(--hud-gap));
   --hud-top: calc(var(--visible-top, 0px) + var(--hud-gap) + var(--telegram-header-safe));
+  --hud-row-gap: 9px;
+  --hud-row-height: 36px;
   --hud-bottom: calc(var(--visible-bottom, 0px) + var(--hud-gap));
 }
 
@@ -310,6 +373,7 @@ html[data-telegram-app="true"] .game-screen {
 }
 
 .plant-catalog-tool {
+  top: calc(var(--hud-top) + var(--hud-row-height) + var(--hud-row-gap));
   right: calc(var(--visible-right, 0px) + 18px) !important;
 }
 
@@ -369,30 +433,30 @@ html[data-telegram-app="true"] .game-screen {
    но не конкурирует с основными игровыми инструментами. */
 .progress-reset-button {
   position: absolute;
-  top: var(--hud-top);
+  top: calc(var(--hud-top) + var(--hud-row-height) + var(--hud-row-gap));
   left: var(--hud-left);
   z-index: 58;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  min-width: 82px;
-  min-height: 38px;
-  padding: 7px 12px;
-  border: 1px solid rgba(255, 201, 151, 0.3);
-  border-radius: 14px;
+  min-width: 78px;
+  min-height: 36px;
+  padding: 7px 11px;
+  border: 1px solid rgba(255, 201, 151, 0.2);
+  border-radius: 13px;
   background:
-    linear-gradient(180deg, rgba(75, 46, 31, 0.92), rgba(43, 27, 20, 0.94));
+    linear-gradient(180deg, rgba(55, 39, 31, 0.82), rgba(25, 20, 18, 0.9));
   color: #ffe7c2;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 900;
   letter-spacing: 0.02em;
   text-shadow: 0 1px 0 rgba(0, 0, 0, 0.42);
   box-shadow:
-    0 7px 16px rgba(0, 0, 0, 0.26),
+    0 8px 18px rgba(0, 0, 0, 0.24),
     inset 0 1px 0 rgba(255, 255, 255, 0.07);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition: transform 140ms ease, filter 140ms ease;
@@ -409,6 +473,3 @@ html[data-telegram-app="true"] .game-screen {
 }
 
 /* Премиум-кошелёк занимает верхний левый угол; сброс расположен ниже и не перекрывает его. */
-.progress-reset-button {
-  top: calc(var(--hud-top) + 48px);
-}

@@ -20,6 +20,7 @@ export const ASSETS = {
   locations: {
     mariaIvanovnaHouse: {
       background: "/assets/locations/maria-ivanovna-house/background.png",
+      scene: "/assets/locations/maria-ivanovna-house/scene-composite.png",
       questBoard: "/assets/locations/maria-ivanovna-house/quest-board.png",
       radio: "/assets/locations/maria-ivanovna-house/radio.png",
     },
@@ -88,6 +89,7 @@ export const deferredAssets = [
   ASSETS.buildings.mariaIvanovnaHouse,
   ASSETS.characters.clubDealer,
   ASSETS.locations.mariaIvanovnaHouse.background,
+  ASSETS.locations.mariaIvanovnaHouse.scene,
   ASSETS.locations.mariaIvanovnaHouse.questBoard,
   ASSETS.locations.mariaIvanovnaHouse.radio,
   ...ASSETS.plants.greenTomato,

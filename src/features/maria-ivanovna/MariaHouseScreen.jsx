@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import { ASSETS } from "../../core/assets/assetCatalog";
-import { triggerTelegramNotification } from "../../core/telegram";
+import { getTelegramPlayer, triggerTelegramNotification } from "../../core/telegram";
 import { MARIA_TRUST_LEVELS, getMariaTrustInfo } from "./mariaProgression";
 import { CROP_IDS } from "../plantation/data/crops";
 import { MARIA_CHAPTERS, MARIA_QUESTS } from "./mariaQuests";
@@ -80,6 +80,7 @@ export default function MariaHouseScreen({
   const [message, setMessage] = useState("На доске — дела района. Подойди, ученик, разберёмся по порядку.");
   const [rewardPopup, setRewardPopup] = useState(null);
   const touchStartY = useRef(null);
+  const telegramPlayer = useMemo(() => getTelegramPlayer(), []);
 
   useEffect(() => {
     if (
@@ -89,6 +90,27 @@ export default function MariaHouseScreen({
       onTutorialAction?.("claim-first-quest");
     }
   }, [completedQuestIds, onTutorialAction, tutorialStep]);
+
+  useEffect(() => {
+    const backButton = telegramPlayer.webApp?.BackButton;
+
+    if (!backButton) return undefined;
+
+    if (isTutorialActive) {
+      backButton.hide?.();
+      return undefined;
+    }
+
+    const handleBack = () => onBack?.();
+
+    backButton.show?.();
+    backButton.onClick?.(handleBack);
+
+    return () => {
+      backButton.offClick?.(handleBack);
+      backButton.hide?.();
+    };
+  }, [isTutorialActive, onBack, telegramPlayer.webApp]);
 
   const activeQuests = useMemo(
     () => MARIA_QUESTS.filter((quest) => !completedQuestIds.includes(quest.id)),
@@ -197,20 +219,16 @@ export default function MariaHouseScreen({
       className="maria-house-screen"
       style={{ "--maria-house-background": `url(${ASSETS.locations.mariaIvanovnaHouse.background})` }}
     >
-      <header className="maria-house-topbar">
+      {!isTutorialActive && (
         <button
           type="button"
-          className="maria-house-back"
+          className="maria-house-fallback-back"
           onClick={onBack}
-          disabled={isTutorialActive}
+          aria-label="????????? ? ?????"
         >
-          ← Район
+          ? ?????
         </button>
-        <div>
-          <span>Старый район</span>
-          <strong>Дом Марии Ивановны</strong>
-        </div>
-      </header>
+      )}
 
       <section className="maria-house-room" aria-label="Комната Марии Ивановны">
         <button
