@@ -5,7 +5,7 @@ export default function PotTypeModal({
   isOpen,
   trust = 0,
   title = "Выбери ёмкость",
-  description = "Разные культуры требуют подходящей среды.",
+  description = "Мария разрешила новое место. Выбери ёмкость для следующего цикла.",
   price = null,
   coins = 0,
   onChoose,
@@ -40,7 +40,7 @@ export default function PotTypeModal({
                   <p>{type.description}</p>
                   <small>
                     {unlocked
-                      ? price === null ? "Доступно" : `Установить · ${price} монет`
+                      ? price === null || price === 0 ? "Установить бесплатно" : `Установить · ${price} монет`
                       : `Откроется при ${type.requiredTrust} доверия Марии Ивановны`}
                   </small>
                 </div>

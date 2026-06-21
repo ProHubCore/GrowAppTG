@@ -1,48 +1,14 @@
-# Telegram Stars → G-монеты
+# Telegram Stars: безопасное подключение
 
-Файл `.env.local` или `.env.production` должен лежать **в корне Vite-проекта рядом с `package.json`**, если `vite.config` явно не задаёт другой `envDir`. Файлы окружения внутри `src` обычно не читаются Vite.
+Grow App использует двухэтапную схему:
 
-Для оплаты через Telegram Stars укажи endpoint:
+1. React запрашивает invoice по `VITE_STARS_INVOICE_ENDPOINT`.
+2. Backend проверяет Telegram Mini App `initData` и создаёт `createInvoiceLink` с валютой `XTR`.
+3. Mini App открывает ссылку через `Telegram.WebApp.openInvoice`.
+4. Bot webhook отвечает на `pre_checkout_query` не позднее десяти секунд.
+5. Товар выдаётся только после webhook-сообщения `successful_payment`.
+6. React вызывает `VITE_STARS_VERIFY_ENDPOINT` и получает подтверждённые entitlements/баланс.
 
-```env
-VITE_STARS_INVOICE_ENDPOINT=https://your-server.example.com/api/stars/invoice
-```
+Нельзя хранить токен бота в Vite env. Переменные `VITE_*` попадают в публичный JavaScript.
 
-Клиент отправляет:
-
-```json
-{
-  "amount": 100,
-  "productId": "growapp-premium-coins",
-  "premiumCoins": 1000,
-  "payload": "growapp-premium-100-1000-..."
-}
-```
-
-Endpoint обязан:
-
-1. Проверить `X-Telegram-Init-Data`.
-2. Не доверять значению `premiumCoins` от клиента — пересчитать пакет на сервере.
-3. Создать invoice link через Telegram Bot API с `currency: "XTR"`.
-4. Вернуть:
-
-```json
-{
-  "invoiceUrl": "https://t.me/$..."
-}
-```
-
-Для Stars `provider_token` не нужен. Backend также должен обработать `pre_checkout_query`, подтвердить его через `answerPreCheckoutQuery`, принять `successful_payment`, сохранить `telegram_payment_charge_id` и начислить G-монеты на серверный аккаунт игрока.
-
-Текущая сборка начисляет валюту после статуса `paid` в локальное сохранение — это удобно для теста интерфейса, но перед публичным релизом баланс и начисление должны стать серверными. Токен бота нельзя хранить в `src`, Vite env или браузерном коде.
-
-## Фиксированные пакеты магазина
-
-Клиент отправляет `packageId`, `amount` в Telegram Stars и ожидаемое количество G-монет. Для публичного запуска сервер обязан считать источником истины только `packageId` и собственный каталог цен:
-
-- `starter`: 10 Stars → 100 G
-- `street`: 30 Stars → 330 G
-- `grower`: 75 Stars → 900 G
-- `boss`: 150 Stars → 1950 G
-
-Не начисляй валюту только по callback `openInvoice(..., "paid")`. Финальное начисление на серверном аккаунте игрока должно происходить после получения `successful_payment`, с сохранением `telegram_payment_charge_id` и защитой от повторной обработки одного платежа.
+Готовый каркас Worker: `backend-reference/cloudflare-worker.js`.

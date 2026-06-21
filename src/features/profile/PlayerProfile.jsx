@@ -318,62 +318,30 @@ function PlayerProfile() {
 
               <p className="player-profile-modal__bio">{profileDescription}</p>
 
-              <div className="player-profile-stats" aria-label="Статистика игрока">
+              <div className="player-profile-stats player-profile-stats--clean" aria-label="Статистика игрока">
                 <article className="player-profile-stat">
-                  <span className="player-profile-stat__mark" aria-hidden="true">✦</span>
+                  <small>Собрано</small>
                   <strong>{profileStats.totalHarvested}</strong>
-                  <small>урожая собрано</small>
+                  <span>урожая</span>
                 </article>
 
                 <article className="player-profile-stat">
-                  <span className="player-profile-stat__mark" aria-hidden="true">◈</span>
-                  <strong>
-                    {profileStats.discoveredCrops}
-                    <em>/{profileStats.totalCrops}</em>
-                  </strong>
-                  <small>культур открыто</small>
+                  <small>Открыто</small>
+                  <strong>{profileStats.discoveredCrops}<em>/{profileStats.totalCrops}</em></strong>
+                  <span>культур</span>
                 </article>
 
                 <article className="player-profile-stat">
-                  <span className="player-profile-stat__mark" aria-hidden="true">✓</span>
+                  <small>Закрыто</small>
                   <strong>{profileStats.completedQuests}</strong>
-                  <small>поручений закрыто</small>
+                  <span>поручений</span>
                 </article>
-              </div>
 
-              <div className="player-rank-card">
-                <div className="player-rank-card__top">
-                  <div>
-                    <span className="player-rank-card__label">Репутация клуба</span>
-                    <strong>{clubProgress.currentLevel.title}</strong>
-                  </div>
-
-                  <div className="player-rank-card__level" aria-label={`Уровень клуба ${clubProgress.currentLevel.level}`}>
-                    <span>ур.</span>
-                    {clubProgress.currentLevel.level}
-                  </div>
-                </div>
-
-                <div className="player-rank-card__progress">
-                  <div
-                    className="player-rank-card__progress-fill"
-                    style={{ width: `${clubProgress.progressPercent}%` }}
-                  />
-                </div>
-
-                <div className="player-rank-card__experience">
-                  {clubProgress.nextLevel ? (
-                    <>
-                      <span>{clubProgress.currentProgress} REP</span>
-                      <span>{clubProgress.nextLevel.required - clubReputation} до уровня</span>
-                    </>
-                  ) : (
-                    <>
-                      <span>{clubReputation} REP</span>
-                      <span>Максимальный уровень</span>
-                    </>
-                  )}
-                </div>
+                <article className="player-profile-stat">
+                  <small>Клуб</small>
+                  <strong>{clubReputation}</strong>
+                  <span>REP · LVL {clubProgress.currentLevel.level}</span>
+                </article>
               </div>
             </div>
           </section>

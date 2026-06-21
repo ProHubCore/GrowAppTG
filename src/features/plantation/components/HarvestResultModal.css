@@ -1,147 +1,26 @@
-.harvest-result-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 145;
-  display: grid;
-  place-items: center;
-  padding: 20px;
-  background: rgba(7, 6, 8, 0.78);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-}
-
-.harvest-result-card {
-  position: relative;
-  width: 100%;
-  max-width: 338px;
-  min-height: 392px;
-  padding: 27px 20px 22px;
-  overflow: hidden;
-  border: 1px solid rgba(255, 227, 169, 0.2);
-  border-radius: 27px;
-  text-align: center;
-  color: #f9edd3;
-  background:
-    radial-gradient(circle at 50% 22%, rgba(255, 197, 88, 0.18), transparent 39%),
-    linear-gradient(180deg, #312522, #171316);
-  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.62);
-}
-
-.harvest-result-rays {
-  position: absolute;
-  left: 50%;
-  top: 132px;
-  width: 236px;
-  height: 236px;
-  border-radius: 50%;
-  background: repeating-conic-gradient(
-    from 0deg,
-    rgba(255, 214, 125, 0.09) 0 8deg,
-    transparent 8deg 18deg
-  );
-  transform: translate(-50%, -50%);
-  animation: harvestSpin 14s linear infinite;
-  pointer-events: none;
-}
-
-.harvest-result-kicker,
-.harvest-result-icon,
-.harvest-result-card h2,
-.harvest-result-amount,
-.harvest-result-actions {
-  position: relative;
-}
-
-.harvest-result-kicker {
-  color: rgba(255, 232, 188, 0.58);
-  font-size: 9px;
-  font-weight: 950;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-}
-
-.harvest-result-icon {
-  display: grid;
-  width: 118px;
-  height: 118px;
-  place-items: center;
-  margin: 12px auto 3px;
-  font-size: 66px;
-  line-height: 1;
-  filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.35));
-  transform-origin: center;
-}
-
-.harvest-result-icon img {
-  display: block;
-  width: 112px;
-  height: 112px;
-  object-fit: contain;
-  object-position: center;
-  user-select: none;
-  -webkit-user-drag: none;
-  animation: harvestPlantFloat 2.4s ease-in-out infinite;
-}
-
-.harvest-result-icon span {
-  display: block;
-}
-
-.harvest-result-card h2 {
-  margin: 2px 0 0;
-  font-family: Georgia, serif;
-  font-size: 27px;
-  line-height: 1.12;
-}
-
-.harvest-result-amount {
-  margin-top: 12px;
-  font-family: Georgia, serif;
-  font-size: 30px;
-  font-weight: 900;
-}
-
-.harvest-result-actions {
-  margin-top: 24px;
-}
-
-.harvest-continue-button {
-  width: 100%;
-  min-height: 47px;
-  border: 0;
-  border-radius: 14px;
-  color: #fff2ce;
-  background: linear-gradient(180deg, #79994d, #516c32);
-  box-shadow: 0 5px 0 #344620;
-  font: inherit;
-  font-size: 12px;
-  font-weight: 900;
-  cursor: pointer;
-  -webkit-tap-highlight-color: transparent;
-  transition: transform 120ms ease, box-shadow 120ms ease;
-}
-
-.harvest-continue-button:active {
-  transform: translateY(3px);
-  box-shadow: 0 2px 0 #344620;
-}
-
-@keyframes harvestSpin {
-  to {
-    transform: translate(-50%, -50%) rotate(360deg);
-  }
-}
-
-@keyframes harvestPlantFloat {
-  50% {
-    transform: translateY(-4px) scale(1.025);
-  }
-}
+.harvest-result-overlay{position:absolute;inset:0;z-index:145;display:grid;place-items:center;padding:18px;background:rgba(7,6,8,.8);backdrop-filter:blur(11px);-webkit-backdrop-filter:blur(11px)}
+.harvest-result-card{--quality:#bcc1ba;position:relative;width:100%;max-width:330px;overflow:hidden;padding:17px;border:1px solid color-mix(in srgb,var(--quality) 31%,transparent);border-radius:26px;color:#f9edd7;background:radial-gradient(circle at 50% 23%,color-mix(in srgb,var(--quality) 17%,transparent),transparent 37%),linear-gradient(180deg,#302522,#171316);box-shadow:0 28px 70px rgba(0,0,0,.64),0 0 34px color-mix(in srgb,var(--quality) 8%,transparent);text-align:center;animation:harvestCardIn .28s cubic-bezier(.2,.8,.2,1) both}.harvest-result-card.quality-good{--quality:#78d49a}.harvest-result-card.quality-excellent{--quality:#edc064}.harvest-result-card.quality-rare{--quality:#c88fff}
+.harvest-result-glow{position:absolute;left:50%;top:114px;width:205px;height:205px;border-radius:50%;background:repeating-conic-gradient(from 0deg,color-mix(in srgb,var(--quality) 9%,transparent) 0 6deg,transparent 6deg 18deg);transform:translate(-50%,-50%);animation:harvestSpin 18s linear infinite;pointer-events:none}
+.harvest-result-head,.harvest-result-hero,.harvest-result-card h2,.harvest-result-line,.harvest-result-value,.harvest-result-tip,.harvest-continue-button{position:relative}.harvest-result-head{display:flex;align-items:center;justify-content:space-between;color:rgba(255,235,204,.47);font-size:11px;font-weight:1000;letter-spacing:.14em}.harvest-result-head b{min-width:37px;height:27px;display:grid;place-items:center;border-radius:9px;background:color-mix(in srgb,var(--quality) 12%,rgba(0,0,0,.18));color:var(--quality);font-size:15px;letter-spacing:0}
+.harvest-result-hero{width:132px;height:132px;margin:0 auto;display:grid;place-items:center}.harvest-result-icon{display:grid;width:111px;height:111px;place-items:center;filter:drop-shadow(0 12px 13px rgba(0,0,0,.4))}.harvest-result-icon img{width:108px;height:108px;object-fit:contain;animation:harvestPlantFloat 2.5s ease-in-out infinite}.harvest-result-icon>span{font-size:66px}.harvest-result-grade{position:absolute;right:-9px;bottom:15px;display:flex;align-items:center;gap:5px;padding:5px 7px;border:1px solid color-mix(in srgb,var(--quality) 35%,transparent);border-radius:9px;background:rgba(18,15,16,.87);box-shadow:0 6px 14px rgba(0,0,0,.28)}.harvest-result-grade small{color:var(--quality);font-size:11px;font-weight:1000;letter-spacing:.1em}.harvest-result-grade strong{color:var(--quality);font-size:15px}
+.harvest-result-card h2{margin:-2px 0 0;font:900 24px/1.05 Georgia,serif}.harvest-result-line{margin:4px 0 0;color:rgba(255,238,213,.52);font-size:11px}
+.harvest-result-value{display:grid;grid-template-columns:1fr 1px 1fr 1px 1.25fr;align-items:center;gap:7px;margin-top:13px;padding:10px 8px;border:1px solid rgba(255,255,255,.055);border-radius:14px;background:rgba(0,0,0,.14)}.harvest-result-value span{min-width:0;display:grid;gap:3px}.harvest-result-value small{color:rgba(255,236,207,.36);font-size:11px;font-weight:1000;letter-spacing:.1em}.harvest-result-value strong{overflow:hidden;color:#f8ead4;font-size:11px;text-overflow:ellipsis;white-space:nowrap}.harvest-result-value span:nth-child(3) strong{color:var(--quality);font-size:15px}.harvest-result-value i{width:1px;height:24px;background:rgba(255,255,255,.07)}
+.harvest-result-tip{display:grid;grid-template-columns:26px minmax(0,1fr);align-items:center;gap:8px;margin-top:9px;padding:7px 9px;border-radius:11px;background:color-mix(in srgb,var(--quality) 6%,rgba(0,0,0,.12));text-align:left}.harvest-result-tip span{width:25px;height:25px;display:grid;place-items:center;border-radius:8px;background:color-mix(in srgb,var(--quality) 12%,transparent);color:var(--quality);font-size:13px}.harvest-result-tip p{margin:0;color:rgba(255,237,213,.48);font-size:11px;line-height:1.3}
+.harvest-continue-button{width:100%;min-height:45px;margin-top:13px;border:0;border-radius:13px;color:#fff4d6;background:linear-gradient(180deg,#78964c,#526b34);box-shadow:0 5px 0 #34451f;font:inherit;font-size:14px;font-weight:1000;cursor:pointer}.harvest-continue-button:active{transform:translateY(3px);box-shadow:0 2px 0 #34451f}
+@keyframes harvestCardIn{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:none}}@keyframes harvestSpin{to{transform:translate(-50%,-50%) rotate(360deg)}}@keyframes harvestPlantFloat{50%{transform:translateY(-4px) scale(1.025)}}@media(prefers-reduced-motion:reduce){.harvest-result-card,.harvest-result-glow,.harvest-result-icon img{animation-duration:1ms}}
 
 
-@media (prefers-reduced-motion: reduce) {
-  .harvest-result-rays,
-  .harvest-result-icon img {
-    animation-duration: 1ms;
-  }
-}
+/* ===== V14: rarity is the visual centre of the harvest result ===== */
+.harvest-result-card{--quality:#aeb5bc}
+.harvest-result-card.quality-good{--quality:#e4c45f}
+.harvest-result-card.quality-excellent{--quality:#65c8f4}
+.harvest-result-card.quality-rare{--quality:#bd80f1}
+.harvest-result-glow{top:126px;width:224px;height:224px;background:repeating-conic-gradient(from 0deg,color-mix(in srgb,var(--quality) 15%,transparent) 0 7deg,transparent 7deg 19deg);filter:drop-shadow(0 0 12px color-mix(in srgb,var(--quality) 20%,transparent))}
+.harvest-result-hero{margin-bottom:0}
+.harvest-result-grade{position:relative!important;right:auto!important;bottom:auto!important;width:max-content;max-width:100%;display:grid!important;grid-template-columns:32px minmax(0,1fr) auto;align-items:center;gap:8px;margin:-2px auto 8px;padding:6px 8px 6px 6px!important;border:1px solid color-mix(in srgb,var(--quality) 45%,transparent)!important;border-radius:13px!important;background:linear-gradient(145deg,color-mix(in srgb,var(--quality) 13%,rgba(18,15,16,.94)),rgba(18,15,16,.94))!important;box-shadow:0 7px 18px rgba(0,0,0,.3),0 0 18px color-mix(in srgb,var(--quality) 9%,transparent)!important;text-align:left}
+.harvest-result-grade>span{width:32px;height:32px;display:grid;place-items:center;border-radius:10px;background:color-mix(in srgb,var(--quality) 18%,transparent);color:var(--quality);font-size:15px}
+.harvest-result-grade>div{display:grid;gap:1px}
+.harvest-result-grade small{color:rgba(255,240,216,.42)!important;font-size:11px!important;letter-spacing:.12em!important}
+.harvest-result-grade strong{color:var(--quality)!important;font-size:14px!important;line-height:1!important}
+.harvest-result-grade>b{padding:5px 7px;border-radius:8px;background:rgba(0,0,0,.2);color:var(--quality);font-size:13px}
+.harvest-result-value span:nth-child(3) strong{color:var(--quality)!important;font-size:12px!important}

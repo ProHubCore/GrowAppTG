@@ -96,6 +96,24 @@ export function getTelegramInitData() {
   return getTelegramPlayer().initData;
 }
 
+export function hasTelegramSession() {
+  const player = getTelegramPlayer();
+  return Boolean(
+    player.isTelegram &&
+    player.initData &&
+    player.user?.id &&
+    player.user.id !== BROWSER_USER.id,
+  );
+}
+
+export function canOpenTelegramInvoice() {
+  const player = getTelegramPlayer();
+  // openInvoice — главный признак, что окно Telegram Stars доступно.
+  // Старые рабочие Mini App-запуски могли не отдавать initData клиенту,
+  // поэтому не блокируем само окно оплаты из-за отсутствия initData.
+  return Boolean(player.isTelegram && player.webApp?.openInvoice);
+}
+
 export function triggerTelegramHaptic(style = "light") {
   const webApp = getTelegramWebApp();
 

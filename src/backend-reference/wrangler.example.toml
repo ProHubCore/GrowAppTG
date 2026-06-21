@@ -1,0 +1,19 @@
+name = "growapp-stars-api"
+main = "cloudflare-worker.js"
+compatibility_date = "2026-06-20"
+
+[vars]
+ALLOWED_ORIGIN = "https://YOUR-MINI-APP.example"
+TERMS_URL = "https://YOUR-SITE.example/terms"
+SUPPORT_CONTACT = "@YOUR_SUPPORT"
+OWNER_TELEGRAM_ID = "YOUR_NUMERIC_TELEGRAM_ID"
+# Сам код задавай секретом: wrangler secret put DEVELOPER_ACCESS_CODE
+
+[[kv_namespaces]]
+binding = "GROWAPP_KV"
+id = "YOUR_KV_NAMESPACE_ID"
+
+[[d1_databases]]
+binding = "GROWAPP_DB"
+database_name = "growapp-db"
+database_id = "YOUR_D1_DATABASE_ID"

@@ -20,8 +20,6 @@ function PlantArea({
   unlockPrice,
   isSlotAvailable,
   lockedStatusText,
-  requiredClubLevel,
-  currentClubLevel,
   isUnlocked,
   isEmpty,
   canCollect,
@@ -66,9 +64,6 @@ function PlantArea({
   const normalizedWateredStages = Array.isArray(wateredStages)
     ? wateredStages.map(Number)
     : [];
-
-  const safeRequiredClubLevel = Math.max(1, Math.floor(Number(requiredClubLevel) || 1));
-  const safeCurrentClubLevel = Math.max(1, Math.floor(Number(currentClubLevel) || 1));
 
   const needsWater = Boolean(
     plant &&
@@ -247,23 +242,11 @@ function PlantArea({
             <div className="plant-area">
               <Pot pot={pot} />
 
-              {growStep > 0 && growStep < 3 && (
-                <button
-                  type="button"
-                  className="pot-growth-info-button"
-                  aria-label="Открыть информацию о растении"
-                  disabled={growthInfoDisabled || typeof onOpenGrowthInfo !== "function"}
-                  onClick={onOpenGrowthInfo}
-                />
-              )}
-
               <GrowTimer
                 growStep={growStep}
                 timeLeft={timeLeft}
                 fastForwardKey={normalizedWateredStages.length}
                 fastForwardIdentity={pot?.id || "pot"}
-                onOpenInfo={onOpenGrowthInfo}
-                infoDisabled={growthInfoDisabled}
               />
 
               {plant && (
@@ -271,6 +254,8 @@ function PlantArea({
                   plant={plant}
                   canCollect={canCollect && !collectDisabled}
                   onCollect={onCollect}
+                  onOpenInfo={onOpenGrowthInfo}
+                  infoDisabled={growthInfoDisabled}
                   needsWater={needsWater}
                   onWater={onWater}
                   isJustWatered={isJustWatered}
@@ -312,7 +297,7 @@ function PlantArea({
             type="button"
             disabled={unlockDisabled}
             onClick={onUnlock}
-            aria-label={isSlotAvailable ? `Добавить новое ведро за ${unlockPrice} монет` : lockedStatusText || `Место откроется на ${safeRequiredClubLevel} уровне клуба`}
+            aria-label={isSlotAvailable ? (Number(unlockPrice) > 0 ? `Установить новое ведро за ${unlockPrice} монет` : "Установить подарок Марии") : lockedStatusText || "Место откроется по поручениям Марии"}
           >
             <span className="add-pot-button__shine" aria-hidden="true" />
             <span className="add-pot-symbol" aria-hidden="true">
@@ -326,19 +311,20 @@ function PlantArea({
               )}
             </span>
             <span className="add-pot-copy">
-              <strong>{isSlotAvailable ? "Добавить ведро" : "Место закрыто"}</strong>
-              <small>{isSlotAvailable ? "Расширить свою плантацию" : "Расширение плантации"}</small>
+              <strong>{isSlotAvailable ? "Установить ведро" : "Место закрыто"}</strong>
+              <small>{isSlotAvailable ? (Number(unlockPrice) > 0 ? "Разрешение Марии получено" : "Подарок Марии Ивановны") : "Продолжи поручения Марии"}</small>
             </span>
             {isSlotAvailable ? (
-              <span className="add-pot-status add-pot-status--price">
-                <span className="add-pot-status__coin" aria-hidden="true" />
-                <strong>{unlockPrice}</strong><small>монет</small>
-              </span>
+              Number(unlockPrice) > 0 ? (
+                <span className="add-pot-status add-pot-status--price">
+                  <span className="add-pot-status__coin" aria-hidden="true" />
+                  <strong>{unlockPrice}</strong><small>монет</small>
+                </span>
+              ) : (
+                <span className="add-pot-status add-pot-status--gift"><span>ПОДАРОК</span><strong>Бесплатно</strong></span>
+              )
             ) : (
-              <>
-                <span className="add-pot-status add-pot-status--level"><span>Клуб</span><strong>{safeRequiredClubLevel} уровень</strong></span>
-                <span className="add-pot-current-level">Сейчас: {safeCurrentClubLevel} уровень</span>
-              </>
+              <span className="add-pot-status add-pot-status--maria"><span>МАРИЯ</span><strong>{lockedStatusText || "Поручение"}</strong></span>
             )}
           </button>
         )}

@@ -9,6 +9,7 @@ function ActionModal({
   confirmText = "Подтвердить",
   cancelText = "Отмена",
   confirmDisabled = false,
+  isProcessing = false,
   danger = false,
   modalIcon = null,
   currencyLabel = "монет",
@@ -43,6 +44,7 @@ function ActionModal({
           type="button"
           aria-label="Закрыть"
           onClick={onCancel}
+          disabled={isProcessing}
         >
           ×
         </button>
@@ -78,10 +80,11 @@ function ActionModal({
           <button
             className={`action-modal-confirm${danger ? " danger" : ""}${canOpenStore ? " purchase" : ""}`}
             type="button"
-            disabled={confirmDisabled && !canOpenStore}
+            disabled={isProcessing || (confirmDisabled && !canOpenStore)}
+            aria-busy={isProcessing ? "true" : undefined}
             onClick={canOpenStore ? onInsufficientFunds : onConfirm}
           >
-            <span>{canOpenStore ? insufficientText : confirmText}</span>
+            <span>{isProcessing ? "Подтверждаем…" : canOpenStore ? insufficientText : confirmText}</span>
             {canOpenStore && <i className="action-modal-premium-coin" aria-hidden="true" />}
           </button>
 
@@ -89,6 +92,7 @@ function ActionModal({
             className="action-modal-cancel"
             type="button"
             onClick={onCancel}
+            disabled={isProcessing}
           >
             {cancelText}
           </button>

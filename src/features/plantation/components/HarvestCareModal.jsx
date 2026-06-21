@@ -1,38 +1,33 @@
 import { useEffect, useMemo, useState } from "react";
+import CareItemIcon from "../../../shared/components/CareItemIcon/CareItemIcon";
 import "./HarvestCareModal.css";
 
 const CARE_ITEMS = [
   {
     id: "nutrition",
     inventoryKey: "nutrition",
-    icon: "🌿",
     title: "Питательный раствор",
     shortTitle: "Питательный раствор",
-    description:
-      "Минеральный раствор для растения. Повышает качество урожая и добавляет один плод при сборе.",
-    actionLabel: "Использовать флакон",
+    description: "Повышает количество урожая и открывает шанс отличного качества.",
+    actionLabel: "Использовать",
     tone: "nutrition",
   },
   {
     id: "mariaMix",
     inventoryKey: "mariaMix",
-    icon: "🧪",
     title: "Смесь Марии Ивановны",
     shortTitle: "Смесь Марии",
-    description:
-      "Редкая смесь Марии Ивановны. Сильно повышает шанс отличного и редкого качества урожая.",
-    actionLabel: "Использовать смесь",
+    description: "Редкий состав. Даёт шанс получить редкое качество.",
+    actionLabel: "Использовать",
     tone: "maria",
   },
   {
     id: "acidWater",
     inventoryKey: "acidWater",
-    icon: "☣",
     title: "Кислотная вода",
     shortTitle: "Кислотная вода",
-    description:
-      "Опасная жидкость для аварийной очистки. Полностью уничтожает растение и освобождает ёмкость.",
-    actionLabel: "Уничтожить растение",
+    description: "Полностью уничтожает растение и освобождает ёмкость.",
+    actionLabel: "Уничтожить",
     tone: "acid",
     destructive: true,
   },
@@ -86,10 +81,7 @@ export default function HarvestCareModal({
 
   const getItemState = (item) => {
     if (!item) {
-      return {
-        disabled: true,
-        status: "Предмет недоступен.",
-      };
+      return { disabled: true, status: "Предмет недоступен." };
     }
 
     if (item.destructive) {
@@ -99,25 +91,23 @@ export default function HarvestCareModal({
       };
     }
 
-    const alreadyUsed = applied.includes(item.id);
-
     if (!canApplyCare) {
       return {
         disabled: true,
-        status: "Уход можно применять только на первой и второй стадии роста.",
+        status: "Уход можно применять только во время роста.",
       };
     }
 
-    if (alreadyUsed) {
+    if (applied.includes(item.id)) {
       return {
         disabled: true,
-        status: "Этот предмет уже применён в текущем цикле.",
+        status: "Этот состав уже применён в текущем цикле.",
       };
     }
 
     return {
       disabled: false,
-      status: `В наличии: ${item.amount}. После применения спишется один предмет.`,
+      status: `В наличии: ${item.amount}. Спишется один флакон.`,
     };
   };
 
@@ -130,26 +120,29 @@ export default function HarvestCareModal({
 
     if (selectedItem.destructive) {
       setSelectedId(null);
-      onRemovePlant();
+      onRemovePlant?.();
       return;
     }
 
-    onChoose(selectedItem.id);
+    onChoose?.(selectedItem.id);
     setSelectedId(null);
-    onClose();
+    onClose?.();
   };
 
   return (
     <div
       className="care-modal-overlay"
       onPointerDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
+        if (event.target === event.currentTarget) onClose?.();
       }}
     >
       <section className="care-modal" aria-label="Набор для ухода">
         <header className="care-modal-header">
           <div className="care-modal-header__handle" aria-hidden="true" />
-          <h2>Набор для ухода</h2>
+          <div>
+            <small>ИНСТРУМЕНТЫ</small>
+            <h2>Уход за растением</h2>
+          </div>
 
           <button
             type="button"
@@ -165,32 +158,22 @@ export default function HarvestCareModal({
           {availableItems.length > 0 ? (
             <div className="care-item-grid">
               {availableItems.map((item) => {
+                const used = applied.includes(item.id);
                 return (
                   <button
                     key={item.id}
                     type="button"
-                    className={`care-item-card care-item-card--${item.tone}`}
-                    onClick={() => {
-                      if (item.destructive) {
-                        onRemovePlant();
-                        return;
-                      }
-
-                      setSelectedId(item.id);
-                    }}
+                    className={`care-item-card care-item-card--${item.tone}${used ? " is-used" : ""}`}
+                    onClick={() => setSelectedId(item.id)}
                     aria-label={`${item.title}. В наличии ${item.amount}`}
                   >
-                    <span className="care-item-card__amount">
-                      ×{item.amount}
-                    </span>
-
+                    <span className="care-item-card__amount">×{item.amount}</span>
                     <span className="care-item-card__visual" aria-hidden="true">
                       <span className="care-item-card__glow" />
-                      <span className="care-item-card__icon">{item.icon}</span>
+                      <CareItemIcon type={item.id} className="card-size" />
                     </span>
-
                     <strong>{item.shortTitle}</strong>
-                    <small>Нажми, чтобы открыть</small>
+                    <small>{used ? "Применено" : "Выбрать"}</small>
                   </button>
                 );
               })}
@@ -198,10 +181,8 @@ export default function HarvestCareModal({
           ) : (
             <div className="care-empty-state">
               <span aria-hidden="true">◇</span>
-              <strong>Предметов ухода нет</strong>
-              <small>
-                Специальные растворы появятся здесь после покупки или получения.
-              </small>
+              <strong>Флаконов нет</strong>
+              <small>Купи расходники в лавке или получи их у Марии Ивановны.</small>
             </div>
           )}
         </div>
@@ -218,8 +199,17 @@ export default function HarvestCareModal({
             className={`care-item-dialog care-item-dialog--${selectedItem.tone}`}
             aria-label={selectedItem.title}
           >
+            <button
+              type="button"
+              className="care-item-dialog__close"
+              onClick={() => setSelectedId(null)}
+              aria-label="Закрыть"
+            >
+              ×
+            </button>
+
             <div className="care-item-dialog__visual" aria-hidden="true">
-              <span>{selectedItem.icon}</span>
+              <CareItemIcon type={selectedItem.id} className="card-size" />
             </div>
 
             <div className="care-item-dialog__amount">

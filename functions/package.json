@@ -1,0 +1,16 @@
+{
+  "name": "growapp-functions",
+  "private": true,
+  "main": "index.js",
+  "engines": {
+    "node": "20"
+  },
+  "scripts": {
+    "test": "node test-trade-engine.js",
+    "serve": "firebase emulators:start --only functions",
+    "deploy": "firebase deploy --only functions:clubDialogue"
+  },
+  "dependencies": {
+    "firebase-functions": "^6.4.0"
+  }
+}

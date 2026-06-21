@@ -1,0 +1,764 @@
+/* Mobile readability pass: readable type, larger touch targets, less visual noise. */
+:root {
+  --mobile-readable-text: 14px;
+  --mobile-readable-small: 11px;
+  --mobile-touch-target: 44px;
+}
+
+html,
+body,
+button,
+input,
+textarea,
+select {
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.game-stage button,
+.game-stage [role="button"] {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Interactive text must not collapse into unreadable microcopy. */
+.game-stage button:not(.plantation-pagination-dot):not(.maria-board-arrow),
+.game-stage input,
+.game-stage textarea,
+.game-stage select {
+  line-height: 1.18;
+}
+
+.game-stage input,
+.game-stage textarea,
+.game-stage select {
+  min-height: var(--mobile-touch-target);
+  font-size: 15px !important;
+}
+
+/* Bottom navigation is the primary mobile control. */
+.bottom-menu-button,
+.bottom-menu__button,
+.bottom-menu button {
+  min-height: 52px;
+}
+
+.bottom-menu-button span,
+.bottom-menu__label,
+.bottom-menu button span,
+.bottom-menu button small {
+  font-size: 11px !important;
+  line-height: 1.05 !important;
+}
+
+/* Dialogs and system modals: fewer cramped lines and larger actions. */
+.action-modal button,
+.seed-modal button,
+.inventory-modal button,
+.harvest-care-modal button,
+.instant-grow-modal button,
+.locked-slot-modal button,
+.harvest-result-card button,
+.monetization-modal button,
+.context-offer-modal button,
+.daily-reward-modal button {
+  min-height: 44px;
+}
+
+.action-modal p,
+.action-modal li,
+.seed-modal p,
+.inventory-modal p,
+.harvest-care-modal p,
+.instant-grow-modal p,
+.locked-slot-modal p,
+.monetization-modal p,
+.context-offer-modal p,
+.daily-reward-modal p {
+  line-height: 1.42;
+}
+
+/* Wallet values stay readable without reintroducing labels or ellipsis. */
+.top-wallet {
+  min-width: 94px;
+  height: 43px;
+  padding-inline: 9px 13px;
+  font-size: 16px;
+}
+
+.premium-wallet {
+  min-width: 82px;
+  max-width: 104px;
+  height: 42px;
+  grid-template-columns: 27px minmax(0, 1fr) 18px;
+  gap: 6px;
+  padding-inline: 7px;
+}
+
+.premium-wallet__icon {
+  width: 27px;
+  height: 27px;
+}
+
+.premium-wallet__value,
+.premium-wallet__copy strong {
+  max-width: none;
+  overflow: visible;
+  font-size: 15px !important;
+  text-overflow: clip;
+}
+
+/* Keep secondary labels present but visually quiet. */
+.game-stage small,
+.game-stage [class*="eyebrow"],
+.game-stage [class*="kicker"],
+.game-stage [class*="overline"] {
+  letter-spacing: .055em !important;
+}
+
+/* Long descriptive text may wrap, while counters and wallet values stay intact. */
+.game-stage p,
+.game-stage li,
+.game-stage [class*="description"],
+.game-stage [class*="subtitle"] {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 380px), (max-height: 760px) {
+  .game-stage {
+    /* The stage still scales as before; typography remains readable after scaling. */
+    font-size: 15px;
+  }
+
+  .top-wallet,
+  .premium-wallet {
+    transform: translateY(2px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Space compensation for the larger mobile type. */
+.club-seat-card {
+  height: 61px !important;
+  padding: 7px 7px !important;
+}
+
+.club-seat-copy {
+  gap: 3px !important;
+}
+
+.club-chat-bubble {
+  padding: 12px 13px !important;
+}
+
+.club-interest-line {
+  min-height: 48px;
+  padding: 8px 10px !important;
+}
+
+.club-answer-bubble {
+  min-height: 64px !important;
+}
+
+.maria-chapter-tabs button,
+.maria-chapter-tabs button:nth-child(odd),
+.maria-chapter-tabs button:nth-child(even),
+.maria-chapter-tabs button.active {
+  min-height: 66px !important;
+}
+
+.maria-chapter-card {
+  min-height: 82px !important;
+  padding-top: 11px !important;
+  padding-bottom: 11px !important;
+}
+
+.maria-focus-quest {
+  gap: 9px !important;
+  padding: 12px !important;
+}
+
+.maria-completed-row {
+  min-height: 44px !important;
+  padding-block: 7px !important;
+}
+
+.shop-departments button {
+  min-height: 56px;
+}
+
+.shop-product-grid {
+  grid-auto-rows: 154px !important;
+}
+
+.shop-product-name {
+  line-height: 1.18 !important;
+}
+
+.backpack-tab {
+  min-height: 62px !important;
+}
+
+.backpack-item-count,
+.backpack-quality-mark {
+  min-height: 22px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.growth-store__tabs {
+  height: 50px;
+}
+
+.growth-store__scroll {
+  top: calc(max(22px, env(safe-area-inset-top)) + 140px);
+}
+
+.growth-product-card,
+.growth-bundle-card {
+  min-height: 126px;
+}
+
+/* Hide only repetitive micro-headings; the actual names and values remain. */
+.club-heading > div > span,
+.growth-store__wallet small,
+.premium-wallet__copy small {
+  display: none !important;
+}
+
+/* ===== V17 mobile composition: large type without broken layout ===== */
+
+/* One shared visual language for normal and premium currency. */
+.top-wallet__coin,
+.shop-wallet-coin,
+.club-currency-icon:not(.premium),
+.maria-coin-icon,
+.add-pot-status__coin {
+  width: 24px !important;
+  height: 24px !important;
+  flex: 0 0 24px !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  border: 1px solid rgba(255, 239, 170, .58) !important;
+  border-radius: 50% !important;
+  background: radial-gradient(circle at 34% 27%, #fff3af 0 10%, #e6ba4f 34%, #9b6420 72%, #4e2d12 100%) !important;
+  box-shadow: inset 0 1px 1px rgba(255,255,255,.5), 0 2px 5px rgba(0,0,0,.32) !important;
+  animation: none !important;
+}
+.top-wallet__coin::before,
+.shop-wallet-coin::after,
+.club-currency-icon:not(.premium)::after,
+.maria-coin-icon::after,
+.add-pot-status__coin::after {
+  content: "" !important;
+  width: 7px !important;
+  height: 7px !important;
+  margin: 0 !important;
+  border: 2px solid rgba(91,53,16,.64) !important;
+  border-radius: 50% !important;
+  background: transparent !important;
+  animation: none !important;
+}
+.premium-wallet__icon,
+.club-currency-icon.premium,
+.growth-bundle-coin > i,
+.action-modal-premium-coin,
+.instant-grow-price-coin {
+  width: 24px !important;
+  height: 24px !important;
+  flex: 0 0 24px !important;
+  border-radius: 50% !important;
+  background: radial-gradient(circle at 34% 27%, #fff 0 9%, #dcc7ff 18%, #9b71ec 49%, #55318d 77%, #291645 100%) !important;
+  box-shadow: inset 0 1px 1px rgba(255,255,255,.58), 0 2px 5px rgba(0,0,0,.32) !important;
+  animation: none !important;
+}
+
+/* Maria board: title and chapter rail stay fixed, only tasks scroll. */
+.maria-panel-overlay.mode-quests {
+  padding: var(--maria-safe-top) 6px 8px !important;
+}
+.maria-quests-panel {
+  width: min(100%, 430px) !important;
+  height: 100% !important;
+  max-height: 100% !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 13px 11px 11px !important;
+  border: 1px solid rgba(228, 188, 126, .18) !important;
+  border-radius: 22px !important;
+  background:
+    linear-gradient(rgba(48, 30, 24, .96), rgba(24, 16, 17, .99)),
+    repeating-linear-gradient(90deg, rgba(174, 115, 66, .08) 0 2px, transparent 2px 22px) !important;
+  box-shadow: 0 24px 68px rgba(0,0,0,.62), inset 0 1px rgba(255,255,255,.05) !important;
+}
+.maria-quests-panel::before,
+.maria-quests-panel::after,
+.maria-board-header::before,
+.maria-board-header::after {
+  display: none !important;
+}
+.maria-board-header {
+  flex: 0 0 auto !important;
+  margin: 0 0 9px !important;
+  padding: 0 2px !important;
+  align-items: center !important;
+}
+.maria-board-header h2 {
+  margin: 0 !important;
+  font-size: 21px !important;
+  line-height: 1.08 !important;
+}
+.maria-board-header > button {
+  width: 38px !important;
+  height: 38px !important;
+}
+.maria-chapter-nav-shell {
+  flex: 0 0 auto !important;
+  display: grid !important;
+  grid-template-columns: 25px minmax(0, 1fr) 25px !important;
+  align-items: center !important;
+  gap: 5px !important;
+  margin: 0 0 8px !important;
+  padding: 0 !important;
+}
+.maria-chapter-arrow {
+  width: 25px !important;
+  height: 44px !important;
+  min-height: 0 !important;
+  border: 0 !important;
+  border-radius: 10px !important;
+  background: rgba(255,255,255,.035) !important;
+  color: rgba(255,232,194,.55) !important;
+  font-size: 23px !important;
+  box-shadow: none !important;
+}
+.maria-chapter-arrow:disabled { opacity: .18 !important; }
+.maria-chapter-tabs {
+  display: grid !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  gap: 5px !important;
+  overflow: visible !important;
+  padding: 0 !important;
+  scroll-snap-type: none !important;
+}
+.maria-chapter-tabs button,
+.maria-chapter-tabs button:nth-child(odd),
+.maria-chapter-tabs button:nth-child(even),
+.maria-chapter-tabs button.active {
+  min-width: 0 !important;
+  width: auto !important;
+  min-height: 58px !important;
+  height: 58px !important;
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  grid-template-rows: 30px 16px 3px !important;
+  place-items: center !important;
+  gap: 2px !important;
+  padding: 5px 3px 4px !important;
+  border: 1px solid rgba(236, 207, 165, .11) !important;
+  border-radius: 13px !important;
+  background: rgba(255,255,255,.035) !important;
+  transform: none !important;
+  text-align: center !important;
+  box-shadow: none !important;
+}
+.maria-chapter-tabs button.active {
+  border-color: rgba(232, 181, 112, .48) !important;
+  background: linear-gradient(180deg, rgba(155, 99, 54, .38), rgba(75, 46, 34, .25)) !important;
+  box-shadow: inset 0 1px rgba(255,255,255,.08), 0 5px 12px rgba(0,0,0,.18) !important;
+}
+.maria-chapter-number {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+  display: grid !important;
+  place-items: center !important;
+  width: 31px !important;
+  height: 31px !important;
+  border: 1px solid rgba(236, 205, 157, .18) !important;
+  border-radius: 10px !important;
+  background: rgba(0,0,0,.16) !important;
+  color: #f4d8a9 !important;
+  font-size: 15px !important;
+  font-weight: 1000 !important;
+  letter-spacing: .02em !important;
+}
+.maria-chapter-tab-copy {
+  grid-column: 1 !important;
+  grid-row: 2 !important;
+  min-width: 0 !important;
+  display: block !important;
+}
+.maria-chapter-tab-copy strong { display: none !important; }
+.maria-chapter-tab-copy small {
+  display: block !important;
+  color: rgba(246,222,186,.55) !important;
+  font-size: 10px !important;
+  font-weight: 900 !important;
+  letter-spacing: 0 !important;
+  white-space: nowrap !important;
+}
+.maria-chapter-tabs button > i {
+  grid-column: 1 !important;
+  grid-row: 3 !important;
+  width: 80% !important;
+  height: 3px !important;
+  border-radius: 99px !important;
+  background: rgba(255,255,255,.06) !important;
+}
+.maria-chapter-card {
+  flex: 0 0 auto !important;
+  min-height: 76px !important;
+  margin: 0 0 8px !important;
+  padding: 10px 57px 10px 12px !important;
+  border: 1px solid rgba(229, 186, 124, .15) !important;
+  border-radius: 16px !important;
+  background: rgba(82, 50, 36, .28) !important;
+  box-shadow: inset 0 1px rgba(255,255,255,.035) !important;
+}
+.maria-chapter-card h3 {
+  margin: 2px 0 3px !important;
+  font-size: 17px !important;
+  line-height: 1.05 !important;
+}
+.maria-chapter-card p {
+  margin: 0 !important;
+  max-width: 100% !important;
+  color: rgba(247,226,196,.6) !important;
+  font-size: 12px !important;
+  line-height: 1.25 !important;
+}
+.maria-chapter-total {
+  right: 11px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 42px !important;
+  height: 42px !important;
+  border-radius: 13px !important;
+}
+.maria-chapter-preview-note {
+  flex: 0 0 auto !important;
+  margin: 0 0 8px !important;
+  padding: 8px 10px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  border-radius: 13px !important;
+}
+.maria-chapter-preview-note > span { flex: 0 0 auto !important; }
+.maria-chapter-preview-note div { min-width: 0 !important; }
+.maria-chapter-preview-note strong,
+.maria-chapter-preview-note small {
+  display: block !important;
+  white-space: normal !important;
+  word-break: normal !important;
+}
+.maria-board-tasks {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 1px 2px 18px !important;
+  scrollbar-width: none !important;
+}
+.maria-board-tasks::-webkit-scrollbar { display: none !important; }
+.maria-focus-quest {
+  padding: 12px !important;
+  border-radius: 17px !important;
+}
+.maria-focus-quest__bottom {
+  display: grid !important;
+  grid-template-columns: minmax(0,1fr) auto !important;
+  gap: 8px !important;
+  align-items: center !important;
+}
+.maria-focus-reward {
+  min-width: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  overflow: hidden !important;
+}
+.maria-focus-reward > small { display: none !important; }
+.maria-focus-reward > em {
+  overflow: hidden !important;
+  color: #bceac8 !important;
+  font-size: 11px !important;
+  line-height: 1.15 !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+.maria-reward-tokens {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  flex-wrap: nowrap !important;
+  white-space: nowrap !important;
+}
+.maria-reward-token {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  min-width: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+.maria-reward-token b { font-size: 13px !important; }
+.maria-trust-icon {
+  width: 31px !important;
+  height: 21px !important;
+  display: inline-grid !important;
+  place-items: center !important;
+  border: 1px solid rgba(226, 178, 197, .22) !important;
+  border-radius: 7px !important;
+  background: linear-gradient(145deg, rgba(147,80,111,.44), rgba(67,39,57,.5)) !important;
+  color: #f0c7da !important;
+  font-size: 9px !important;
+  font-style: normal !important;
+  font-weight: 1000 !important;
+  letter-spacing: .03em !important;
+}
+.maria-queue-row {
+  grid-template-columns: 30px minmax(0,1fr) !important;
+}
+.maria-queue-reward { display: none !important; }
+.maria-completed-section { display: none !important; }
+
+/* Clean coin bank: no side wallet, no daily order, content stays inside its background. */
+.growth-store--cashbook .growth-store__header {
+  grid-template-columns: 42px minmax(0,1fr) !important;
+  height: 70px !important;
+}
+.growth-store--cashbook .growth-store__wallet { display: none !important; }
+.cashbook-title { min-width: 0; }
+.cashbook-title h1 {
+  margin: 0 !important;
+  font: 800 24px/1 Georgia, serif !important;
+}
+.cashbook-title p {
+  margin: 5px 0 0 !important;
+  color: rgba(246,237,216,.5) !important;
+  font-size: 12px !important;
+  line-height: 1.2 !important;
+}
+.cashbook-scroll {
+  top: calc(max(22px, env(safe-area-inset-top)) + 84px) !important;
+  left: 0 !important;
+  right: 0 !important;
+  padding: 10px 14px 28px !important;
+}
+.cashbook-balance {
+  min-height: 112px !important;
+  padding: 17px 16px 16px 82px !important;
+  border-radius: 20px !important;
+}
+.cashbook-balance::before {
+  left: 15px !important;
+  top: 22px !important;
+  width: 51px !important;
+  height: 51px !important;
+}
+.cashbook-balance > strong { font-size: 36px !important; }
+.cashbook-balance p {
+  margin-top: 10px !important;
+  padding-top: 9px !important;
+  font-size: 13px !important;
+}
+.cashbook-order { display: none !important; }
+.cashbook-routes article {
+  grid-template-columns: 34px minmax(0,1fr) !important;
+  padding: 12px !important;
+}
+.cashbook-routes small { font-size: 12px !important; }
+
+/* Profile: remove cryptic marks and replace the club block with clear 2x2 stats. */
+.player-profile-stats--clean {
+  grid-template-columns: repeat(2, minmax(0,1fr)) !important;
+  gap: 8px !important;
+}
+.player-profile-stats--clean .player-profile-stat {
+  min-height: 92px !important;
+  display: grid !important;
+  align-content: center !important;
+  gap: 3px !important;
+  padding: 11px 9px !important;
+  border-radius: 16px !important;
+  text-align: left !important;
+}
+.player-profile-stats--clean .player-profile-stat > small {
+  color: rgba(246,232,191,.52) !important;
+  font-size: 11px !important;
+  font-weight: 900 !important;
+  letter-spacing: .08em !important;
+  text-transform: uppercase !important;
+}
+.player-profile-stats--clean .player-profile-stat > strong {
+  color: #fff0c7 !important;
+  font-size: 25px !important;
+  line-height: 1 !important;
+}
+.player-profile-stats--clean .player-profile-stat > strong em {
+  color: rgba(255,240,199,.48) !important;
+  font-size: 14px !important;
+  font-style: normal !important;
+}
+.player-profile-stats--clean .player-profile-stat > span {
+  color: rgba(246,232,191,.65) !important;
+  font-size: 12px !important;
+}
+.player-profile-stat__mark,
+.player-rank-card { display: none !important; }
+
+/* Club: one clear deal card, no daily assignment, less noise between buyers. */
+.club-daily-order-chip { display: none !important; }
+.club-scroll-area {
+  top: calc(var(--safe-top) + 52px) !important;
+  grid-template-rows: 48px minmax(0,1fr) !important;
+  gap: 6px !important;
+}
+.club-seat-rail {
+  height: 48px !important;
+  gap: 4px !important;
+}
+.club-seat-card {
+  height: 48px !important;
+  padding: 5px !important;
+}
+.club-seat-copy small { display: none !important; }
+.club-seat-copy strong { font-size: 12px !important; }
+.club-deal-summary {
+  margin: 0 8px 7px !important;
+  padding: 10px !important;
+  display: grid !important;
+  grid-template-columns: minmax(0,1.3fr) minmax(104px,.7fr) !important;
+  grid-template-areas: "party offer" "interest interest" !important;
+  gap: 9px !important;
+  border: 1px solid rgba(231,202,159,.12) !important;
+  border-radius: 17px !important;
+  background: linear-gradient(145deg, rgba(73,48,38,.36), rgba(23,18,19,.82)) !important;
+  box-shadow: inset 0 1px rgba(255,255,255,.035) !important;
+}
+.club-deal-summary__party {
+  grid-area: party !important;
+  min-width: 0 !important;
+  display: grid !important;
+  grid-template-columns: 38px minmax(0,1fr) !important;
+  gap: 8px !important;
+  align-items: center !important;
+}
+.club-deal-summary__party > div { min-width: 0 !important; }
+.club-deal-summary__party small,
+.club-deal-summary__party strong,
+.club-deal-summary__party em {
+  display: block !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+.club-deal-summary__party small,
+.club-deal-summary__offer small,
+.club-deal-summary__interest small {
+  color: rgba(235,216,190,.45) !important;
+  font-size: 10px !important;
+  font-weight: 1000 !important;
+  letter-spacing: .09em !important;
+}
+.club-deal-summary__party strong {
+  margin-top: 2px !important;
+  color: #f3e7d5 !important;
+  font-size: 14px !important;
+  white-space: nowrap !important;
+}
+.club-deal-summary__party em {
+  margin-top: 3px !important;
+  color: rgba(235,216,190,.58) !important;
+  font-size: 11px !important;
+  font-style: normal !important;
+  white-space: nowrap !important;
+}
+.club-deal-summary__offer {
+  grid-area: offer !important;
+  min-width: 0 !important;
+  display: grid !important;
+  align-content: center !important;
+  justify-items: end !important;
+  text-align: right !important;
+}
+.club-deal-summary__offer strong {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  margin-top: 2px !important;
+  color: #f0cd83 !important;
+  font-size: 20px !important;
+}
+.club-deal-summary__offer span {
+  color: rgba(235,216,190,.52) !important;
+  font-size: 11px !important;
+}
+.club-deal-summary__interest {
+  grid-area: interest !important;
+  display: grid !important;
+  grid-template-columns: auto minmax(0,1fr) auto !important;
+  gap: 8px !important;
+  align-items: center !important;
+  padding-top: 8px !important;
+  border-top: 1px solid rgba(255,255,255,.06) !important;
+}
+.club-deal-summary__interest span strong {
+  display: block !important;
+  color: #f0dfc8 !important;
+  font-size: 12px !important;
+}
+.club-deal-summary__interest > i {
+  height: 5px !important;
+  overflow: hidden !important;
+  border-radius: 99px !important;
+  background: rgba(255,255,255,.07) !important;
+}
+.club-deal-summary__interest > i b {
+  display: block !important;
+  height: 100% !important;
+  border-radius: inherit !important;
+  background: linear-gradient(90deg,#b86f4d,#e3bd72) !important;
+}
+.club-deal-summary__interest > em {
+  color: #c5e6ca !important;
+  font-size: 11px !important;
+  font-style: normal !important;
+  font-weight: 900 !important;
+  white-space: nowrap !important;
+}
+.club-deal-facts,
+.club-interest-line { display: none !important; }
+.club-player-answers { padding-top: 7px !important; }
+.club-player-answers-head b { display: none !important; }
+.club-answer-bubble em { display: none !important; }
+.club-answer-bubble { min-height: 54px !important; }
+
+/* Catalog sits lower and closes by tapping the dimmed area. */
+.catalog-overlay {
+  align-items: flex-start !important;
+  padding: max(102px, calc(env(safe-area-inset-top, 0px) + 82px)) 14px 16px !important;
+}
+.catalog-book {
+  max-height: calc(100dvh - max(118px, calc(env(safe-area-inset-top, 0px) + 98px))) !important;
+}
+
+@media (max-width: 350px) {
+  .maria-chapter-nav-shell { grid-template-columns: 22px minmax(0,1fr) 22px !important; gap: 3px !important; }
+  .maria-chapter-tabs { gap: 3px !important; }
+  .maria-chapter-tabs button,
+  .maria-chapter-tabs button:nth-child(odd),
+  .maria-chapter-tabs button:nth-child(even),
+  .maria-chapter-tabs button.active { min-height: 55px !important; height: 55px !important; }
+  .maria-focus-quest__bottom { grid-template-columns: 1fr !important; }
+  .maria-quest-complete { width: 100% !important; }
+  .club-deal-summary { grid-template-columns: 1fr 96px !important; }
+}

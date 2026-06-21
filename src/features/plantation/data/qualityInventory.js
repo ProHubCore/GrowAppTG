@@ -1,10 +1,8 @@
+import { GAME_ECONOMY } from "../../economy/gameEconomy";
 import { HARVEST_QUALITIES } from "./harvestQuality";
 
 export const QUALITY_PRICE_MULTIPLIERS = {
-  normal: 1,
-  good: 1.45,
-  excellent: 2.1,
-  rare: 3.4,
+  ...GAME_ECONOMY.qualityMultipliers,
 };
 
 export function createEmptyQualityInventory() {

@@ -228,7 +228,7 @@
 .tutorial-hint {
   margin-top: 8px;
   color: #b9ff62;
-  font-size: 12.5px;
+  font-size: 15px;
   font-weight: 900;
   animation: tutorialHint 1.1s ease-in-out infinite;
 }

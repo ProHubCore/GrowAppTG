@@ -68,6 +68,8 @@ function Plant({
   plant,
   canCollect,
   onCollect,
+  onOpenInfo,
+  infoDisabled = false,
   needsWater = false,
   onWater,
   isJustWatered = false,
@@ -91,9 +93,15 @@ function Plant({
       <button
         type="button"
         className="plant-collect-button"
-        onClick={canCollect && !isHarvesting ? onCollect : undefined}
-        disabled={!canCollect || isHarvesting}
-        aria-label={canCollect && !isHarvesting ? "Собрать урожай" : plant.name}
+        onClick={
+          isHarvesting
+            ? undefined
+            : canCollect
+              ? onCollect
+              : onOpenInfo
+        }
+        disabled={isHarvesting || (!canCollect && (infoDisabled || typeof onOpenInfo !== "function"))}
+        aria-label={canCollect && !isHarvesting ? "Собрать урожай" : `Открыть прогноз: ${plant.name}`}
       >
         {plant.image ? (
           <img className="plant" src={plant.image} alt={plant.name} />

@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import PlantArea from "../plantation/components/PlantArea";
 import BottomMenu from "../../shared/components/BottomMenu/BottomMenu";
@@ -17,6 +17,11 @@ import ActionModal from "../../shared/components/ActionModal/ActionModal";
 import UnlockCelebration from "../progression/components/UnlockCelebration";
 import SupportScreen from "../support/SupportScreen";
 import CoinBankScreen from "../support/CoinBankScreen";
+import { formatCompactNumber } from "../support/storePackages";
+import {
+  fetchSecurePlayerProfile,
+  spendPremiumCurrency,
+} from "../support/starsPayments";
 import HarvestCareModal from "../plantation/components/HarvestCareModal";
 import HarvestResultModal from "../plantation/components/HarvestResultModal";
 import LockedSlotModal from "../plantation/components/LockedSlotModal";
@@ -26,15 +31,30 @@ import ResetProgressModal from "./components/ResetProgressModal";
 import PlantCatalogModal from "../catalog/components/PlantCatalogModal";
 import PotTypeModal from "../plantation/components/PotTypeModal";
 import TutorialOverlay from "../tutorial/TutorialOverlay";
+import ContextOfferModal from "../monetization/ContextOfferModal";
+import DailyRewardModal from "../monetization/DailyRewardModal";
+import {
+  applySaleToDailyOrder,
+  claimDailyLogin,
+  createDailyOrder,
+  normalizeDailyOrder,
+  prepareDailyLogin,
+} from "../monetization/dailyEngagement";
+import { trackGameEvent, flushGameAnalytics } from "../../core/analytics/monetizationAnalytics";
+import { pullProgressSnapshot, pushProgressSnapshot } from "../../core/cloud/gameCloud";
 import usePersistentState from "../../core/hooks/usePersistentState";
 import useResponsiveStage from "../../core/hooks/useResponsiveStage";
 import usePotGrowth from "../plantation/hooks/usePotGrowth";
 import useClubReputation from "../club/useClubReputation";
 import {
+  hasTelegramSession,
   triggerTelegramHaptic,
   triggerTelegramNotification,
 } from "../../core/telegram";
-import { requestGameProgressReset } from "../../core/bootstrap/prepareReleaseState";
+import {
+  requestGameProgressReset,
+  SKIP_CLOUD_RESTORE_ONCE_KEY,
+} from "../../core/bootstrap/prepareReleaseState";
 import {
   PREMIUM_CURRENCY,
   PREMIUM_PRICES,
@@ -47,7 +67,11 @@ import {
   getPlantationSlotState,
   plantationSlots,
 } from "../plantation/data/plantationSlots";
-import { CLUB_LEVELS, getClubLevel } from "../club/clubProgression";
+import {
+  CLUB_LEVELS,
+  getClubLevel,
+  writeClubReputation,
+} from "../club/clubProgression";
 import { MARIA_TRUST_LEVELS } from "../maria-ivanovna/mariaProgression";
 import { plantsBySeed } from "../plantation/data/plants";
 import {
@@ -86,7 +110,7 @@ import "./GameScreen.css";
 
 const DEFAULT_GROW_TIME = 90;
 const TUTORIAL_GROW_TIME = 5;
-const INITIAL_COINS = 40;
+const INITIAL_COINS = 24;
 
 const STAGE_WIDTH = 390;
 const STAGE_HEIGHT = 844;
@@ -150,6 +174,16 @@ function readLastSeenAt() {
     );
   } catch {
     return 0;
+  }
+}
+
+function consumeSkipCloudRestoreOnce() {
+  try {
+    const shouldSkip = localStorage.getItem(SKIP_CLOUD_RESTORE_ONCE_KEY) === "1";
+    if (shouldSkip) localStorage.removeItem(SKIP_CLOUD_RESTORE_ONCE_KEY);
+    return shouldSkip;
+  } catch {
+    return false;
   }
 }
 
@@ -231,6 +265,51 @@ function GameScreen() {
     { migrate: normalizePremiumBalance },
   );
 
+  const [ownedProducts, setOwnedProducts] = usePersistentState(
+    "growapp-owned-products-v1",
+    [],
+    { migrate: (value) => Array.isArray(value) ? [...new Set(value.map(String))] : [] },
+  );
+
+  const [ownedCosmetics, setOwnedCosmetics] = usePersistentState(
+    "growapp-owned-cosmetics-v1",
+    ["classic"],
+    {
+      migrate: (value) => {
+        const items = Array.isArray(value) ? value.map(String) : [];
+        return [...new Set(["classic", ...items])];
+      },
+    },
+  );
+
+  const [activeCosmetic, setActiveCosmetic] = usePersistentState(
+    "growapp-active-cosmetic-v1",
+    "classic",
+    { migrate: (value) => String(value || "classic") },
+  );
+
+  const [monetizationMilestones, setMonetizationMilestones] = usePersistentState(
+    "growapp-monetization-milestones-v1",
+    { totalHarvests: 0, totalSales: 0, firstSaleOfferShown: false },
+    {
+      migrate: (value) => ({
+        totalHarvests: Math.max(0, Number(value?.totalHarvests) || 0),
+        totalSales: Math.max(0, Number(value?.totalSales) || 0),
+        firstSaleOfferShown: Boolean(value?.firstSaleOfferShown),
+      }),
+    },
+  );
+
+  const [dailyLoginState, setDailyLoginState] = usePersistentState(
+    "growapp-daily-login-v1",
+    { streak: 0, lastClaimed: "" },
+  );
+
+  const [dailyOrder, setDailyOrder] = usePersistentState(
+    "growapp-daily-order-v1",
+    () => createDailyOrder({ unlockedCropIds: ["tabakko"] }),
+  );
+
   const [mariaQuestState, setMariaQuestState] = usePersistentState(
     "growapp-maria-ivanovna-quests",
     {
@@ -259,6 +338,7 @@ function GameScreen() {
 
   const potStatesRef = useRef(potStates);
   const [initialLastSeenAt] = useState(readLastSeenAt);
+  const [skipCloudRestore] = useState(consumeSkipCloudRestoreOnce);
   const [offlineReadyCount, setOfflineReadyCount] = useState(0);
 
   useEffect(() => {
@@ -273,6 +353,11 @@ function GameScreen() {
     getTutorialScreen(tutorialStep),
   );
   const [bankReturnScreen, setBankReturnScreen] = useState("plantation");
+  const [storeFocusProductId, setStoreFocusProductId] = useState(null);
+  const [contextOffer, setContextOffer] = useState(null);
+  const [dailyRewardPrepared, setDailyRewardPrepared] = useState(null);
+  const [dailyRewardVisible, setDailyRewardVisible] = useState(false);
+  const [cloudHydrated, setCloudHydrated] = useState(false);
   const {
     viewportRef,
     scale: stageScale,
@@ -319,6 +404,8 @@ function GameScreen() {
   const [isResetProgressModalOpen, setIsResetProgressModalOpen] =
     useState(false);
   const [instantGrowRequest, setInstantGrowRequest] = useState(null);
+  const [premiumSpendPending, setPremiumSpendPending] = useState(null);
+  const [premiumSpendError, setPremiumSpendError] = useState("");
 
   useEffect(() => {
     const currentTrust = Math.max(0, Number(mariaQuestState?.trust) || 0);
@@ -378,10 +465,10 @@ function GameScreen() {
 
       if (unlockedLevels.length > 0) {
         const clubUnlocks = {
-          2: ["+5% к клубным ценам", "Новый статус поставщика"],
-          3: ["Второе место под ведро", "+10% к клубным ценам"],
-          4: ["+15% к клубным ценам", "Статус звезды клуба"],
-          5: ["Третье место под ведро", "+20% к клубным ценам"],
+          2: ["Второй покупатель", "+5% к клубным ценам"],
+          3: ["Коллекционеры качества", "+10% к клубным ценам"],
+          4: ["Третий покупатель", "+15% к клубным ценам"],
+          5: ["VIP-заказы", "+20% к клубным ценам"],
         };
 
         setUnlockQueue((queue) => [
@@ -406,6 +493,159 @@ function GameScreen() {
 
   const isTutorialActive = tutorialStep !== "completed";
 
+  const unlockedCropIdsForDaily = useMemo(() => {
+    const unlocked = CROP_IDS.filter((cropId) => {
+      const record = plantCatalog?.[cropId];
+      return Boolean(
+        (Number(record?.totalHarvested) || 0) > 0 ||
+        Object.keys(record?.qualities || {}).length > 0,
+      );
+    });
+    return unlocked.length > 0 ? unlocked : ["tabakko"];
+  }, [plantCatalog]);
+
+  const dailyCropSignature = unlockedCropIdsForDaily.join("|");
+
+  useEffect(() => {
+    setDailyOrder((previous) =>
+      normalizeDailyOrder(previous, {
+        unlockedCropIds: unlockedCropIdsForDaily,
+      }),
+    );
+  }, [dailyCropSignature, setDailyOrder]);
+
+  useEffect(() => {
+    trackGameEvent("app_open", {
+      tutorialStep,
+      premiumBalance: premiumCoins,
+    });
+    flushGameAnalytics();
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    Promise.allSettled([
+      pullProgressSnapshot(),
+      fetchSecurePlayerProfile(),
+    ]).then(([progressResult, profileResult]) => {
+      if (cancelled) return;
+
+      const saved = progressResult.status === "fulfilled"
+        ? progressResult.value?.saved
+        : null;
+      const secureProfile = profileResult.status === "fulfilled"
+        ? profileResult.value
+        : null;
+      const serverUpdatedAt = saved?.updatedAt
+        ? Date.parse(saved.updatedAt)
+        : 0;
+      const shouldUseCloudSnapshot = Boolean(
+        !skipCloudRestore &&
+        saved?.snapshot &&
+        (initialLastSeenAt <= 0 || serverUpdatedAt > initialLastSeenAt + 1000),
+      );
+
+      if (shouldUseCloudSnapshot) {
+        const snapshot = saved.snapshot;
+        if (snapshot.tutorialStep) setTutorialStep(String(snapshot.tutorialStep));
+        if (snapshot.coins !== undefined) setCoins(normalizeCoins(snapshot.coins));
+        if (snapshot.potStates) setPotStates(migratePotStates(snapshot.potStates));
+        if (snapshot.inventory) setInventory(migrateCropInventory(snapshot.inventory));
+        if (snapshot.seedInventory) setSeedInventory(migrateSeedInventory(snapshot.seedInventory));
+        if (snapshot.careInventory) setCareInventory(migrateCareInventory(snapshot.careInventory));
+        if (snapshot.qualityInventory) setQualityInventory(migrateQualityInventory(snapshot.qualityInventory));
+        if (snapshot.plantCatalog) setPlantCatalog(migratePlantCatalog(snapshot.plantCatalog));
+        if (snapshot.mariaQuestState) setMariaQuestState(migrateMariaQuestState(snapshot.mariaQuestState));
+        if (snapshot.clubReputation !== undefined) {
+          writeClubReputation(snapshot.clubReputation);
+        }
+        if (snapshot.shopStock) setShopStock((current) => ({
+          ...current,
+          ...migrateShopStock(snapshot.shopStock),
+        }));
+        if (snapshot.shopRefreshAt) setShopRefreshAt(Number(snapshot.shopRefreshAt) || Date.now() + SHOP_REFRESH_MS);
+        if (snapshot.dailyOrder) setDailyOrder(normalizeDailyOrder(snapshot.dailyOrder, { unlockedCropIds: ["tabakko"] }));
+        if (snapshot.dailyLoginState) setDailyLoginState(snapshot.dailyLoginState);
+        if (snapshot.monetizationMilestones) setMonetizationMilestones(snapshot.monetizationMilestones);
+      }
+
+      if (secureProfile) {
+        // Не затираем старые рабочие покупки нулём нового серверного кошелька.
+        setPremiumCoins((current) => Math.max(
+          Math.max(0, Math.floor(Number(current) || 0)),
+          Math.max(0, Math.floor(Number(secureProfile.premiumBalance) || 0)),
+        ));
+        setOwnedProducts((current) => [...new Set([...(current || []), ...(secureProfile.ownedProducts || [])])]);
+        const secureCosmetics = [...new Set(["classic", ...(ownedCosmetics || []), ...secureProfile.ownedCosmetics])];
+        setOwnedCosmetics(secureCosmetics);
+        const preferredCosmetic = shouldUseCloudSnapshot
+          ? String(saved.snapshot.activeCosmetic || "classic")
+          : activeCosmetic;
+        setActiveCosmetic(secureCosmetics.includes(preferredCosmetic) ? preferredCosmetic : "classic");
+      }
+    }).finally(() => {
+      if (!cancelled) setCloudHydrated(true);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    const prepared = prepareDailyLogin(dailyLoginState);
+    setDailyRewardPrepared(prepared);
+    if (prepared.canClaim && !isTutorialActive) {
+      setDailyRewardVisible(true);
+    }
+  }, [dailyLoginState?.lastClaimed, dailyLoginState?.streak, isTutorialActive]);
+
+  useEffect(() => {
+    if (!cloudHydrated) return undefined;
+
+    const timeoutId = window.setTimeout(() => {
+      pushProgressSnapshot({
+        tutorialStep,
+        coins,
+        activeCosmetic,
+        dailyLoginState,
+        dailyOrder,
+        monetizationMilestones,
+        clubReputation,
+        mariaQuestState,
+        inventory,
+        seedInventory,
+        careInventory,
+        qualityInventory,
+        plantCatalog,
+        potStates,
+        shopStock,
+        shopRefreshAt,
+      }).catch(() => {});
+    }, 1400);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [
+    cloudHydrated,
+    tutorialStep,
+    coins,
+    activeCosmetic,
+    dailyLoginState,
+    dailyOrder,
+    monetizationMilestones,
+    clubReputation,
+    mariaQuestState,
+    inventory,
+    seedInventory,
+    careInventory,
+    qualityInventory,
+    plantCatalog,
+    potStates,
+    shopStock,
+    shopRefreshAt,
+  ]);
+
   const hasBlockingOverlay = Boolean(
     isSeedModalOpen ||
     isRemoveModalOpen ||
@@ -419,7 +659,9 @@ function GameScreen() {
     instantGrowRequest ||
     isResetProgressModalOpen ||
     isUnavailableModalOpen ||
-    unlockQueue.length > 0,
+    unlockQueue.length > 0 ||
+    contextOffer ||
+    dailyRewardVisible,
   );
 
   const showBottomMenu =
@@ -587,7 +829,7 @@ function GameScreen() {
 
   const currentSlotState = getPlantationSlotState(
     currentSlot,
-    clubLevel,
+    mariaQuestState,
     Boolean(currentPotState.unlocked),
   );
 
@@ -716,7 +958,7 @@ function GameScreen() {
     const slot = plantationSlots[pendingSlotIndex];
     const slotState = getPlantationSlotState(
       slot,
-      clubLevel,
+      mariaQuestState,
       Boolean(potStates[pendingSlotIndex]?.unlocked),
     );
     const type = POT_TYPES_BY_ID[potTypeId];
@@ -962,10 +1204,18 @@ function GameScreen() {
       tutorialStep === "collect" && plantedSeedId === "tabakko";
     const quality = isTutorialHarvest
       ? getQualityById("normal")
-      : rollHarvestQuality(currentPotState.careApplied || []);
+      : rollHarvestQuality(
+          currentPotState.careApplied || [],
+          currentPotState.wateredStages || [],
+        );
     const reward = isTutorialHarvest
       ? 3
-      : getHarvestYield(currentPotState.careApplied || [], quality.id);
+      : getHarvestYield(
+          currentPotState.careApplied || [],
+          quality.id,
+          plantedSeedId,
+          currentPotState.wateredStages || [],
+        );
 
     const seedData = seeds.find((seed) => seed.id === plantedSeedId);
     const harvestItemId = seedData?.harvestItemId || plantedSeedId || "tabakko";
@@ -993,6 +1243,12 @@ function GameScreen() {
       itemImage: currentPlantStages?.[2]?.image || currentPlant?.image || null,
       amount: reward,
       quality,
+      careApplied: Array.isArray(currentPotState.careApplied)
+        ? currentPotState.careApplied
+        : [],
+      wateredStages: Array.isArray(currentPotState.wateredStages)
+        ? currentPotState.wateredStages
+        : [],
     });
   };
 
@@ -1082,6 +1338,18 @@ function GameScreen() {
         };
       });
 
+      setMonetizationMilestones((previous) => ({
+        ...previous,
+        totalHarvests: (Number(previous?.totalHarvests) || 0) + 1,
+      }));
+      trackGameEvent("harvest_complete", {
+        cropId: result.itemId,
+        amount: result.amount,
+        qualityId: result.quality.id,
+        careCount: result.careApplied.length,
+        wateredStages: result.wateredStages.length,
+      });
+
       setPotStates((previousStates) =>
         previousStates.map((potState, index) =>
           index === result.potIndex
@@ -1112,30 +1380,36 @@ function GameScreen() {
 
   const requestInstantGrow = () => {
     if (
-      isTutorialActive ||
       growStep <= 0 ||
-      growStep >= 3 ||
-      !instantGrowCost
+      growStep >= 3
     ) {
       return;
     }
 
+    setPremiumSpendError("");
     setInstantGrowRequest({
       potIndex: currentPotIndex,
-      cost: instantGrowCost,
+      cost: Math.max(1, Number(instantGrowCost) || 1),
       cropName:
         seeds.find((seed) => seed.id === plantedSeedId)?.name || "Растение",
       cropImage:
         currentPlantStages?.[2]?.image || currentPlant?.image || null,
+      cropId: plantedSeedId || "tabakko",
+      appliedCare: Array.isArray(currentPotState.careApplied)
+        ? currentPotState.careApplied
+        : [],
+      wateredStages: Array.isArray(currentPotState.wateredStages)
+        ? currentPotState.wateredStages
+        : [],
       growStep,
       timeLeft,
       formattedTime: formatGrowthTime(timeLeft),
     });
   };
 
-  const confirmInstantGrow = () => {
+  const confirmInstantGrow = async () => {
     const request = instantGrowRequest;
-    if (!request) return;
+    if (!request || premiumSpendPending) return;
 
     const targetState = potStatesRef.current?.[request.potIndex];
     if (
@@ -1159,37 +1433,103 @@ function GameScreen() {
 
     if (premiumCoins < cost) return;
 
-    setPremiumCoins((value) => Math.max(0, value - cost));
-    setPotStates((states) =>
-      states.map((state, index) =>
-        index === request.potIndex && state?.growStep > 0 && state.growStep < 3
-          ? {
-              ...state,
-              growStep: 3,
-              timeLeft: 0,
-              nextGrowthAt: null,
-              harvestAt: null,
-            }
-          : state,
-      ),
-    );
+    setPremiumSpendPending("instant-grow");
+    setPremiumSpendError("");
+    try {
+      const nextBalance = (await spendPremiumCurrency({
+        amount: cost,
+        reason: "instant-grow",
+        idempotencyKey: [
+          "pot",
+          request.potIndex,
+          targetState.selectedSeedId || "crop",
+          targetState.nextGrowthAt || targetState.harvestAt || targetState.growStep,
+        ].join(":"),
+        metadata: {
+          potIndex: request.potIndex,
+          cropId: targetState.selectedSeedId || null,
+          growStep: targetState.growStep,
+          quotedCost: cost,
+        },
+        currentBalance: premiumCoins,
+        allowLocalFallback: true,
+      })).premiumBalance;
 
-    triggerTelegramNotification("success");
-    setInstantGrowRequest(null);
+      setPremiumCoins(nextBalance);
+      setPotStates((states) =>
+        states.map((state, index) =>
+          index === request.potIndex && state?.growStep > 0 && state.growStep < 3
+            ? {
+                ...state,
+                growStep: 3,
+                timeLeft: 0,
+                nextGrowthAt: null,
+                harvestAt: null,
+              }
+            : state,
+        ),
+      );
+
+      trackGameEvent("premium_spend", {
+        reason: "instant-grow",
+        amount: cost,
+        cropId: targetState.selectedSeedId || "unknown",
+      });
+      triggerTelegramNotification("success");
+      setInstantGrowRequest(null);
+    } catch (error) {
+      if (Number.isFinite(error?.serverBalance)) {
+        setPremiumCoins(error.serverBalance);
+      }
+      setPremiumSpendError(
+        error?.code === "INSUFFICIENT_FUNDS"
+          ? "На серверном балансе не хватает монет роста."
+          : "Не удалось подтвердить списание. Проверь соединение и повтори.",
+      );
+      triggerTelegramNotification("error");
+    } finally {
+      setPremiumSpendPending(null);
+    }
   };
 
-  const refreshShopWithPremium = () => {
+  const refreshShopWithPremium = async () => {
     const cost = PREMIUM_PRICES.shopRefresh;
+    if (premiumSpendPending) {
+      return { success: false, message: "Предыдущее действие ещё подтверждается." };
+    }
     if (premiumCoins < cost) {
-      return { success: false, message: "Не хватает G-монет." };
+      return { success: false, message: "Не хватает монет роста." };
     }
 
-    setPremiumCoins((value) => Math.max(0, value - cost));
-    setShopStock(createShopStock());
-    setShopRefreshAt(Date.now() + SHOP_REFRESH_MS);
-    triggerTelegramHaptic("medium");
-
-    return { success: true, message: "Зорик уже выставил новую поставку." };
+    setPremiumSpendPending("shop-refresh");
+    try {
+      const nextBalance = (await spendPremiumCurrency({
+        amount: cost,
+        reason: "shop-refresh",
+        idempotencyKey: `supply:${shopRefreshAt}`,
+        metadata: { previousRefreshAt: shopRefreshAt, quotedCost: cost },
+        currentBalance: premiumCoins,
+        allowLocalFallback: true,
+      })).premiumBalance;
+      setPremiumCoins(nextBalance);
+      setShopStock(createShopStock());
+      setShopRefreshAt(Date.now() + SHOP_REFRESH_MS);
+      trackGameEvent("premium_spend", { reason: "shop-refresh", amount: cost });
+      triggerTelegramHaptic("medium");
+      return { success: true, message: "Зорик уже выставил новую поставку." };
+    } catch (error) {
+      if (Number.isFinite(error?.serverBalance)) {
+        setPremiumCoins(error.serverBalance);
+      }
+      return {
+        success: false,
+        message: error?.code === "INSUFFICIENT_FUNDS"
+          ? "На серверном балансе не хватает монет роста."
+          : "Не удалось подтвердить списание. Попробуй ещё раз.",
+      };
+    } finally {
+      setPremiumSpendPending(null);
+    }
   };
 
   const removePlant = () => {
@@ -1253,7 +1593,7 @@ function GameScreen() {
     }));
   };
 
-  const openPremiumBank = () => {
+  const openPremiumBank = (focusProductId = null) => {
     if (isTutorialActive) {
       return;
     }
@@ -1262,7 +1602,14 @@ function GameScreen() {
       setBankReturnScreen(activeScreen);
     }
 
+    const safeFocusId = typeof focusProductId === "string" ? focusProductId : null;
+    setStoreFocusProductId(safeFocusId);
+    setContextOffer(null);
     triggerTelegramHaptic("light");
+    trackGameEvent("store_navigation", {
+      sourceScreen: activeScreen,
+      focusProductId: safeFocusId,
+    });
     setActiveScreen("support");
   };
 
@@ -1280,20 +1627,130 @@ function GameScreen() {
   };
 
   const closeCurrencyBank = () => {
+    setStoreFocusProductId(null);
     setActiveScreen(bankReturnScreen || "plantation");
   };
 
-  const exchangePremiumForCoins = (pack) => {
-    const gCost = Math.max(0, Math.floor(Number(pack?.gCost) || 0));
-    const coinAmount = Math.max(0, Math.floor(Number(pack?.coins) || 0));
+  const grantEntitlements = ({ product, entitlements, serverBalance }) => {
+    const rewards = Array.isArray(entitlements) && entitlements.length > 0
+      ? entitlements
+      : (product?.contents || []);
 
-    if (gCost <= 0 || coinAmount <= 0 || premiumCoins < gCost) {
-      return false;
+    const growthReward = rewards
+      .filter((item) => (item?.kind || item?.type) === "growth")
+      .reduce((total, item) => total + Math.max(0, Math.floor(Number(item.amount) || 0)), 0);
+    const hasServerBalance =
+      serverBalance !== null &&
+      serverBalance !== undefined &&
+      Number.isFinite(Number(serverBalance));
+    const confirmedPremiumBalance = hasServerBalance
+      ? Math.max(0, Math.floor(Number(serverBalance)))
+      : Math.max(0, Math.floor(Number(premiumCoins) || 0)) + growthReward;
+
+    // Новый backend отдаёт точный баланс. Старый рабочий Stars endpoint
+    // возвращал только paid — в таком случае начисляем валюту из состава товара.
+    if (confirmedPremiumBalance !== premiumCoins) {
+      setPremiumCoins(confirmedPremiumBalance);
     }
 
-    setPremiumCoins((value) => Math.max(0, value - gCost));
-    setCoins((value) => value + coinAmount);
-    return true;
+    const nextCareInventory = { ...careInventory };
+    rewards
+      .filter((item) => (item?.kind || item?.type) === "care")
+      .forEach((item) => {
+        const careId = String(item.id || "");
+        const amount = Math.max(0, Math.floor(Number(item.amount) || 0));
+        if (careId && amount > 0) {
+          nextCareInventory[careId] = (nextCareInventory[careId] || 0) + amount;
+        }
+      });
+    setCareInventory(nextCareInventory);
+
+    const cosmeticRewards = rewards
+      .filter((item) => (item?.kind || item?.type) === "cosmetic")
+      .map((item) => String(item.id || ""))
+      .filter(Boolean);
+    const nextOwnedCosmetics = [
+      ...new Set(["classic", ...(ownedCosmetics || []), ...cosmeticRewards]),
+    ];
+    if (cosmeticRewards.length > 0) {
+      setOwnedCosmetics(nextOwnedCosmetics);
+    }
+
+    const shouldEquipPurchasedTheme =
+      cosmeticRewards.length > 0 &&
+      (product?.type === "cosmetic" || product?.id === "starter-kit");
+    const nextActiveCosmetic = shouldEquipPurchasedTheme
+      ? cosmeticRewards[0]
+      : activeCosmetic;
+    if (nextActiveCosmetic !== activeCosmetic) {
+      setActiveCosmetic(nextActiveCosmetic);
+    }
+
+    const nextOwnedProducts = product && (product.oneTime || product.type === "cosmetic")
+      ? [...new Set([...(ownedProducts || []), product.id])]
+      : (ownedProducts || []);
+    if (nextOwnedProducts !== ownedProducts) {
+      setOwnedProducts(nextOwnedProducts);
+    }
+
+    // После подтверждённой покупки сохраняем расходники немедленно.
+    // Это защищает награды, если Mini App закрыли сразу после оплаты.
+    pushProgressSnapshot({
+      tutorialStep,
+      coins,
+      activeCosmetic: nextActiveCosmetic,
+      dailyLoginState,
+      dailyOrder,
+      monetizationMilestones,
+      clubReputation,
+      mariaQuestState,
+      inventory,
+      seedInventory,
+      careInventory: nextCareInventory,
+      qualityInventory,
+      plantCatalog,
+      potStates,
+      shopStock,
+      shopRefreshAt,
+    }).catch(() => {});
+
+    trackGameEvent("entitlements_granted", {
+      productId: product?.id || null,
+      rewardCount: rewards.length,
+      premiumBalance: confirmedPremiumBalance,
+    });
+  };
+
+  const equipCosmetic = (cosmeticId) => {
+    const safeId = String(cosmeticId || "classic");
+    if (safeId !== "classic" && !ownedCosmetics.includes(safeId)) return;
+    setActiveCosmetic(safeId);
+    triggerTelegramHaptic("light");
+    trackGameEvent("cosmetic_equipped", { cosmeticId: safeId });
+  };
+
+  const claimDailyRewardNow = () => {
+    const prepared = dailyRewardPrepared;
+    const reward = prepared?.reward;
+    if (!prepared?.canClaim || !reward) return;
+
+    if (reward.coins) setCoins((value) => value + reward.coins);
+    if (reward.care) {
+      setCareInventory((previous) => ({
+        ...previous,
+        nutrition: (previous.nutrition || 0) + (reward.care.nutrition || 0),
+        mariaMix: (previous.mariaMix || 0) + (reward.care.mariaMix || 0),
+      }));
+    }
+
+    setDailyLoginState(claimDailyLogin(prepared));
+    setDailyRewardVisible(false);
+    triggerTelegramNotification("success");
+    trackGameEvent("daily_reward_claimed", {
+      day: reward.day,
+      coins: reward.coins || 0,
+      growth: reward.growth || 0,
+    });
   };
 
   const openClub = () => {
@@ -1474,16 +1931,34 @@ function GameScreen() {
     return true;
   };
 
-  const claimMariaReward = ({ coins: coinReward }) => {
+  const claimMariaReward = ({ coins: coinReward, seeds: seedReward, care: careReward }) => {
     const safeCoins = Math.max(0, Math.floor(Number(coinReward) || 0));
+    if (safeCoins > 0) setCoins((previousCoins) => previousCoins + safeCoins);
 
-    if (safeCoins > 0) {
-      setCoins((previousCoins) => previousCoins + safeCoins);
+    if (seedReward && typeof seedReward === "object") {
+      setSeedInventory((previous) => {
+        const next = { ...previous };
+        Object.entries(seedReward).forEach(([seedId, amount]) => {
+          next[seedId] = (next[seedId] || 0) + Math.max(0, Math.floor(Number(amount) || 0));
+        });
+        return next;
+      });
+    }
+
+    if (careReward && typeof careReward === "object") {
+      setCareInventory((previous) => {
+        const next = { ...previous };
+        Object.entries(careReward).forEach(([careId, amount]) => {
+          next[careId] = (next[careId] || 0) + Math.max(0, Math.floor(Number(amount) || 0));
+        });
+        return next;
+      });
     }
   };
 
-  const handleClubSaleForMaria = ({ itemId, amount }) => {
-    const safeAmount = Math.max(0, Math.floor(Number(amount) || 0));
+  const handleClubSaleForMaria = (sale) => {
+    const itemId = sale?.itemId;
+    const safeAmount = Math.max(0, Math.floor(Number(sale?.amount) || 0));
 
     if (!itemId || safeAmount <= 0) {
       return;
@@ -1496,10 +1971,80 @@ function GameScreen() {
         [itemId]: (previousState?.clubSales?.[itemId] || 0) + safeAmount,
       },
     }));
+
+    const dailyResult = applySaleToDailyOrder(dailyOrder, sale);
+    if (dailyResult.matchedAmount > 0) {
+      const nextOrder = dailyResult.completedNow
+        ? { ...dailyResult.order, claimed: true }
+        : dailyResult.order;
+      setDailyOrder(nextOrder);
+
+      if (dailyResult.completedNow) {
+        const reward = dailyResult.order.reward || {};
+        if (reward.coins) setCoins((value) => value + reward.coins);
+            setUnlockQueue((queue) => [
+          ...queue,
+          {
+            id: `daily-order-${dailyResult.order.id}-${Date.now()}`,
+            source: "daily",
+            sourceLabel: "Заказ дня",
+            level: "Выполнено",
+            icon: "✦",
+            title: `${dailyResult.order.cropName} принята`,
+            description: "Клуб закрыл специальный заказ. Награда уже в твоём кошельке.",
+            unlocks: [
+              `+${reward.coins || 0} монет`,
+              ...(reward.growth ? [`+${reward.growth} монет роста`] : []),
+            ],
+          },
+        ]);
+        trackGameEvent("daily_order_complete", {
+          orderId: dailyResult.order.id,
+          cropId: itemId,
+          qualityId: sale?.qualityId,
+          rewardCoins: reward.coins || 0,
+          rewardGrowth: reward.growth || 0,
+        });
+      }
+    }
+
+    const firstSaleOffer =
+      !monetizationMilestones.firstSaleOfferShown &&
+      !ownedProducts.includes("starter-kit");
+
+    setMonetizationMilestones((previous) => ({
+      ...previous,
+      totalSales: (Number(previous?.totalSales) || 0) + 1,
+      firstSaleOfferShown: Boolean(previous?.firstSaleOfferShown),
+    }));
+
+    trackGameEvent("club_sale", {
+      cropId: itemId,
+      amount: safeAmount,
+      qualityId: sale?.qualityId || "normal",
+      coins: sale?.coins || 0,
+      reputation: sale?.reputation || 0,
+    });
+
+    if (firstSaleOffer) {
+      window.setTimeout(() => {
+        setMonetizationMilestones((previous) => ({
+          ...previous,
+          firstSaleOfferShown: true,
+        }));
+        setContextOffer({
+          productId: "starter-kit",
+          source: "first-sale",
+          eyebrow: "ПЕРВАЯ СДЕЛКА ЗАКРЫТА",
+          title: "Теперь ты реально в деле",
+          description: "Стартовый набор ускорит следующие циклы и откроет оформление, но обычные монеты всё равно придётся заработать в клубе.",
+        });
+      }, 2100);
+    }
   };
 
   return (
-    <div className={`game-screen game-screen--${activeScreen}`}>
+    <div className={`game-screen game-screen--${activeScreen} game-screen--cosmetic-${activeCosmetic}`}>
       <div className="game-viewport" ref={viewportRef}>
         <div
           className="game-stage"
@@ -1515,7 +2060,7 @@ function GameScreen() {
           }}
         >
           {!isTutorialActive &&
-            ["plantation", "district", "shop"].includes(activeScreen) && (
+            activeScreen === "plantation" && (
               <PremiumWallet
                 balance={premiumCoins}
                 disabled={isTutorialActive}
@@ -1544,7 +2089,7 @@ function GameScreen() {
                 aria-label={`Монеты: ${coins}. Открыть банк монет.`}
               >
                 <span className="top-wallet__coin" aria-hidden="true" />
-                <strong>{coins}</strong>
+                <strong>{formatCompactNumber(coins)}</strong>
               </button>
 
               <button
@@ -1627,7 +2172,7 @@ function GameScreen() {
                     collectDisabled={!tutorialAllows("collect")}
                     unlockDisabled={!tutorialAllows("unlock-pot")}
                     onOpenGrowthInfo={requestInstantGrow}
-                    growthInfoDisabled={isTutorialActive}
+                    growthInfoDisabled={false}
                     isHarvesting={
                       harvestAnimation?.potIndex === currentPotIndex
                     }
@@ -1713,6 +2258,8 @@ function GameScreen() {
                 trust={mariaQuestState.trust || 0}
                 careInventory={careInventory}
                 appliedCare={currentPotState.careApplied}
+                wateredStages={currentPotState.wateredStages}
+                cropId={plantedSeedId || "tabakko"}
                 canApplyCare={growStep > 0 && growStep < 3}
                 onChoose={applyPlantCare}
                 onRemovePlant={() => {
@@ -1783,11 +2330,18 @@ function GameScreen() {
                 request={instantGrowRequest}
                 coins={premiumCoins}
                 onConfirm={confirmInstantGrow}
+                isProcessing={premiumSpendPending === "instant-grow"}
+                error={premiumSpendError}
                 onBuyCoins={() => {
                   setInstantGrowRequest(null);
-                  openPremiumBank();
+                  setPremiumSpendError("");
+                  openPremiumBank("growth-pocket");
                 }}
-                onCancel={() => setInstantGrowRequest(null)}
+                onCancel={() => {
+                  if (premiumSpendPending === "instant-grow") return;
+                  setInstantGrowRequest(null);
+                  setPremiumSpendError("");
+                }}
               />
 
               <ResetProgressModal
@@ -1801,8 +2355,9 @@ function GameScreen() {
 
               <LockedSlotModal
                 isOpen={isUnavailableModalOpen}
-                currentLevel={clubLevel}
-                requiredLevel={currentSlot?.requiredClubLevel ?? null}
+                title={`Место ${currentSlot?.id || ""} закрыто`}
+                statusText={currentSlotState.statusText}
+                requirementText={currentSlotState.requirementText}
                 onClose={() => setIsUnavailableModalOpen(false)}
               />
             </>
@@ -1877,9 +2432,14 @@ function GameScreen() {
               setInventory={setInventory}
               qualityInventory={qualityInventory}
               setQualityInventory={setQualityInventory}
+              plantCatalog={plantCatalog}
               coins={coins}
               setCoins={setCoins}
+              premiumCoins={premiumCoins}
+              onOpenCoinBank={openCoinBank}
+              onOpenPremiumStore={openPremiumBank}
               onSaleCompleted={handleClubSaleForMaria}
+              dailyOrder={dailyOrder}
               onGoBack={goBackToDistrict}
             />
           )}
@@ -1887,24 +2447,22 @@ function GameScreen() {
           {activeScreen === "support" && (
             <SupportScreen
               premiumCoins={premiumCoins}
-              onPremiumCoinsAdded={(amount) =>
-                setPremiumCoins(
-                  (value) =>
-                    value + Math.max(0, Math.floor(Number(amount) || 0)),
-                )
-              }
+              ownedProducts={ownedProducts}
+              ownedCosmetics={ownedCosmetics}
+              activeCosmetic={activeCosmetic}
+              initialProductId={storeFocusProductId}
+              onProductGranted={grantEntitlements}
+              onEquipCosmetic={equipCosmetic}
               onClose={closeCurrencyBank}
-              onOpenCoinStore={() => setActiveScreen("coin-bank")}
             />
           )}
 
           {activeScreen === "coin-bank" && (
             <CoinBankScreen
               coins={coins}
-              premiumCoins={premiumCoins}
-              onExchange={exchangePremiumForCoins}
+              dailyOrder={dailyOrder}
               onClose={closeCurrencyBank}
-              onOpenPremiumStore={() => setActiveScreen("support")}
+              onOpenPremiumStore={() => openPremiumBank("growth-pocket")}
             />
           )}
 
@@ -1924,7 +2482,26 @@ function GameScreen() {
             onClose={() => setUnlockQueue((queue) => queue.slice(1))}
           />
 
-          {!isResetProgressModalOpen && !harvestResult && !isCatalogOpen && (
+          <ContextOfferModal
+            offer={contextOffer}
+            onOpenStore={(productId) => openPremiumBank(productId)}
+            onClose={() => {
+              trackGameEvent("context_offer_dismissed", {
+                productId: contextOffer?.productId || null,
+              });
+              setContextOffer(null);
+            }}
+          />
+
+          {dailyRewardVisible && (
+            <DailyRewardModal
+              prepared={dailyRewardPrepared}
+              onClaim={claimDailyRewardNow}
+              onClose={() => setDailyRewardVisible(false)}
+            />
+          )}
+
+          {!isResetProgressModalOpen && !harvestResult && !isCatalogOpen && !contextOffer && !dailyRewardVisible && (
             <TutorialOverlay
               step={tutorialStep}
               stageScale={stageScale}

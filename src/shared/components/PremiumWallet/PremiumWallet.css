@@ -1,95 +1,67 @@
-/* Премиальные монеты: только монета и баланс, без подписи G. */
-.premium-wallet {
-  position: absolute;
-  top: calc(var(--hud-top, max(18px, calc(env(safe-area-inset-top) + 8px))) + 8px);
-  left: var(--hud-left, 16px);
-  z-index: 72;
+.premium-wallet{position:absolute;top:calc(var(--hud-top,max(18px,calc(env(safe-area-inset-top) + 8px))) + 8px);left:var(--hud-left,16px);z-index:72;min-width:116px;height:42px;display:grid;grid-template-columns:28px minmax(0,1fr) 18px;align-items:center;gap:7px;padding:0 8px;border:1px solid rgba(203,173,255,.3);border-radius:15px;background:radial-gradient(circle at 20% 8%,rgba(244,233,255,.16),transparent 35%),linear-gradient(180deg,rgba(60,45,87,.95),rgba(25,21,39,.97));color:#f5efff;box-shadow:0 9px 20px rgba(0,0,0,.3),0 0 14px rgba(164,113,255,.1),inset 0 1px 0 rgba(255,255,255,.1);font:inherit;cursor:pointer;backdrop-filter:blur(8px);-webkit-tap-highlight-color:transparent}.premium-wallet:active:not(:disabled){transform:translateY(2px) scale(.985)}.premium-wallet:disabled{cursor:default}.premium-wallet__icon{width:27px;height:27px;display:grid;place-items:center;border-radius:10px;color:#f3eaff;background:radial-gradient(circle at 34% 26%,#fff 0 9%,#dcc7ff 18%,#9b71ec 49%,#55318d 77%,#291645 100%);box-shadow:inset 0 1px 1px rgba(255,255,255,.68),0 2px 6px rgba(0,0,0,.35),0 0 8px rgba(184,132,255,.22);font-size:14px}.premium-wallet__copy{min-width:0;display:grid;gap:1px;text-align:left}.premium-wallet__copy small{color:#aa9dbc;font-size:11px;font-weight:1000;letter-spacing:.11em;line-height:1}.premium-wallet__copy strong{font-size:14px;font-weight:1000;line-height:1.1;font-variant-numeric:tabular-nums}.premium-wallet__plus{width:18px;height:18px;display:grid;place-items:center;border-radius:7px;color:#2a1c3c;background:#d7c1ff;font-size:13px;font-weight:1000;line-height:1}
 
-  min-width: 88px;
-  height: 40px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 0 13px 0 8px;
-
-  border: 1px solid rgba(219, 200, 255, 0.34);
-  border-radius: 15px;
-  background:
-    radial-gradient(circle at 22% 18%, rgba(235, 222, 255, 0.22), transparent 34%),
-    radial-gradient(circle at 84% 118%, rgba(123, 75, 220, 0.28), transparent 52%),
-    linear-gradient(180deg, rgba(61, 43, 91, 0.94), rgba(25, 20, 43, 0.96));
-  color: #f5efff;
-
-  box-shadow:
-    0 9px 20px rgba(0, 0, 0, 0.30),
-    0 0 12px rgba(164, 113, 255, 0.10),
-    inset 0 1px 0 rgba(255, 255, 255, 0.11),
-    inset 0 -1px 0 rgba(25, 12, 50, 0.42);
-
-  font: inherit;
-  cursor: pointer;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-  -webkit-tap-highlight-color: transparent;
+/* ===== Premium wallet V10: animated coin, not a generic crystal ===== */
+.premium-wallet{
+  min-width:112px;
+  height:43px;
+  grid-template-columns:29px minmax(0,1fr) 18px;
+  border-color:rgba(201,164,255,.32);
+  background:radial-gradient(circle at 18% 10%,rgba(255,255,255,.13),transparent 32%),linear-gradient(180deg,rgba(62,45,91,.96),rgba(27,21,43,.98));
 }
-
-.premium-wallet:active:not(:disabled) {
-  transform: translateY(2px) scale(0.98);
+.premium-wallet__icon{
+  position:relative;
+  width:28px;
+  height:28px;
+  border:1px solid rgba(245,236,255,.66);
+  border-radius:50%;
+  color:#fff;
+  background:radial-gradient(circle at 32% 24%,#fff 0 8%,#e7d8ff 16%,#aa7cf1 44%,#6a42ae 72%,#321a52 100%);
+  box-shadow:inset 0 1px 1px rgba(255,255,255,.72),inset 0 -2px 3px rgba(34,11,66,.36),0 3px 7px rgba(17,7,34,.4),0 0 10px rgba(180,123,255,.25);
+  perspective:80px;
+  animation:premiumCoinFloat 2.5s ease-in-out infinite;
 }
-
-.premium-wallet:disabled {
-  cursor: default;
+.premium-wallet__icon::before{
+  content:"";
+  position:absolute;
+  inset:5px;
+  border:1px solid rgba(255,255,255,.28);
+  border-radius:50%;
 }
-
-.premium-wallet__icon {
-  position: relative;
-  flex: 0 0 auto;
-  width: 25px;
-  height: 25px;
-  border: 1px solid rgba(245, 234, 255, 0.58);
-  border-radius: 50%;
-  background:
-    radial-gradient(circle at 33% 27%, #fff8ff 0 10%, #ddc8ff 18%, #9a72ec 48%, #57328f 76%, #2a1749 100%);
-  box-shadow:
-    inset 0 1px 1px rgba(255, 255, 255, 0.72),
-    inset 0 -2px 3px rgba(31, 13, 61, 0.42),
-    0 2px 5px rgba(0, 0, 0, 0.34),
-    0 0 7px rgba(184, 132, 255, 0.24);
+.premium-wallet__icon::after{
+  content:"";
+  position:absolute;
+  top:3px;
+  right:3px;
+  width:7px;
+  height:7px;
+  border-radius:50%;
+  background:radial-gradient(circle,#fff 0 18%,rgba(255,255,255,.7) 24%,transparent 70%);
+  animation:premiumCoinSpark 2.5s ease-in-out infinite;
 }
-
-.premium-wallet__icon::before {
-  content: "";
-  position: absolute;
-  inset: 5px;
-  border: 1px solid rgba(255, 248, 255, 0.40);
-  border-radius: 50%;
-  box-shadow: inset 0 0 0 1px rgba(65, 30, 110, 0.24);
+.premium-wallet__icon i{
+  position:relative;
+  z-index:2;
+  font-style:normal;
+  font-size:13px;
+  text-shadow:0 1px 2px rgba(31,10,59,.5);
+  animation:premiumCoinFace 3.2s linear infinite;
 }
+.premium-wallet__copy small{font-size:11px;color:#b7a8ca}
+.premium-wallet__copy strong{font-size:14px}
+@keyframes premiumCoinFloat{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-2px) rotate(3deg)}}
+@keyframes premiumCoinFace{0%{transform:rotateY(0deg)}50%{transform:rotateY(180deg)}100%{transform:rotateY(360deg)}}
+@keyframes premiumCoinSpark{0%,100%{opacity:.45;transform:scale(.8)}50%{opacity:1;transform:scale(1.2)}}
+@media(prefers-reduced-motion:reduce){.premium-wallet__icon,.premium-wallet__icon i,.premium-wallet__icon::after{animation:none}}
 
-.premium-wallet__icon::after {
-  content: "";
-  position: absolute;
-  top: 7px;
-  left: 10px;
-  width: 5px;
-  height: 10px;
-  border-radius: 50%;
-  background: linear-gradient(180deg, rgba(255,255,255,0.65), rgba(255,255,255,0));
-  transform: rotate(32deg);
-  opacity: 0.72;
-}
+/* V12 compact HUD token: same visual weight as the normal coin wallet. */
+.premium-wallet{min-width:88px;max-width:108px;height:38px;grid-template-columns:25px minmax(0,1fr) 16px;gap:5px;padding:0 6px;border-radius:14px}
+.premium-wallet__icon{width:25px;height:25px}
+.premium-wallet__copy small{font-size:11px;letter-spacing:.07em}
+.premium-wallet__copy strong{display:block;max-width:46px;overflow:hidden;font-size:15px;text-overflow:ellipsis;white-space:nowrap}
+.premium-wallet__plus{width:16px;height:16px;border-radius:6px;font-size:14px}
 
-.premium-wallet__copy {
-  min-width: 0;
-  display: flex;
-  align-items: center;
-}
-
-.premium-wallet__copy strong {
-  font-size: 15px;
-  font-weight: 1000;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.48);
-}
+/* V13: compact premium wallet — no label, no ellipsis, no spinning face. */
+.premium-wallet{min-width:72px;max-width:92px;height:38px;grid-template-columns:25px minmax(0,1fr) 16px;gap:5px;padding:0 6px;border-radius:14px}
+.premium-wallet__value{min-width:0;overflow:visible;color:#f7f1ff;font-size:13px;font-weight:1000;line-height:1;text-align:center;white-space:nowrap;text-overflow:clip}
+.premium-wallet__icon,.premium-wallet__icon i,.premium-wallet__icon::after{animation:none!important}
+.premium-wallet__icon i{transform:none!important}

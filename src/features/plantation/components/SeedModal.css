@@ -207,7 +207,7 @@
 .seed-modal .modal-subtitle {
   margin-top: 5px;
   color: rgba(255, 239, 208, 0.48);
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 800;
   line-height: 1.2;
 }
@@ -297,7 +297,7 @@
 
 .seed-card-index {
   color: rgba(255, 224, 172, 0.42);
-  font-size: 8px;
+  font-size: 11px;
   font-weight: 1000;
   letter-spacing: 1px;
 }
@@ -311,7 +311,7 @@
   background: rgba(94, 211, 143, 0.09);
   color: #a8f4c5;
 
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 1000;
   line-height: 1;
   text-align: center;
@@ -381,7 +381,7 @@
   margin-top: 4px;
   overflow: hidden;
   color: rgba(255, 237, 207, 0.46);
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 700;
   line-height: 1.25;
   -webkit-box-orient: vertical;
@@ -403,7 +403,7 @@
 .seed-card-footer span {
   overflow: hidden;
   color: rgba(255, 231, 192, 0.36);
-  font-size: 7px;
+  font-size: 11px;
   font-weight: 900;
   letter-spacing: 0.3px;
   text-overflow: ellipsis;
@@ -413,7 +413,7 @@
 
 .seed-card-footer strong {
   color: #9ff2bd;
-  font-size: 8px;
+  font-size: 11px;
   font-weight: 1000;
   letter-spacing: 0.2px;
   text-transform: uppercase;
@@ -435,7 +435,7 @@
     rgba(11, 9, 7, 0.24);
   color: rgba(255, 232, 194, 0.21);
 
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 900;
   letter-spacing: 0.3px;
   text-align: center;
@@ -498,7 +498,7 @@
   border-radius: 5px;
 
   color: rgba(164, 255, 197, 0.58);
-  font-size: 7px;
+  font-size: 11px;
   font-weight: 1000;
   letter-spacing: 0.9px;
   transform: rotate(4deg);
@@ -537,7 +537,7 @@
   max-width: 250px;
   margin: 6px auto 0;
   color: rgba(255, 237, 207, 0.5);
-  font-size: 10px;
+  font-size: 13px;
   -webkit-line-clamp: unset;
 }
 
@@ -552,7 +552,7 @@
   background: rgba(126, 255, 190, 0.07);
   color: #aaf2c3;
 
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 1000;
   line-height: 1;
 }
@@ -567,7 +567,7 @@
   background: rgba(255, 85, 85, 0.08);
   color: #ffc1c1;
 
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 800;
   line-height: 1.25;
 }
@@ -670,7 +670,7 @@
   }
 
   .seed-name {
-    font-size: 12px;
+    font-size: 15px;
   }
 }
 
@@ -749,7 +749,7 @@
 .seed-scroll-hint {
   margin-top: 5px;
   color: rgba(255, 239, 208, 0.48);
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 800;
   line-height: 1.2;
 }

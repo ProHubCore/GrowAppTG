@@ -91,7 +91,7 @@
 .action-modal-price-block span {
   margin-bottom: 3px;
   color: rgba(255, 244, 214, 0.62);
-  font-size: 12px;
+  font-size: 15px;
 }
 
 .action-modal-price-block strong {
@@ -190,4 +190,12 @@
 
 @media (prefers-reduced-motion: reduce) {
   .action-modal-premium-coin { animation: none; }
+}
+
+
+.action-modal-confirm:disabled,
+.action-modal-cancel:disabled,
+.action-modal-close:disabled {
+  cursor: wait;
+  opacity: .66;
 }

@@ -522,7 +522,7 @@ html[data-telegram-app="true"] .game-screen {
   background:
     linear-gradient(180deg, rgba(55, 39, 31, 0.82), rgba(25, 20, 18, 0.9));
   color: #ffe7c2;
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 900;
   letter-spacing: 0.02em;
   text-shadow: 0 1px 0 rgba(0, 0, 0, 0.42);
@@ -614,3 +614,22 @@ html[data-telegram-app="true"] .game-screen {
 .top-wallet:active {
   transform: translateY(2px) scale(0.98);
 }
+/* Cosmetic themes are account entitlements. They never change economy or hitboxes. */
+.game-screen--cosmetic-amber-lab .game-stage::after,
+.game-screen--cosmetic-violet-haze .game-stage::after{content:"";position:absolute;z-index:390;inset:0;pointer-events:none;mix-blend-mode:screen;opacity:.42}
+.game-screen--cosmetic-amber-lab .game-stage::after{background:radial-gradient(circle at 50% 64%,rgba(255,177,55,.13),transparent 31%),linear-gradient(180deg,rgba(255,186,72,.035),transparent 42%,rgba(188,111,28,.06))}
+.game-screen--cosmetic-violet-haze .game-stage::after{background:radial-gradient(circle at 50% 62%,rgba(172,83,232,.16),transparent 33%),linear-gradient(180deg,rgba(119,66,186,.045),transparent 44%,rgba(127,52,166,.08))}
+.game-screen--cosmetic-amber-lab .flying-loot-item{filter:drop-shadow(0 0 9px rgba(255,190,71,.8))}
+.game-screen--cosmetic-violet-haze .flying-loot-item{filter:drop-shadow(0 0 10px rgba(190,101,255,.82))}
+
+/* ===== Wallet coin motion V10 ===== */
+.top-wallet__coin{animation:walletCoinFloat 2.7s ease-in-out infinite}
+.top-wallet__coin::before{animation:walletCoinFace 3.6s linear infinite}
+@keyframes walletCoinFloat{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-2px) rotate(3deg)}}
+@keyframes walletCoinFace{0%{transform:rotate(0deg)}100%{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.top-wallet__coin,.top-wallet__coin::before{animation:none}}
+
+/* V13: clean compact wallets. */
+.top-wallet{min-width:72px;max-width:92px;height:38px;gap:6px;padding:0 9px 0 6px}
+.top-wallet strong{overflow:visible;font-size:13px;white-space:nowrap;text-overflow:clip}
+.top-wallet__coin,.top-wallet__coin::before{animation:none!important}

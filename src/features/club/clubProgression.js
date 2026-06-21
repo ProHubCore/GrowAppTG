@@ -4,36 +4,53 @@ export const CLUB_REPUTATION_STORAGE_KEY =
 export const CLUB_REPUTATION_EVENT =
   "growapp-club-reputation-change";
 
+// Клуб отвечает только за покупателей, цену и сложность заказов.
+// Все места плантации открывает Мария Ивановна через поручения.
 export const CLUB_LEVELS = [
   {
     level: 1,
     title: "Новый поставщик",
     required: 0,
-    reward: "Доступ к клубному сбыту",
+    reward: "Первый покупатель",
+    unlocks: ["1 покупатель", "Базовые заказы", "Обычное качество"],
+    priceBonus: 0,
+    seatCount: 1,
   },
   {
     level: 2,
     title: "Свой человек",
-    required: 30,
-    reward: "+5% к клубным ценам",
+    required: 35,
+    reward: "Второй покупатель и +5% к цене",
+    unlocks: ["2 покупателя", "+5% к цене", "Больше выбора"],
+    priceBonus: 5,
+    seatCount: 2,
   },
   {
     level: 3,
     title: "Надёжный поставщик",
-    required: 80,
-    reward: "Второе место и +10% к клубным ценам",
+    required: 90,
+    reward: "Коллекционеры качества и +10%",
+    unlocks: ["Покупатели качества", "+10% к цене", "Более дорогие партии"],
+    priceBonus: 10,
+    seatCount: 2,
   },
   {
     level: 4,
     title: "Звезда клуба",
     required: 180,
-    reward: "+15% к клубным ценам",
+    reward: "Третий покупатель и +15% к цене",
+    unlocks: ["3 покупателя", "+15% к цене", "Заказы отличного качества"],
+    priceBonus: 15,
+    seatCount: 3,
   },
   {
     level: 5,
     title: "Легенда района",
-    required: 350,
-    reward: "Третье место и +20% к клубным ценам",
+    required: 340,
+    reward: "VIP-заказы и +20% к цене",
+    unlocks: ["VIP-покупатели", "Редкие заказы", "+20% к цене"],
+    priceBonus: 20,
+    seatCount: 3,
   },
 ];
 
@@ -56,7 +73,6 @@ export function readClubReputation() {
     return 0;
   }
 }
-
 
 export function writeClubReputation(value) {
   const reputation = normalizeReputation(value);
@@ -131,4 +147,12 @@ export function getClubLevelInfo(reputationValue) {
 
 export function getClubLevel(reputationValue) {
   return getClubLevelInfo(reputationValue).currentLevel.level;
+}
+
+export function getClubSeatCount(reputationValue) {
+  return getClubLevelInfo(reputationValue).currentLevel.seatCount || 1;
+}
+
+export function getClubPriceBonusPercent(reputationValue) {
+  return getClubLevelInfo(reputationValue).currentLevel.priceBonus || 0;
 }

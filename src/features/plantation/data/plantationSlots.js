@@ -1,83 +1,33 @@
 export const plantationSlots = [
-  {
-    id: 1,
-    unlockPrice: 0,
-    requiredClubLevel: 1,
-    released: true,
-  },
-  {
-    id: 2,
-    unlockPrice: 100,
-    requiredClubLevel: 3,
-    released: true,
-  },
-  {
-    id: 3,
-    unlockPrice: 500,
-    requiredClubLevel: 5,
-    released: true,
-  },
+  { id: 1, unlockPrice: 0, requiredQuestId: null, requirementTitle: "Стартовое ведро", released: true },
+  { id: 2, unlockPrice: 0, requiredQuestId: "maria-water-three", requirementTitle: "Заверши главу «Чужой двор»", released: true },
+  { id: 3, unlockPrice: 420, requiredQuestId: "maria-club-rep-150", requirementTitle: "Заслужи разрешение Марии", released: true },
+  { id: 4, unlockPrice: 900, requiredQuestId: "maria-club-rep-280", requirementTitle: "Докажи стабильное качество", released: true },
 ];
 
-export function getPlantationSlotState(
-  slot,
-  clubLevel,
-  isUnlocked = false,
-) {
-  if (!slot) {
+export function getPlantationSlotState(slot, mariaQuestState, isUnlocked = false) {
+  if (!slot) return { canBuy:false, isQuestLocked:false, isReleased:false, statusText:"Пока недоступно", requirementText:"" };
+  if (isUnlocked) return { canBuy:false, isQuestLocked:false, isReleased:true, statusText:"Открыто", requirementText:"" };
+  if (!slot.released) return { canBuy:false, isQuestLocked:false, isReleased:false, statusText:"Пока недоступно", requirementText:"" };
+
+  const completed = new Set(mariaQuestState?.completedQuestIds || []);
+  const questLocked = Boolean(slot.requiredQuestId && !completed.has(slot.requiredQuestId));
+  if (questLocked) {
     return {
-      canBuy: false,
-      isLevelLocked: false,
-      isReleased: false,
-      statusText: "Пока что недоступно",
+      canBuy:false,
+      isQuestLocked:true,
+      isReleased:true,
+      statusText: slot.requirementTitle || "Сначала выполни поручение Марии",
+      requirementText:"Открой доску поручений в доме Марии Ивановны и заверши нужную главу.",
     };
   }
 
-  if (isUnlocked) {
-    return {
-      canBuy: false,
-      isLevelLocked: false,
-      isReleased: true,
-      statusText: "Открыто",
-    };
-  }
-
-  if (!slot.released) {
-    return {
-      canBuy: false,
-      isLevelLocked: false,
-      isReleased: false,
-      statusText: "Пока что недоступно",
-    };
-  }
-
-  const currentLevel = Math.max(
-    1,
-    Math.floor(Number(clubLevel) || 1),
-  );
-
-  const requiredLevel = Math.max(
-    1,
-    Math.floor(Number(slot.requiredClubLevel) || 1),
-  );
-
-  if (currentLevel < requiredLevel) {
-    return {
-      canBuy: false,
-      isLevelLocked: true,
-      isReleased: true,
-      statusText: `Откроется на ${requiredLevel} уровне клуба`,
-    };
-  }
-
-  const price = Number(slot.unlockPrice);
-
+  const price = Math.max(0, Number(slot.unlockPrice) || 0);
   return {
-    canBuy: Number.isFinite(price) && price > 0,
-    isLevelLocked: false,
-    isReleased: true,
-    statusText: Number.isFinite(price)
-      ? `${price} монет`
-      : "Пока что недоступно",
+    canBuy:true,
+    isQuestLocked:false,
+    isReleased:true,
+    statusText: price > 0 ? `${price} монет` : "Мария отдаёт бесплатно",
+    requirementText: price > 0 ? "Разрешение уже получено. Осталось оплатить установку обычными монетами." : "Награда уже заслужена — выбери тип ёмкости и установи её.",
   };
 }

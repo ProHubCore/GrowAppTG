@@ -536,7 +536,7 @@ body {
 .hint-text {
   margin-top: 2px;
 
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 700;
   line-height: 1.15;
 
@@ -790,7 +790,7 @@ body {
 .seed-description {
   margin-top: 3px;
 
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 700;
   line-height: 1.25;
 
@@ -894,7 +894,7 @@ body {
 
   color: #10281d;
 
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 900;
 
   box-shadow:
@@ -905,7 +905,7 @@ body {
 .inventory-hint {
   margin-top: 14px;
 
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 700;
   line-height: 1.35;
 

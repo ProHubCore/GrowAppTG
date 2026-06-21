@@ -72,7 +72,9 @@ export function migratePotStates(value) {
 
   const now = Date.now();
 
-  return value.map((pot) => {
+  const padded = [...value];
+  while (padded.length < 4) padded.push({ unlocked: false, growStep: 0, selectedSeedId: null });
+  return padded.slice(0, 4).map((pot) => {
     const mappedSeedId = pot?.selectedSeedId
       ? mapCropId(pot.selectedSeedId)
       : null;

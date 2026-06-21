@@ -55,7 +55,7 @@
   display:block;
   margin-bottom:5px;
   color:#a9c8d0;
-  font-size:9px;
+  font-size:12px;
   font-weight:1000;
   letter-spacing:.18em;
   line-height:1;
@@ -146,7 +146,7 @@
 .locked-slot-copy p{
   margin:8px 0 0;
   color:rgba(220,232,235,.62);
-  font-size:10px;
+  font-size:13px;
   font-weight:700;
   line-height:1.42;
 }
@@ -163,7 +163,7 @@
   justify-content:space-between;
   gap:10px;
   color:rgba(215,231,235,.62);
-  font-size:9px;
+  font-size:12px;
   font-weight:900;
 }
 .locked-slot-levels strong{color:#c9e1e7;font-weight:1000}
@@ -193,10 +193,14 @@
   color:#f1f8fa;
   box-shadow:0 4px 0 #1b272a,0 7px 14px rgba(0,0,0,.25),inset 0 1px 0 rgba(240,252,255,.09);
   font:inherit;
-  font-size:12px;
+  font-size:15px;
   font-weight:1000;
   cursor:pointer;
 }
 .locked-slot-confirm:active{transform:translateY(3px) scale(.99);box-shadow:0 1px 0 #1b272a,0 3px 7px rgba(0,0,0,.22)}
 @keyframes lockedSlotIn{from{opacity:0;transform:translateY(12px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
 @media(prefers-reduced-motion:reduce){.locked-slot-modal{animation:none}}
+.locked-slot-maria-note{display:grid;grid-template-columns:31px minmax(0,1fr);align-items:center;gap:8px;margin-top:8px;padding:8px 9px;border:1px solid rgba(220,178,117,.13);border-radius:11px;background:rgba(118,76,48,.1)}.locked-slot-maria-note>span{width:30px;height:30px;display:grid;place-items:center;border-radius:50%;background:linear-gradient(145deg,#9c6843,#54372f);color:#f0cf9b;font:900 13px Georgia,serif}.locked-slot-maria-note p{margin:0;color:rgba(239,220,191,.57);font-size:11px;font-style:italic;line-height:1.35}
+
+.locked-slot-lock i{position:relative;width:10px;height:18px;border-radius:999px;background:rgba(18,27,29,.76);box-shadow:inset 0 1px 2px rgba(0,0,0,.45)}
+.locked-slot-lock i::before{content:"";position:absolute;left:50%;top:-4px;width:15px;height:15px;border-radius:50%;background:inherit;transform:translateX(-50%)}

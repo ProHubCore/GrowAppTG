@@ -203,7 +203,7 @@
   background: rgba(44, 105, 76, 0.48);
   color: #c8f3dc;
 
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 1000;
   line-height: 1;
   text-align: center;
@@ -294,7 +294,7 @@
   display: flex;
   align-items: center;
   color: #eef4ee;
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 1000;
   line-height: 1.08;
   text-align: center;
@@ -303,7 +303,7 @@
 .care-item-card small {
   margin-top: auto;
   color: rgba(207, 231, 216, 0.48);
-  font-size: 8px;
+  font-size: 11px;
   font-weight: 800;
   line-height: 1.15;
 }
@@ -334,7 +334,7 @@
   max-width: 220px;
   margin-top: 6px;
   color: rgba(215, 231, 220, 0.48);
-  font-size: 9px;
+  font-size: 12px;
   line-height: 1.4;
 }
 
@@ -415,7 +415,7 @@
 
 .care-item-dialog__amount {
   color: rgba(174, 232, 202, 0.72);
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 1000;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -432,7 +432,7 @@
 .care-item-dialog p {
   margin: 9px 0 0;
   color: rgba(225, 237, 229, 0.66);
-  font-size: 10px;
+  font-size: 13px;
   line-height: 1.45;
 }
 
@@ -443,7 +443,7 @@
   border-radius: 10px;
   background: rgba(50, 129, 87, 0.1);
   color: #9fe3bf;
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 900;
   line-height: 1.35;
 }
@@ -473,7 +473,7 @@
   padding: 0 10px;
   border-radius: 12px;
   font: inherit;
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 1000;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
@@ -606,3 +606,49 @@
   transform-origin: center;
   pointer-events: none;
 }
+
+/* Economy v4: visible outcome forecast instead of hidden random rules. */
+.care-forecast{
+  margin-top:8px;
+  padding:10px 11px;
+  border:1px solid rgba(226,240,229,.12);
+  border-radius:13px;
+  background:linear-gradient(180deg,rgba(255,255,255,.045),rgba(0,0,0,.08));
+  box-shadow:inset 0 1px rgba(255,255,255,.035);
+}
+.care-forecast__top{display:flex;align-items:center;justify-content:space-between;gap:9px}
+.care-forecast__top span{min-width:0;display:grid;gap:2px}
+.care-forecast__top small{color:rgba(221,239,226,.5);font-size:11px;font-weight:1000;letter-spacing:.12em}
+.care-forecast__top strong{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#f3f6ef;font-size:14px}
+.care-forecast__top>b{flex:0 0 auto;color:#c9f0d4;font-size:13px}
+.care-forecast__qualities{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:5px;margin-top:8px}
+.care-forecast__qualities span{min-width:0;display:grid;grid-template-columns:7px minmax(0,1fr) auto;align-items:center;gap:5px;padding:5px 6px;border-radius:8px;background:rgba(255,255,255,.035);color:rgba(232,241,234,.68);font-size:11px;font-weight:800}
+.care-forecast__qualities span>i{width:6px;height:6px;border-radius:50%;background:#9aa39c}
+.care-forecast__qualities span.good>i{background:#70d69a}
+.care-forecast__qualities span.excellent>i{background:#efc86b}
+.care-forecast__qualities span.rare>i{background:#c78cff}
+.care-forecast__qualities span>b{color:#f6f7f2;font-size:11px}
+.care-forecast__note{display:flex;justify-content:space-between;gap:8px;margin-top:7px;color:rgba(219,237,224,.46);font-size:11px}
+.care-forecast.compact{margin:12px 0 0;padding:9px;background:rgba(0,0,0,.12)}
+.care-forecast.compact .care-forecast__qualities{grid-template-columns:repeat(4,minmax(0,1fr));gap:3px}
+.care-forecast.compact .care-forecast__qualities span{display:flex;justify-content:center;padding:5px 2px;font-size:0}
+.care-forecast.compact .care-forecast__qualities span>i{display:none}
+.care-forecast.compact .care-forecast__qualities span>b{font-size:11px}
+@media(max-width:340px){.care-forecast__qualities{gap:4px}.care-forecast.compact .care-forecast__qualities{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* V13: care contains tools only. Forecast lives exclusively on plant tap. */
+.care-modal{width:min(342px,calc(100vw - 22px));max-height:min(620px,calc(100dvh - 28px));padding:10px}
+.care-modal-header{min-height:68px;padding:23px 52px 12px 15px}
+.care-modal-header>div:last-of-type{display:grid;gap:3px}
+.care-modal-header small{color:rgba(206,231,216,.5);font-size:11px;font-weight:1000;letter-spacing:.15em}
+.care-modal-header h2{font-size:21px}
+.care-case-tray{margin-top:8px}
+.care-item-grid{gap:8px}
+.care-item-card{min-height:152px;padding:9px 7px 8px}
+.care-item-card__visual{width:72px;height:76px}
+.care-item-card__icon{display:none}
+.care-item-card.is-used{opacity:.58}
+.care-item-dialog{position:relative}
+.care-item-dialog__visual{display:grid;place-items:center;width:84px;height:90px;margin:0 auto 5px;border:0;background:transparent;box-shadow:none}
+.care-item-dialog__visual>span{font-size:0}
+.care-item-dialog__close{position:absolute;top:10px;right:10px;width:32px;height:32px;display:grid;place-items:center;padding:0 0 2px;border:1px solid rgba(255,255,255,.12);border-radius:50%;color:#f0f5f1;background:rgba(255,255,255,.05);font:inherit;font-size:23px;line-height:1}

@@ -372,14 +372,14 @@
   margin: 0;
   overflow: hidden;
   color: rgba(246, 232, 191, 0.62);
-  font-size: 12px;
+  font-size: 15px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .player-profile-modal__eyebrow {
   color: #b9d77c;
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 900;
   letter-spacing: 0.09em;
   text-transform: uppercase;
@@ -394,7 +394,7 @@
   border-radius: 4px 13px 13px 4px;
   background: rgba(11, 10, 8, 0.24);
   color: rgba(246, 232, 191, 0.72);
-  font-size: 10.5px;
+  font-size: 13px;
   font-weight: 620;
   line-height: 1.45;
 }
@@ -430,7 +430,7 @@
   border-radius: 8px;
   background: rgba(113, 145, 70, 0.14);
   color: #c8e58e;
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 950;
 }
 
@@ -446,7 +446,7 @@
 
 .player-profile-stat strong em {
   color: rgba(246, 232, 191, 0.46);
-  font-size: 10px;
+  font-size: 13px;
   font-style: normal;
 }
 
@@ -454,7 +454,7 @@
   display: block;
   margin-top: 6px;
   color: rgba(246, 232, 191, 0.5);
-  font-size: 8px;
+  font-size: 11px;
   font-weight: 800;
   line-height: 1.2;
 }
@@ -482,7 +482,7 @@
 .player-rank-card__label {
   display: block;
   color: rgba(246, 232, 191, 0.55);
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 850;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -514,7 +514,7 @@
 
 .player-rank-card__level span {
   color: rgba(234, 246, 196, 0.54);
-  font-size: 7px;
+  font-size: 11px;
   font-weight: 900;
   text-transform: uppercase;
 }
@@ -543,7 +543,7 @@
   gap: 10px;
   margin-top: 8px;
   color: rgba(246, 232, 191, 0.54);
-  font-size: 9px;
+  font-size: 12px;
   font-weight: 750;
 }
 

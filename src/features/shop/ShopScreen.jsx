@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import "./ShopScreen.css";
 import { getClubLevel } from "../club/clubProgression";
 import ActionModal from "../../shared/components/ActionModal/ActionModal";
+import CareItemIcon from "../../shared/components/CareItemIcon/CareItemIcon";
 
 const DEPARTMENTS = [
   { id: "seed", label: "Семена", icon: "🌱" },
@@ -40,6 +41,10 @@ function saveSeenItems(refreshAt, seenItemIds) {
 }
 
 function ItemArt({ item }) {
+  if (item.type === "care") {
+    return <CareItemIcon type={item.id} className="shop-care-item-icon" />;
+  }
+
   if (item.image) {
     return <img src={item.image} alt={item.name} draggable="false" />;
   }
@@ -66,6 +71,22 @@ function getDepartmentId(item) {
   return "equipment";
 }
 
+function getUnlockText(item, clubLevel, mariaTrust) {
+  if (mariaTrust < (item.requiredTrust || 0)) return `${item.requiredTrust} ♥`;
+  if (clubLevel < (item.requiredClubLevel || 1)) return `CLUB ${item.requiredClubLevel}`;
+  return "";
+}
+
+function getItemSortRank(item, stock, clubLevel, mariaTrust, unseenItemIds) {
+  const locked =
+    clubLevel < (item.requiredClubLevel || 1) ||
+    mariaTrust < (item.requiredTrust || 0);
+  if (locked) return 30;
+  if ((stock[item.id] || 0) <= 0) return 20;
+  if (unseenItemIds?.has(item.id)) return 0;
+  return 10;
+}
+
 export default function ShopScreen({
   onGoBack,
   items = [],
@@ -88,6 +109,7 @@ export default function ShopScreen({
   const [amount, setAmount] = useState(1);
   const [toast, setToast] = useState("");
   const [isPremiumRefreshOpen, setIsPremiumRefreshOpen] = useState(false);
+  const [isPremiumRefreshPending, setIsPremiumRefreshPending] = useState(false);
   const [seenItemIds, setSeenItemIds] = useState(() => new Set(readSeenItems(refreshAt)));
   const clubLevel = getClubLevel(clubReputation);
 
@@ -99,9 +121,20 @@ export default function ShopScreen({
     [items, careInventory],
   );
 
-  const availableDepartments = DEPARTMENTS;
+  const availableDepartments = useMemo(
+    () => DEPARTMENTS.filter((entry) =>
+      visibleItems.some((item) => getDepartmentId(item) === entry.id),
+    ),
+    [visibleItems],
+  );
 
-  const filteredItems = useMemo(
+  useEffect(() => {
+    if (!availableDepartments.some((entry) => entry.id === department)) {
+      setDepartment(availableDepartments[0]?.id || "seed");
+    }
+  }, [availableDepartments, department]);
+
+  const departmentItems = useMemo(
     () => visibleItems.filter((item) => getDepartmentId(item) === department),
     [visibleItems, department],
   );
@@ -156,6 +189,23 @@ export default function ShopScreen({
     [visibleItems, stock, clubLevel, mariaTrust, seenItemIds],
   );
   const hasUnseenItems = unseenItemIds.size > 0;
+  const filteredItems = useMemo(
+    () => [...departmentItems].sort((a, b) => {
+      const rank = getItemSortRank(a, stock, clubLevel, mariaTrust, unseenItemIds) -
+        getItemSortRank(b, stock, clubLevel, mariaTrust, unseenItemIds);
+      if (rank !== 0) return rank;
+      return (stock[b.id] || 0) - (stock[a.id] || 0) || a.name.localeCompare(b.name, "ru");
+    }),
+    [departmentItems, stock, clubLevel, mariaTrust, unseenItemIds],
+  );
+  const departmentStats = useMemo(() => ({
+    available: filteredItems.filter((item) =>
+      getItemSortRank(item, stock, clubLevel, mariaTrust, unseenItemIds) < 20,
+    ).length,
+    locked: filteredItems.filter((item) =>
+      getItemSortRank(item, stock, clubLevel, mariaTrust, unseenItemIds) >= 30,
+    ).length,
+  }), [filteredItems, stock, clubLevel, mariaTrust, unseenItemIds]);
 
   const markItemSeen = (itemId) => {
     setSeenItemIds((current) => {
@@ -172,9 +222,7 @@ export default function ShopScreen({
       clubLevel < (item.requiredClubLevel || 1) ||
       mariaTrust < (item.requiredTrust || 0);
 
-    if (itemLocked) return;
-
-    markItemSeen(item.id);
+    if (!itemLocked) markItemSeen(item.id);
     setSelectedId(item.id);
     setAmount(1);
   };
@@ -202,36 +250,39 @@ export default function ShopScreen({
     closeItem();
   };
 
-  const refreshWithPremium = () => {
-    const result = onPremiumRefresh?.();
-    if (!result?.success) {
-      setToast(result?.message || "Не удалось обновить поставку");
-      return;
-    }
+  const refreshWithPremium = async () => {
+    if (isPremiumRefreshPending) return;
+    setIsPremiumRefreshPending(true);
+    try {
+      const result = await onPremiumRefresh?.();
+      if (!result?.success) {
+        setToast(result?.message || "Не удалось обновить поставку");
+        return;
+      }
 
-    setIsPremiumRefreshOpen(false);
-    setToast(result.message || "Новая поставка уже на прилавке");
+      setIsPremiumRefreshOpen(false);
+      setToast(result.message || "Новая поставка уже на прилавке");
+    } finally {
+      setIsPremiumRefreshPending(false);
+    }
   };
 
   return (
     <div className="shop-screen">
       <div className="shop-top-safe" aria-hidden="true" />
 
-      <div className="shop-wallet" aria-label={`Монеты: ${coins}`}>
-        <span className="shop-wallet-coin">●</span>
-        <strong>{coins}</strong>
-      </div>
-
       <section className="shop-stall" aria-label="Лавка Зорика">
         <header className="shop-signboard">
           <div className="shop-signboard-copy">
+            <small>ТОРГОВАЯ ЛАВКА</small>
             <h1>Лавка Зорика</h1>
+            <p>Семена, уход и редкие штуки</p>
           </div>
 
           <button
             type="button"
             className={`shop-delivery${hasUnseenItems ? " has-new" : ""}`}
-            aria-label={`Обновление через ${formatTimer(secondsLeft)}. Обновить сейчас за ${premiumRefreshPrice} G-монет.`}
+            aria-label={`Обновление через ${formatTimer(secondsLeft)}. Обновить сейчас за ${premiumRefreshPrice} монет роста.`}
             onClick={() => setIsPremiumRefreshOpen(true)}
           >
             <span className="shop-delivery-icon" aria-hidden="true">↻</span>
@@ -243,6 +294,30 @@ export default function ShopScreen({
             {hasUnseenItems && <span className="shop-delivery-new">ЕСТЬ НОВОЕ</span>}
           </button>
         </header>
+
+        <div className="shop-cashbar" aria-label="Баланс игрока">
+          <div className="shop-cashbar-wallet shop-cashbar-wallet--coins" aria-label={`Обычные монеты: ${coins}`}>
+            <span className="shop-cashbar-icon shop-cashbar-icon--coin" aria-hidden="true" />
+            <span className="shop-cashbar-copy">
+              <small>МОНЕТЫ</small>
+              <strong>{coins}</strong>
+            </span>
+          </div>
+
+          <button
+            type="button"
+            className="shop-cashbar-wallet shop-cashbar-wallet--premium"
+            onClick={onOpenPremiumStore}
+            aria-label={`Монеты роста: ${premiumCoins}. Открыть магазин монет роста.`}
+          >
+            <span className="shop-cashbar-icon shop-cashbar-icon--premium" aria-hidden="true">✦</span>
+            <span className="shop-cashbar-copy">
+              <small>G-МОНЕТЫ</small>
+              <strong>{premiumCoins}</strong>
+            </span>
+            <span className="shop-cashbar-plus" aria-hidden="true">+</span>
+          </button>
+        </div>
 
         <nav className="shop-departments" aria-label="Разделы магазина">
           {availableDepartments.map((entry) => (
@@ -268,6 +343,7 @@ export default function ShopScreen({
                 ? "Уход за растениями"
                 : "Оснащение"}</span>
             <i aria-hidden="true" />
+            <b>{departmentStats.available} доступно{departmentStats.locked ? ` · ${departmentStats.locked} закрыто` : ""}</b>
           </div>
 
           <div className="shop-product-grid">
@@ -297,7 +373,9 @@ export default function ShopScreen({
                       </span>
                     )}
                     <span className="shop-product-name">{item.name}</span>
-                    {!itemLocked && (
+                    {itemLocked ? (
+                      <span className="shop-product-unlock">{getUnlockText(item, clubLevel, mariaTrust)}</span>
+                    ) : (
                       <span className="shop-product-footer">
                         <span className="shop-product-price">
                           <i aria-hidden="true">●</i>{item.pricePerSeed}
@@ -402,14 +480,17 @@ export default function ShopScreen({
         modalIcon="↻"
         confirmText="Обновить лавку"
         cancelText="Подождать"
-        confirmDisabled={premiumCoins < premiumRefreshPrice}
+        confirmDisabled={premiumCoins < premiumRefreshPrice || isPremiumRefreshPending}
+        isProcessing={isPremiumRefreshPending}
         onConfirm={refreshWithPremium}
         onInsufficientFunds={() => {
           setIsPremiumRefreshOpen(false);
           onOpenPremiumStore?.();
         }}
         insufficientText="Приобрести"
-        onCancel={() => setIsPremiumRefreshOpen(false)}
+        onCancel={() => {
+          if (!isPremiumRefreshPending) setIsPremiumRefreshOpen(false);
+        }}
       />
 
       {toast && <div className="shop-toast" role="status">{toast}</div>}

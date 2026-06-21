@@ -1,386 +1,410 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
-  getTelegramUserId,
   triggerTelegramHaptic,
   triggerTelegramNotification,
 } from "../../core/telegram";
+import { trackGameEvent } from "../../core/analytics/monetizationAnalytics";
 import {
-  createStarsInvoice,
-  isStarsPaymentConfigured,
-  openStarsInvoice,
+  COSMETIC_OPTIONS,
+  STORE_PRODUCTS,
+  STORE_TABS,
+  getProductGrowthAmount,
+} from "../monetization/storeCatalog";
+import {
+  getStarsConfiguration,
+  purchaseStarsProduct,
+  redeemServerPromo,
 } from "./starsPayments";
-import CurrencyCoinPile from "./CurrencyCoinPile";
-import {
-  G_COIN_PACKAGES,
-  formatStoreNumber,
-} from "./storePackages";
+import { formatStoreNumber } from "./storePackages";
+import CareItemIcon from "../../shared/components/CareItemIcon/CareItemIcon";
 
 import "./SupportScreen.css";
 
-const PROMO_KEY = "3141592";
-const PROMO_REWARD = 100;
+const DEV_TEST_CODES = new Set(["14.15.92", "3141592"]);
 
-function normalizePromoKey(value) {
-  return String(value ?? "").replace(/\D/g, "");
-}
+function ProductIcon({ product, compact = false }) {
+  const growth = getProductGrowthAmount(product);
+  const care = (product.contents || []).filter((item) => item.kind === "care");
+  const cosmetic = (product.contents || []).find((item) => item.kind === "cosmetic");
 
-function createPromoStorageKey() {
-  let playerId = "browser-player";
-
-  try {
-    playerId = String(getTelegramUserId() || playerId);
-  } catch {
-    // В обычном браузере используем локальный профиль.
+  if (product.type === "bundle") {
+    return (
+      <span className={`growth-product-icon growth-bundle-visual theme-${product.theme}${compact ? " compact" : ""}`} aria-hidden="true">
+        <span className="growth-bundle-coin"><i>✦</i><b>{growth}</b></span>
+        <span className="growth-bundle-flasks">
+          {care.slice(0, 2).map((item) => (
+            <span key={item.id} className={`growth-bundle-flask flask-${item.id}`}>
+              <CareItemIcon type={item.id} className="bundle-size" />
+              <b>×{item.amount}</b>
+            </span>
+          ))}
+        </span>
+        <span className={`growth-bundle-theme preview-${cosmetic?.id || "classic"}`}><i /></span>
+      </span>
+    );
   }
 
-  return `growapp-support-promo-${PROMO_KEY}-${playerId}`;
-}
-
-function readPromoRedeemed(storageKey) {
-  try {
-    return window.localStorage.getItem(storageKey) === "1";
-  } catch {
-    return false;
+  if (product.type === "cosmetic") {
+    return <span className={`growth-product-icon growth-theme-preview preview-${product.id}${compact ? " compact" : ""}`} aria-hidden="true"><i /><b>ТЕМА</b></span>;
   }
-}
 
-function CoinBurst({ premium = false }) {
   return (
-    <span className={`currency-burst ${premium ? "currency-burst--premium" : ""}`} aria-hidden="true">
-      {Array.from({ length: 12 }, (_, index) => (
-        <i key={index} style={{ "--burst-index": index }} />
-      ))}
+    <span className={`growth-product-icon growth-coin-product theme-${product.theme}${compact ? " compact" : ""}`} aria-hidden="true">
+      <i>✦</i><b>{growth}</b>
     </span>
+  );
+}
+
+function RewardLine({ item, detailed = false }) {
+  return (
+    <span className={`growth-reward-line reward-${item.kind} ${item.id ? `reward-${item.id}` : ""}`}>
+      <i aria-hidden="true">
+        {item.kind === "care" ? (
+          <CareItemIcon type={item.id} className="reward-size" />
+        ) : (
+          <b>{item.kind === "growth" ? "✦" : "◈"}</b>
+        )}
+      </i>
+      <span>
+        <strong>{item.label}</strong>
+        {detailed && item.detail && <small>{item.detail}</small>}
+      </span>
+    </span>
+  );
+}
+
+function ProductCard({ product, owned, equipped, onOpen, onEquip }) {
+  const growthAmount = getProductGrowthAmount(product);
+  return (
+    <article className={`growth-product theme-${product.theme}${product.featured ? " featured" : ""}${owned ? " owned" : ""}`}>
+      <button type="button" className="growth-product__main" onClick={onOpen}>
+        <span className="growth-product__topline">
+          <span className="growth-product__badge">{owned ? "КУПЛЕНО" : product.badge}</span>
+          <span className="growth-product__value">{product.valueLabel}</span>
+        </span>
+
+        <span className="growth-product__hero-row">
+          <ProductIcon product={product} />
+          <span className="growth-product__copy">
+            <strong>{product.title}</strong>
+            <small>{product.cardLine || product.subtitle}</small>
+            {product.compareLine && <em>{product.compareLine}</em>}
+          </span>
+        </span>
+
+        {product.type === "currency" && (
+          <span className="growth-product__currency-amount">
+            <b>{growthAmount}</b>
+            <span><strong>ускорителей</strong><small>сразу на баланс</small></span>
+          </span>
+        )}
+
+        {product.type !== "currency" && (
+          <span className="growth-product__contents">
+            {(product.contents || []).slice(0, 3).map((item) => (
+              <RewardLine key={`${item.kind}-${item.id || item.amount}`} item={item} />
+            ))}
+          </span>
+        )}
+
+        <span className="growth-product__bottomline">
+          <span>{owned ? "Уже получено" : product.ctaLine || "Посмотреть"}</span>
+          <span className="growth-product__price">
+            {owned ? <b>Открыто</b> : <><b>{product.stars}</b><i>★</i></>}
+          </span>
+        </span>
+      </button>
+
+      {product.type === "cosmetic" && owned && (
+        <button type="button" className={`growth-product__equip${equipped ? " active" : ""}`} onClick={onEquip}>
+          {equipped ? "Используется" : "Применить тему"}
+        </button>
+      )}
+    </article>
   );
 }
 
 export default function SupportScreen({
   premiumCoins = 0,
-  onPremiumCoinsAdded,
+  ownedProducts = [],
+  ownedCosmetics = ["classic"],
+  activeCosmetic = "classic",
+  initialProductId = null,
+  onProductGranted,
+  onEquipCosmetic,
   onClose,
-  onOpenCoinStore,
 }) {
-  const [selectedPackage, setSelectedPackage] = useState(null);
-  const [status, setStatus] = useState("idle");
+  const [activeTab, setActiveTab] = useState(() => {
+    const initial = STORE_PRODUCTS.find((product) => product.id === initialProductId);
+    return initial?.tab || "featured";
+  });
+  const [selectedProduct, setSelectedProduct] = useState(() =>
+    STORE_PRODUCTS.find((product) => product.id === initialProductId) || null,
+  );
+  const [purchaseStatus, setPurchaseStatus] = useState("idle");
   const [message, setMessage] = useState("");
-  const [successPackage, setSuccessPackage] = useState(null);
-  const [promoStorageKey] = useState(createPromoStorageKey);
+  const [successProduct, setSuccessProduct] = useState(null);
   const [promoCode, setPromoCode] = useState("");
-  const [promoRedeemed, setPromoRedeemed] = useState(() =>
-    readPromoRedeemed(promoStorageKey),
-  );
-  const [promoStatus, setPromoStatus] = useState(() =>
-    readPromoRedeemed(promoStorageKey) ? "redeemed" : "idle",
-  );
-  const [promoMessage, setPromoMessage] = useState(() =>
-    readPromoRedeemed(promoStorageKey)
-      ? "Ключ уже применён. Награда была начислена на этот аккаунт."
-      : "",
+  const [promoStatus, setPromoStatus] = useState("idle");
+  const configuration = getStarsConfiguration();
+  const canUsePromo = configuration.promo || import.meta.env.DEV;
+
+  const ownedProductSet = useMemo(() => new Set(ownedProducts || []), [ownedProducts]);
+  const ownedCosmeticSet = useMemo(() => new Set(ownedCosmetics || ["classic"]), [ownedCosmetics]);
+  const visibleProducts = STORE_PRODUCTS.filter((product) => {
+    if (activeTab === "featured") return product.tab === "featured";
+    return product.tab === activeTab;
+  });
+
+  useEffect(() => {
+    trackGameEvent("store_open", { focusProductId: initialProductId || null, premiumBalance: premiumCoins });
+  }, [initialProductId, premiumCoins]);
+
+  useEffect(() => {
+    if (!initialProductId) return;
+    const product = STORE_PRODUCTS.find((item) => item.id === initialProductId);
+    if (!product) return;
+    setActiveTab(product.tab || "featured");
+    setSelectedProduct(product);
+    trackGameEvent("offer_impression", { productId: product.id, source: "contextual" });
+  }, [initialProductId]);
+
+  const productOwned = selectedProduct && (
+    ownedProductSet.has(selectedProduct.id) ||
+    (selectedProduct.type === "cosmetic" && ownedCosmeticSet.has(selectedProduct.id))
   );
 
-  const configured = isStarsPaymentConfigured();
-  const safeBalance = Math.max(0, Math.floor(Number(premiumCoins) || 0));
-
-  const closePurchaseModal = () => {
-    if (status === "loading") return;
-    setSelectedPackage(null);
-    setStatus("idle");
+  const closeProduct = () => {
+    if (purchaseStatus === "loading") return;
+    setSelectedProduct(null);
+    setPurchaseStatus("idle");
     setMessage("");
   };
 
-  const saveSuccessfulPurchase = (pack) => {
-    onPremiumCoinsAdded?.(pack.coins);
-  };
-
-  const handlePromoSubmit = (event) => {
-    event.preventDefault();
-
-    if (promoRedeemed) {
-      triggerTelegramHaptic("light");
-      setPromoStatus("redeemed");
-      setPromoMessage(
-        "Ключ уже применён. Награда была начислена на этот аккаунт.",
-      );
-      return;
-    }
-
-    const normalizedCode = normalizePromoKey(promoCode);
-
-    if (!normalizedCode) {
-      triggerTelegramNotification("error");
-      setPromoStatus("error");
-      setPromoMessage("Сначала введи ключ.");
-      return;
-    }
-
-    if (normalizedCode !== PROMO_KEY) {
-      triggerTelegramNotification("error");
-      setPromoStatus("error");
-      setPromoMessage("Такой ключ не найден. Проверь цифры и попробуй снова.");
-      return;
-    }
-
-    try {
-      window.localStorage.setItem(promoStorageKey, "1");
-    } catch {
-      // Награда всё равно начислится в текущей сессии.
-    }
-
-    onPremiumCoinsAdded?.(PROMO_REWARD);
-    setPromoRedeemed(true);
-    setPromoStatus("success");
-    setPromoMessage(`Ключ принят. На баланс начислено +${PROMO_REWARD} G-монет.`);
-    setPromoCode("");
-    triggerTelegramNotification("success");
+  const openProduct = (product) => {
+    triggerTelegramHaptic("light");
+    setSelectedProduct(product);
+    setPurchaseStatus("idle");
+    setMessage("");
+    trackGameEvent("product_view", { productId: product.id });
   };
 
   const handlePurchase = async () => {
-    if (!selectedPackage || status === "loading") return;
+    if (!selectedProduct || purchaseStatus === "loading" || productOwned) return;
 
-    setStatus("loading");
+    setPurchaseStatus("loading");
     setMessage("");
+    trackGameEvent("purchase_started", { productId: selectedProduct.id, stars: selectedProduct.stars });
 
-    if (!configured) {
-      setStatus("error");
-      setMessage("Сервер Telegram Stars пока не подключён.");
+    try {
+      const result = await purchaseStarsProduct(selectedProduct);
+      if (result.status === "cancelled") {
+        setPurchaseStatus("idle");
+        setMessage("Покупка отменена. Stars не списывались.");
+        trackGameEvent("purchase_cancelled", { productId: selectedProduct.id });
+        return;
+      }
+      if (!result.verified) {
+        setPurchaseStatus("error");
+        setMessage("Платёж не подтверждён сервером. Ничего не начислено.");
+        return;
+      }
+
+      onProductGranted?.({
+        product: selectedProduct,
+        entitlements: result.entitlements,
+        serverBalance: result.serverBalance,
+        purchaseId: result.purchaseId,
+      });
+      setSuccessProduct(selectedProduct);
+      setSelectedProduct(null);
+      setPurchaseStatus("success");
+      triggerTelegramNotification("success");
+      trackGameEvent("purchase_succeeded", { productId: selectedProduct.id, stars: selectedProduct.stars });
+    } catch (error) {
+      console.error("Stars purchase failed:", error);
+      setPurchaseStatus("error");
+      const errorMessage = String(error?.message || "");
+      setMessage(
+        errorMessage.includes("TELEGRAM_SESSION_REQUIRED")
+          ? "Покупка открывается только внутри Telegram."
+          : errorMessage.includes("VERIFY")
+            ? "Оплата прошла, но сервер ещё не подтвердил выдачу. Повтори проверку позже."
+            : "Не удалось открыть безопасную оплату Telegram Stars.",
+      );
+      trackGameEvent("purchase_failed", { productId: selectedProduct.id, reason: String(error?.message || "unknown") });
+    }
+  };
+
+  const handlePromo = async (event) => {
+    event.preventDefault();
+    if (!promoCode.trim() || promoStatus === "loading") return;
+
+    setPromoStatus("loading");
+    setMessage("");
+    const normalizedCode = promoCode.trim();
+
+    if (import.meta.env.DEV && DEV_TEST_CODES.has(normalizedCode)) {
+      const developerGrant = { id: "developer-grant", shortTitle: "Тестовый запас", title: "Тестовый запас" };
+      onProductGranted?.({
+        product: null,
+        entitlements: [
+          { kind: "care", id: "nutrition", amount: 25 },
+          { kind: "care", id: "mariaMix", amount: 25 },
+          { kind: "cosmetic", id: "amber-lab", amount: 1 },
+          { kind: "cosmetic", id: "violet-haze", amount: 1 },
+        ],
+        serverBalance: Math.max(100000, Number(premiumCoins) + 100000),
+        purchaseId: `dev-${Date.now()}`,
+      });
+      setPromoCode("");
+      setPromoStatus("success");
+      setMessage("Тестовый запас выдан. Покупки не отмечены.");
+      setSuccessProduct(developerGrant);
+      triggerTelegramNotification("success");
+      trackGameEvent("developer_test_grant");
       return;
     }
 
     try {
-      const invoiceUrl = await createStarsInvoice({
-        stars: selectedPackage.stars,
-        premiumCoins: selectedPackage.coins,
-        packageId: selectedPackage.id,
-      });
-      const paymentStatus = await openStarsInvoice(invoiceUrl);
-
-      if (paymentStatus === "paid") {
-        saveSuccessfulPurchase(selectedPackage);
-        setSuccessPackage(selectedPackage);
-        setSelectedPackage(null);
-        setStatus("success");
-        setMessage("");
-        return;
-      }
-
-      if (paymentStatus === "cancelled") {
-        setStatus("idle");
-        setMessage("Покупка отменена. Stars не списывались.");
-        return;
-      }
-
-      if (paymentStatus === "failed") {
-        setStatus("error");
-        setMessage("Telegram не смог провести покупку.");
-        return;
-      }
-
-      setStatus("idle");
-      setMessage("Окно оплаты закрыто без списания Stars.");
+      const result = await redeemServerPromo(normalizedCode);
+      onProductGranted?.({ product: null, entitlements: result.entitlements, serverBalance: result.serverBalance, purchaseId: null });
+      setPromoCode("");
+      setPromoStatus("success");
+      setMessage(result.message);
+      triggerTelegramNotification("success");
+      trackGameEvent("promo_redeemed");
     } catch (error) {
-      console.error("Не удалось открыть Stars invoice:", error);
-      setStatus("error");
-      setMessage("Не удалось открыть оплату. Проверь подключение сервера.");
+      setPromoStatus("error");
+      setMessage("Ключ не найден, уже использован или доступен только разработчику.");
+      triggerTelegramNotification("error");
     }
   };
 
   return (
-    <main className="currency-store currency-store--premium currency-store--clean">
-      <div className="currency-store__glow currency-store__glow--one" aria-hidden="true" />
-      <div className="currency-store__glow currency-store__glow--two" aria-hidden="true" />
+    <main className={`growth-store growth-store--${activeTab}`}>
+      <div className="growth-store__ambient" aria-hidden="true"><i /><i /><i /></div>
 
-      <div className="currency-store__scroll">
-        <nav className="currency-store__switch" aria-label="Выбор валютного магазина">
-          <button type="button" className="active" aria-current="page">
-            <span className="currency-mini-coin currency-mini-coin--g" aria-hidden="true" />
-            G-монеты
+      <header className="growth-store__header">
+        <button type="button" className="growth-store__back" onClick={onClose} aria-label="Закрыть магазин">←</button>
+        <div className="growth-store__title">
+          <small>МАГАЗИН РАЙОНА</small>
+          <h1>Ускорения</h1>
+        </div>
+        <div className="growth-store__wallet" aria-label={`Монеты роста: ${premiumCoins}`}>
+          <span className="growth-store__wallet-crystal">✦</span>
+          <span><small>УСКОРИТЕЛИ</small><strong>{formatStoreNumber(premiumCoins)}</strong></span>
+        </div>
+      </header>
+
+      <nav className="growth-store__tabs" aria-label="Разделы магазина">
+        {STORE_TABS.map((tab) => (
+          <button type="button" key={tab.id} className={activeTab === tab.id ? "active" : ""} onClick={() => {
+            triggerTelegramHaptic("light");
+            setActiveTab(tab.id);
+          }}>
+            <i aria-hidden="true">{tab.icon}</i><span>{tab.label}</span>
           </button>
-          <button type="button" onClick={onOpenCoinStore}>
-            <span className="currency-mini-coin currency-mini-coin--gold" aria-hidden="true" />
-            Обычные
-          </button>
-        </nav>
+        ))}
+      </nav>
 
-        <section className="currency-balance-overview currency-balance-overview--premium currency-balance-overview--compact">
-          <div className="currency-balance-overview__coin currency-balance-overview__coin--premium" aria-hidden="true">
-            <span />
-          </div>
-          <div className="currency-balance-overview__copy">
-            <small>ТВОЙ БАЛАНС</small>
-            <strong>{formatStoreNumber(safeBalance)} <em>G</em></strong>
-          </div>
-        </section>
+      <div className="growth-store__scroll">
+        {activeTab === "growth" && (
+          <section className="growth-store__explain">
+            <span>✦</span>
+            <div><strong>Ускорители сокращают ожидание</strong><p>Прогресс и обычные монеты всё равно добываются в игре.</p></div>
+          </section>
+        )}
 
-        <h2 className="currency-store__package-heading">Выберите пакет</h2>
-
-        <section className="currency-package-grid currency-package-grid--clean" aria-label="Пакеты G-монет">
-          {G_COIN_PACKAGES.map((pack, index) => (
-            <button
-              key={pack.id}
-              type="button"
-              className={`currency-package currency-package--clean currency-package--${pack.theme}`}
-              style={{ "--pack-index": index }}
-              onClick={() => {
-                setSelectedPackage(pack);
-                setStatus("idle");
-                setMessage("");
-              }}
-            >
-              <span className="currency-package__badge currency-package__badge--centered">{pack.badge}</span>
-              <CurrencyCoinPile type="premium" count={pack.visualCoins} />
-              <span className="currency-package__ribbon">{pack.benefit}</span>
-              <span className="currency-package__amount">{formatStoreNumber(pack.coins)}</span>
-              <span className="currency-package__currency">G-МОНЕТ</span>
-              <span className="currency-package__title">{pack.title}</span>
-              <span className="currency-package__subtitle">{pack.subtitle}</span>
-              <span className="currency-package__price">
-                <b>{pack.stars}</b>
-                <span aria-hidden="true">★</span>
-              </span>
-            </button>
-          ))}
-        </section>
-
-        <section
-          className={`currency-promo-key currency-promo-key--${promoStatus}`}
-          aria-labelledby="currency-promo-title"
-        >
-          <div className="currency-promo-key__shine" aria-hidden="true" />
-
-          <div className="currency-promo-key__heading">
-            <div className="currency-promo-key__emblem" aria-hidden="true">
-              <span className="currency-mini-coin currency-mini-coin--g" />
-              <i>+</i>
-            </div>
-            <div>
-              <small>БОНУСНЫЙ ДОСТУП</small>
-              <h2 id="currency-promo-title">Ввести ключ</h2>
-              <p>Активируй ключ района и получи награду на баланс.</p>
-            </div>
-          </div>
-
-          <form className="currency-promo-key__form" onSubmit={handlePromoSubmit}>
-            <label className="currency-promo-key__field">
-              <span>Ключ</span>
-              <input
-                type="text"
-                inputMode="numeric"
-                autoComplete="off"
-                enterKeyHint="done"
-                maxLength={16}
-                value={promoCode}
-                disabled={promoRedeemed}
-                placeholder={promoRedeemed ? "Ключ применён" : "Введите цифры"}
-                onChange={(event) => {
-                  setPromoCode(event.target.value.slice(0, 16));
-                  if (promoStatus === "error") {
-                    setPromoStatus("idle");
-                    setPromoMessage("");
-                  }
-                }}
+        <section className="growth-product-grid" aria-label="Товары">
+          {visibleProducts.map((product) => {
+            const owned = ownedProductSet.has(product.id) || (product.type === "cosmetic" && ownedCosmeticSet.has(product.id));
+            const equipped = product.type === "cosmetic" && activeCosmetic === product.id;
+            return (
+              <ProductCard
+                key={product.id}
+                product={product}
+                owned={owned}
+                equipped={equipped}
+                onOpen={() => openProduct(product)}
+                onEquip={() => onEquipCosmetic?.(product.id)}
               />
-            </label>
-
-            <button
-              type="submit"
-              className="currency-promo-key__apply"
-              disabled={promoRedeemed}
-            >
-              {promoRedeemed ? (
-                <>
-                  <span aria-hidden="true">✓</span>
-                  Применено
-                </>
-              ) : (
-                <>
-                  Применить
-                  <span className="currency-mini-coin currency-mini-coin--g" aria-hidden="true" />
-                </>
-              )}
-            </button>
-          </form>
-
-          {promoMessage && (
-            <div
-              className={`currency-promo-key__message currency-promo-key__message--${promoStatus}`}
-              role="status"
-            >
-              <span aria-hidden="true">{promoStatus === "error" ? "!" : "✓"}</span>
-              <p>{promoMessage}</p>
-            </div>
-          )}
+            );
+          })}
         </section>
+
+        {activeTab === "style" && (
+          <section className="growth-style-library">
+            <header><small>ТВОЯ КОЛЛЕКЦИЯ</small><h2>Оформление района</h2></header>
+            {COSMETIC_OPTIONS.map((cosmetic) => {
+              const owned = cosmetic.id === "classic" || ownedCosmeticSet.has(cosmetic.id);
+              const equipped = activeCosmetic === cosmetic.id;
+              return (
+                <button type="button" key={cosmetic.id} disabled={!owned} className={`${owned ? "owned" : "locked"}${equipped ? " active" : ""}`} onClick={() => owned && onEquipCosmetic?.(cosmetic.id)}>
+                  <i aria-hidden="true">{owned ? (equipped ? "✓" : cosmetic.icon) : "⌁"}</i>
+                  <span><strong>{cosmetic.title}</strong><small>{cosmetic.description}</small></span>
+                  <b>{equipped ? "Выбрано" : owned ? "Выбрать" : "Закрыто"}</b>
+                </button>
+              );
+            })}
+          </section>
+        )}
+
+        <form className="growth-promo" onSubmit={handlePromo}>
+          <div><small>КЛЮЧ</small><strong>Тестовый доступ</strong></div>
+          <label>
+            <input value={promoCode} onChange={(event) => setPromoCode(event.target.value.replace(/\s/g, "").slice(0, 32))} placeholder="Введите ключ" autoComplete="off" inputMode="text" />
+            <button type="submit" disabled={!canUsePromo || promoStatus === "loading"}>{promoStatus === "loading" ? "…" : "Готово"}</button>
+          </label>
+        </form>
+
+        {message && !selectedProduct && <div className={`growth-store__message ${promoStatus}`}>{message}</div>}
       </div>
 
-      <footer className="currency-store__footer">
-        <button type="button" className="currency-store__close" onClick={onClose}>
-          Закрыть
-        </button>
-      </footer>
+      <footer className="growth-store__footer"><button type="button" onClick={onClose}>Вернуться в игру</button></footer>
 
-      {selectedPackage && (
-        <div className="currency-dialog-layer" role="presentation" onClick={closePurchaseModal}>
-          <section
-            className="currency-dialog currency-dialog--premium"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="gcoin-purchase-title"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <button
-              type="button"
-              className="currency-dialog__x"
-              onClick={closePurchaseModal}
-              disabled={status === "loading"}
-              aria-label="Закрыть окно покупки"
-            >
-              ×
-            </button>
-
-            <div className="currency-dialog__hero" aria-hidden="true">
-              <span className="currency-dialog__coin currency-dialog__coin--premium" />
-              <span className="currency-dialog__orbit" />
+      {selectedProduct && (
+        <div className="growth-dialog-layer" role="presentation" onMouseDown={(event) => event.target === event.currentTarget && closeProduct()}>
+          <section className={`growth-dialog theme-${selectedProduct.theme}`} role="dialog" aria-modal="true" aria-labelledby="growth-product-title">
+            <button type="button" className="growth-dialog__close" onClick={closeProduct} disabled={purchaseStatus === "loading"}>×</button>
+            <div className="growth-dialog__visual"><ProductIcon product={selectedProduct} /><span>{selectedProduct.valueLabel}</span></div>
+            <small>{selectedProduct.badge}</small>
+            <h2 id="growth-product-title">{selectedProduct.title}</h2>
+            <p>{selectedProduct.cardLine || selectedProduct.subtitle}</p>
+            <div className="growth-dialog__rewards">
+              {(selectedProduct.contents || []).map((item) => <RewardLine key={`${item.kind}-${item.id || item.amount}`} item={item} />)}
             </div>
-
-            <small className="currency-dialog__eyebrow">{selectedPackage.badge}</small>
-            <h2 id="gcoin-purchase-title">{selectedPackage.title}</h2>
-            <p>На баланс будет начислено <b>{formatStoreNumber(selectedPackage.coins)} G-монет</b>.</p>
-
-            <div className="currency-dialog__receipt">
-              <span>Пакет</span>
-              <strong>{formatStoreNumber(selectedPackage.coins)} G</strong>
-              <span>К оплате</span>
-              <strong>{selectedPackage.stars} ★</strong>
+            <div className="growth-dialog__total">
+              <span>{productOwned ? "Уже на аккаунте" : "Получишь сразу"}</span>
+              <strong>{productOwned ? "✓" : `${selectedProduct.stars} ★`}</strong>
             </div>
-
-            {message && (
-              <div className={`currency-dialog__message currency-dialog__message--${status}`} role="status">
-                {message}
+            {!configuration.ready && !import.meta.env.DEV && (
+              <div className="growth-dialog__warning">
+                {configuration.reason === "OPEN_IN_TELEGRAM"
+                  ? "Открой игру внутри Telegram, чтобы купить через Stars."
+                  : "Оплата временно недоступна. Награды не будут начислены без подтверждения сервера."}
               </div>
             )}
-
-            <div className="currency-dialog__actions">
-              <button type="button" className="currency-dialog__cancel" onClick={closePurchaseModal} disabled={status === "loading"}>
-                Отмена
-              </button>
-              <button type="button" className="currency-dialog__confirm" onClick={handlePurchase} disabled={status === "loading" || !configured}>
-                {status === "loading" ? "Открываем Telegram…" : `Купить за ${selectedPackage.stars} ★`}
+            {message && <div className={`growth-dialog__message status-${purchaseStatus}`}>{message}</div>}
+            <div className="growth-dialog__actions">
+              <button type="button" onClick={closeProduct} disabled={purchaseStatus === "loading"}>Не сейчас</button>
+              <button type="button" className="primary" onClick={handlePurchase} disabled={!configuration.ready || purchaseStatus === "loading" || productOwned}>
+                {productOwned ? "Получено" : purchaseStatus === "loading" ? "Проверяем…" : `Купить · ${selectedProduct.stars} ★`}
               </button>
             </div>
           </section>
         </div>
       )}
 
-      {successPackage && (
-        <div className="currency-success-layer" role="status">
-          <section className="currency-success-card currency-success-card--premium">
-            <CoinBurst premium />
-            <div className="currency-success-card__coin currency-success-card__coin--premium" aria-hidden="true" />
-            <small>ПОКУПКА УСПЕШНА</small>
-            <h2>+{formatStoreNumber(successPackage.coins)} G</h2>
-            <p>G-монеты уже добавлены на баланс.</p>
-            <button type="button" onClick={() => setSuccessPackage(null)}>Отлично</button>
+      {successProduct && (
+        <div className="growth-success-layer" role="status">
+          <section className="growth-success">
+            <span aria-hidden="true">✦</span>
+            <small>ПОКУПКА ПОДТВЕРЖДЕНА</small>
+            <h2>{successProduct.shortTitle}</h2>
+            <p>Награды уже на аккаунте.</p>
+            <button type="button" onClick={() => setSuccessProduct(null)}>Забрать</button>
           </section>
         </div>
       )}

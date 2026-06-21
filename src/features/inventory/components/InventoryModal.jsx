@@ -6,6 +6,7 @@ import {
   QUALITY_PRICE_MULTIPLIERS,
   getQualityAmount,
 } from "../../plantation/data/qualityInventory";
+import CareItemIcon from "../../../shared/components/CareItemIcon/CareItemIcon";
 import "./InventoryModal.css";
 
 const SLOT_COUNT = 20;
@@ -130,6 +131,10 @@ function reconcileLayouts(previous, stacks) {
 }
 
 function ItemArt({ stack }) {
+  if (stack.type === "care") {
+    return <CareItemIcon type={stack.itemId} className="backpack-care-item-icon" />;
+  }
+
   if (stack.image) {
     return (
       <img
@@ -555,7 +560,7 @@ export default function InventoryModal({
               return (
                 <button
                   key={`${activeCategory}-slot-${index}`}
-                  className={`backpack-slot${stack ? " filled" : " empty"}${isSelected ? " selected" : ""}${isDragging ? " dragging-source" : ""}${isDropTarget ? " drop-target" : ""}`}
+                  className={`backpack-slot${stack ? " filled" : " empty"}${stack?.qualityId ? ` quality-${QUALITY_CLASS[stack.qualityId] || "none"}` : ""}${isSelected ? " selected" : ""}${isDragging ? " dragging-source" : ""}${isDropTarget ? " drop-target" : ""}`}
                   type="button"
                   data-backpack-drop={`slot:${index}`}
                   onPointerDown={

@@ -1,15 +1,15 @@
 export const PREMIUM_CURRENCY = Object.freeze({
   id: "growCoin",
-  name: "G-монеты",
-  shortName: "G",
+  name: "Монеты роста",
+  shortName: "◆",
   icon: "◆",
   storageKey: "growapp-premium-coins",
-  demoStartingBalance: 1000,
-  coinsPerStar: 10,
+  demoStartingBalance: 0,
+  coinsPerStar: 1,
 });
 
 export const PREMIUM_PRICES = Object.freeze({
-  shopRefresh: 5,
+  shopRefresh: 8,
 });
 
 export function normalizePremiumBalance(value) {

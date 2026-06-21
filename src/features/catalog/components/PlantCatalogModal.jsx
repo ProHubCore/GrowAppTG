@@ -6,7 +6,7 @@ export default function PlantCatalogModal({ isOpen, catalog = {}, onClose }) {
   if (!isOpen) return null;
 
   return (
-    <div className="catalog-overlay">
+    <div className="catalog-overlay" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose?.(); }}>
       <section className="catalog-book">
         <button type="button" className="catalog-close" onClick={onClose}>×</button>
         <div className="catalog-kicker">Записи Марии Ивановны</div>
